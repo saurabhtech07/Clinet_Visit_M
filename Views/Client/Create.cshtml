@@ -1,0 +1,162 @@
+@* @using Microsoft.AspNetCore.Html
+@model List<DynamicField>
+@{
+    var states = ((DynamicTableViewModel)ViewBag.States).Rows;
+    var companyTypes = ((DynamicTableViewModel)ViewBag.CompanyTypes).Rows;
+
+    var companyFields = new[]
+    {
+        "ClientName",
+        "Address1",
+        "Address2",
+        "City",
+        "StateId",
+        "Pincode"
+    };
+
+    var contactFields = new[]
+    {
+        "LandlineNo",
+        "MobileNo",
+        "Email"
+    };
+
+    var businessFields = new[]
+    {
+        "CompanyTypeId" // <-- bas ye hi rahega
+    };
+
+    IHtmlContent RenderField(DynamicField f)
+    {
+        var label = $"<label class=\"form-label\">{(f.Name == "CompanyTypeId" ? "Company Type" : f.Name)}{(f.IsNullable ? "" : " *")}</label>";
+        string input;
+
+        if (f.Name == "StateId")
+        {
+            var opts = string.Join("", states.Select(s => $"<option value=\"{s["StateId"]}\">{s["StateName"]}</option>"));
+            input = $@"<select class=""form-select"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
+        }
+        else if (f.Name == "CompanyTypeId")
+        {
+            var opts = string.Join("", companyTypes.Select(s => $"<option value=\"{s["Id"]}\">{s["Name"]}</option>"));
+            input = $@"<select class=""form-select"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
+        }
+        else
+        {
+            var type = f.DataType.Contains("int") ? "number" : f.DataType.Contains("date") ? "date" : "text";
+            var req = f.IsNullable ? "" : "required";
+            input = $@"<input class=""form-control"" name=""{f.Name}"" type=""{type}"" {req} />";
+        }
+        return new HtmlString(label + input);
+    }
+}
+
+<h4 class="mb-3">Create New Client</h4>
+<form method="post">
+    <div class="row g-4 align-items-stretch">
+        <div class="col-md-6 d-flex">
+            <div class="card-section w-100">
+                <h6>Company Information</h6>
+                @foreach (var f in Model.Where(f => companyFields.Contains(f.Name)))
+                {
+                    @RenderField(f)
+                }
+            </div>
+        </div>
+        <div class="col-md-6 d-flex flex-column gap-4">
+            <div class="card-section w-100">
+                <h6>Contact Information</h6>
+                @foreach (var f in Model.Where(f => contactFields.Contains(f.Name)))
+                {
+                    @RenderField(f)
+                }
+            </div>
+            <div class="card-section w-100">
+                <h6>Business Information</h6>
+                @foreach (var f in Model.Where(f => businessFields.Contains(f.Name)))
+                {
+                    @RenderField(f)
+                }
+            </div>
+        </div>
+    </div>
+    <div class="text-end mt-4">
+        <button type="reset" class="btn btn-light border">Reset</button>
+        <button type="submit" class="btn btn-primary">Save & Continue</button>
+    </div>
+</form> *@
+
+@using Microsoft.AspNetCore.Html
+@model List<DynamicField>
+@{
+    var states = ((DynamicTableViewModel)ViewBag.States).Rows;
+    var companyTypes = ((DynamicTableViewModel)ViewBag.CompanyTypes).Rows;
+
+    var companyFields = new[] { "ClientName", "Address1", "Address2", "City", "StateId", "Pincode" };
+    var contactFields = new[] { "LandlineNo", "MobileNo", "Email" };
+    var businessFields = new[] { "CompanyTypeId" };
+
+    // FIX: Jo bhi naya column (GSTNo, PANNo, Website) add hoga wo is list me khud ayega
+    var otherFields = Model.Where(f =>
+       !companyFields.Contains(f.Name) &&
+       !contactFields.Contains(f.Name) &&
+       !businessFields.Contains(f.Name) &&
+        f.Name!= "ClientId" && f.Name!= "CreatedOn" && f.Name!= "CompanyType"
+    ).ToList();
+
+    IHtmlContent RenderField(DynamicField f)
+    {
+        var label = $"<label class=\"form-label\">{(f.Name == "CompanyTypeId"? "Company Type" : f.Name == "StateId"? "State" : f.Name)}{(f.IsNullable? "" : " *")}</label>";
+        string input;
+        if (f.Name == "StateId")
+        {
+            var opts = string.Join("", states.Select(s => $"<option value=\"{s["StateId"]}\">{s["StateName"]}</option>"));
+            input = $@"<select class=""form-select"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
+        }
+        else if (f.Name == "CompanyTypeId")
+        {
+            var opts = string.Join("", companyTypes.Select(s => $"<option value=\"{s["Id"]}\">{s["Name"]}</option>"));
+            input = $@"<select class=""form-select"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
+        }
+        else
+        {
+            var type = f.DataType.Contains("int")? "number" : f.DataType.Contains("date")? "date" : "text";
+            var req = f.IsNullable? "" : "required";
+            input = $@"<input class=""form-control"" name=""{f.Name}"" type=""{type}"" {req} placeholder=""Enter {f.Name}"" />";
+        }
+        return new HtmlString($"<div class='mb-3'>{label}{input}</div>");
+    }
+}
+
+<h4 class="mb-3">Create New Client</h4>
+<form method="post">
+    <div class="row g-4 align-items-stretch">
+        <div class="col-md-6 d-flex">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6>Company Information</h6>
+                @foreach (var f in Model.Where(f => companyFields.Contains(f.Name))) { @RenderField(f) }
+            </div>
+        </div>
+        <div class="col-md-6 d-flex flex-column gap-4">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6>Contact Information</h6>
+                @foreach (var f in Model.Where(f => contactFields.Contains(f.Name))) { @RenderField(f) }
+            </div>
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6>Business Information</h6>
+                @foreach (var f in Model.Where(f => businessFields.Contains(f.Name))) { @RenderField(f) }
+
+                @if(otherFields.Any())
+                {
+                    <hr />
+                    <h6>Additional Information - Auto Added</h6>
+                    @foreach (var f in otherFields) { @RenderField(f) }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="text-end mt-4">
+        <button type="reset" class="btn btn-light border">Reset</button>
+        <button type="submit" class="btn btn-primary">Save & Continue</button>
+    </div>
+</form>

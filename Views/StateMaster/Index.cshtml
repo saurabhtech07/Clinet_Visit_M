@@ -1,0 +1,381 @@
+@* @model ClientVisitManagement.Models.DynamicTableViewModel
+
+<h4 class="mb-3">State Master</h4>
+
+<div class="card-section">
+
+    <div class="client-toolbar">
+
+        <!-- SEARCH -->
+        <div class="client-search-box">
+
+            <i class="bi bi-search"></i>
+
+            <input type="text"
+                   id="stateSearch"
+                   value="@Model.SearchTerm"
+                   placeholder="Search by state name..."
+                   autocomplete="off" />
+
+        </div>
+
+
+        <!-- ADD STATE -->
+        <a href="/StateMaster/Create"
+           class="btn btn-primary btn-sm">
+
+            <i class="bi bi-plus-circle"></i>
+            Add State
+
+        </a>
+
+
+        <!-- RECORDS PER PAGE - RIGHT SIDE -->
+        <div class="d-flex align-items-center gap-2 ms-auto">
+
+            <select id="statePageSize"
+                    class="form-select form-select-sm"
+                    style="width:70px;">
+
+                <option value="10"
+                        selected="@(Model.PageSize == 10)">
+                    10
+                </option>
+
+                <option value="25"
+                        selected="@(Model.PageSize == 25)">
+                    25
+                </option>
+
+                <option value="50"
+                        selected="@(Model.PageSize == 50)">
+                    50
+                </option>
+
+                <option value="100"
+                        selected="@(Model.PageSize == 100)">
+                    100
+                </option>
+
+            </select>
+
+            <span class="text-muted">
+                records per page
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- STATE TABLE -->
+
+    <div id="stateTable">
+
+        @await Html.PartialAsync(
+            "_StateTable",
+            Model)
+
+    </div>
+
+</div>
+
+
+<script>
+
+    let searchTimer;
+
+    const searchInput =
+        document.getElementById("stateSearch");
+
+    const stateTable =
+        document.getElementById("stateTable");
+
+    const pageSizeSelect =
+        document.getElementById("statePageSize");
+
+
+    // =========================================================
+    // LOAD TABLE
+    // =========================================================
+
+    function loadStateTable(url) {
+
+        fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+
+            if (!response.ok)
+                throw new Error("Unable to load states.");
+
+            return response.text();
+
+        })
+        .then(html => {
+
+            stateTable.innerHTML = html;
+
+        })
+        .catch(error => {
+
+            console.error(
+                "State table error:",
+                error
+            );
+
+        });
+
+    }
+
+
+    // =========================================================
+    // SEARCH
+    // =========================================================
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            clearTimeout(searchTimer);
+
+            const search =
+                this.value.trim();
+
+            searchTimer = setTimeout(() => {
+
+                const pageSize =
+                    pageSizeSelect.value;
+
+                const url =
+                    "/StateMaster?page=1" +
+                    "&pageSize=" + pageSize +
+                    "&search=" +
+                    encodeURIComponent(search);
+
+                loadStateTable(url);
+
+            }, 300);
+
+        }
+    );
+
+
+    // =========================================================
+    // PAGE SIZE
+    // =========================================================
+
+    pageSizeSelect.addEventListener(
+        "change",
+        function () {
+
+            const pageSize =
+                this.value;
+
+            const search =
+                searchInput.value.trim();
+
+            const url =
+                "/StateMaster?page=1" +
+                "&pageSize=" + pageSize +
+                "&search=" +
+                encodeURIComponent(search);
+
+            loadStateTable(url);
+
+        }
+    );
+
+
+    // =========================================================
+    // SORTING + PAGINATION
+    // =========================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    ".ajax-table-link"
+                );
+
+            if (!link)
+                return;
+
+            event.preventDefault();
+
+            loadStateTable(link.href);
+
+        }
+    );
+
+</script> *@
+
+
+
+@model dynamic
+@{
+    ViewData["Title"] = "State Master";
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+}
+
+<style>
+    .page-wrapper { padding: 16px 20px 20px 20px; }
+    .kpi-card {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        background: #fff;
+        padding: 14px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 75px;
+    }
+    .kpi-icon {
+        width: 38px; height: 38px;
+        border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 18px;
+    }
+    .search-box {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+    .table-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0" style="font-size:20px;">State Master</h5>
+    </div>
+
+    <!-- KPI - ab upar chipka hua -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="text-muted fw-bold" style="font-size:10px; letter-spacing:0.5px;">TOTAL STATES</div>
+                    <div class="fw-bold" style="font-size:22px; line-height:1;">@ViewBag.TotalStates</div>
+                </div>
+                <div class="kpi-icon bg-primary"><i class="bi bi-geo-alt-fill"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="text-muted fw-bold" style="font-size:10px; letter-spacing:0.5px;">ACTIVE STATES</div>
+                    <div class="fw-bold" style="font-size:22px; line-height:1;">@ViewBag.ActiveStates</div>
+                </div>
+                <div class="kpi-icon bg-success"><i class="bi bi-check-circle-fill"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-box mb-3">
+        <div class="text-muted fw-bold mb-2" style="font-size:10px;">SEARCH STATE / CODE / COUNTRY</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="position-relative" style="width:360px;">
+                <i class="bi bi-search position-absolute" style="left:12px; top:50%; transform:translateY(-50%); color:#888;"></i>
+                <input type="text" id="searchInput" class="form-control form-control-sm ps-5 bg-light" placeholder="Search by state name..." style="border-radius:8px; height:38px;" />
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" id="btnClear" class="btn btn-light border btn-sm px-3" style="border-radius:8px; height:38px;">Clear</button>
+                <a href="/StateMaster/Create" class="btn btn-dark btn-sm px-3 d-flex align-items-center" style="border-radius:8px; height:38px;">
+                    <i class="bi bi-plus-circle me-1"></i> Add State
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div id="stateTableContainer">
+            @await Html.PartialAsync("_StateTable", (object)Model)
+        </div>
+    </div>
+</div>
+
+<script>
+    window.__stateNav = window.__stateNav || {};
+    var searchTimer;
+
+    function loadTable(page = 1) {
+        const term = document.getElementById("searchInput").value.trim();
+        const p = new URLSearchParams();
+        if (term) p.append("search", term);
+        p.append("page", page);
+        p.append("pageSize", document.getElementById("statePageSize")?.value || 10);
+        fetch("/StateMaster?" + p.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+        .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+        .then(html => {
+            const container = document.getElementById("stateTableContainer");
+            if (container) container.innerHTML = html;
+        })
+        .catch(e => console.error(e));
+    }
+
+    function loadStateTable(url) {
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+        .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+        .then(html => {
+            const container = document.getElementById("stateTableContainer");
+            if (container) container.innerHTML = html;
+        })
+        .catch(e => console.error(e));
+    }
+
+    // SORT + PAGINATION + PAGE SIZE - sirf ek baar register (AJAX nav safe)
+    if (!window.__stateNav.delegates) {
+        window.__stateNav.delegates = true;
+
+        document.addEventListener("click", function (e) {
+            if (e.__ajaxNavHandled) return;
+            const link = e.target.closest(".ajax-table-link");
+            if (!link) return;
+            e.preventDefault();
+            e.__ajaxNavHandled = true;
+            loadStateTable(link.href);
+        });
+
+        document.addEventListener("change", function (e) {
+            if (e.__ajaxNavHandled) return;
+            if (e.target.id !== "statePageSize") return;
+            e.__ajaxNavHandled = true;
+            loadTable(1);
+        });
+    }
+
+    var searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+        searchInput.addEventListener("keyup", function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => loadTable(1), 300);
+        });
+    }
+
+    var btnClear = document.getElementById("btnClear");
+    if (btnClear) {
+        btnClear.addEventListener("click", function () {
+            document.getElementById("searchInput").value = "";
+            loadTable(1);
+        });
+    }
+</script>

@@ -1,0 +1,94 @@
+@* @using ClientVisitManagement.Models
+@model DSSReportViewModel
+@{
+    int totalPages = Model.PageSize > 0 ? (int)Math.Ceiling((double)Model.TotalCalls / Model.PageSize) : 1;
+    if(totalPages==0) totalPages=1;
+}
+
+@foreach (var c in Model.Calls)
+{
+    var dateVal = c.ContainsKey("SupportDate") ? c["SupportDate"] : null;
+    DateTime dateIn = DateTime.Now; if(dateVal!=null){try{dateIn=Convert.ToDateTime(dateVal);}catch{}}
+    var ageing = (DateTime.Now - dateIn).Days;
+    var priority = c.ContainsKey("Priority") ? c["Priority"]?.ToString() : "Medium";
+    var status = c.ContainsKey("Status") ? c["Status"]?.ToString() : "Open";
+    var ticketNo = c.ContainsKey("TicketNo") ? c["TicketNo"]?.ToString() : "";
+    var company = c.ContainsKey("CompanyName") ? c["CompanyName"]?.ToString() : (c.ContainsKey("ClientName") ? c["ClientName"]?.ToString() : "");
+    var mobile = c.ContainsKey("Mobile") ? c["Mobile"]?.ToString() : "";
+    var problem = c.ContainsKey("Issue") ? c["Issue"]?.ToString() : "";
+    var assigned = c.ContainsKey("AssignedToName") ? c["AssignedToName"]?.ToString() : (c.ContainsKey("AssignedName") ? c["AssignedName"]?.ToString() : "");
+    var callId = c.ContainsKey("SupportId") ? c["SupportId"]?.ToString() : "";
+    <tr>
+        <td><span style="background:#111827;color:#fff;padding:3px 7px;border-radius:5px;font-size:11px;font-weight:700;">@ticketNo</span></td>
+        <td style="font-size:12px;white-space:nowrap;">@dateIn.ToString("dd-MM-yy hh:mm tt")</td>
+        <td style="font-size:13px;font-weight:500;white-space:nowrap;">@company</td>
+        <td style="white-space:nowrap;">@mobile</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="@problem">@problem</td>
+        <td><span class="badge-pri-@priority">@priority</span></td>
+        <td><span class="badge bg-light border text-dark" style="border-radius:12px;font-size:11px;white-space:nowrap;">@status</span></td>
+        <td style="font-size:12px;white-space:nowrap;">@assigned</td>
+        <td style="white-space:nowrap;">@(ageing==0 ? "Today" : ageing+"d")</td>
+        <td><a href="/DailySupport/Edit/@callId" class="btn btn-sm border bg-white" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;"><i class="bi bi-eye" style="font-size:12px;"></i></a></td>
+    </tr>
+}
+
+@if (Model.Calls == null || !Model.Calls.Any())
+{
+    <tr><td colspan="10" class="text-center text-muted p-4">No records found</td></tr>
+}
+
+<!-- Hidden data for JS to update pagination info -->
+<input type="hidden" id="totalCalls" value="@Model.TotalCalls" />
+<input type="hidden" id="currentPage" value="@Model.CurrentPage" />
+<input type="hidden" id="totalPages" value="@totalPages" />
+<input type="hidden" id="pageSize" value="@Model.PageSize" />
+<input type="hidden" id="showingFrom" value="@((Model.CurrentPage-1)*Model.PageSize + 1)" />
+<input type="hidden" id="showingTo" value="@(Math.Min(Model.CurrentPage*Model.PageSize, Model.TotalCalls))" /> *@
+
+
+@using ClientVisitManagement.Models
+@model DSSReportViewModel
+@{
+    int totalPages = Model.PageSize > 0 ? (int)Math.Ceiling((double)Model.TotalCalls / Model.PageSize) : 1;
+    if(totalPages==0) totalPages=1;
+}
+
+@foreach (var c in Model.Calls)
+{
+    var dateVal = c.ContainsKey("SupportDate") ? c["SupportDate"] : null;
+    DateTime dateIn = DateTime.Now; if(dateVal!=null){try{dateIn=Convert.ToDateTime(dateVal);}catch{}}
+    var ageing = (DateTime.Now - dateIn).Days;
+    var priority = c.ContainsKey("Priority") ? c["Priority"]?.ToString() : "Medium";
+    var status = c.ContainsKey("Status") ? c["Status"]?.ToString() : "Open";
+    var ticketNo = c.ContainsKey("TicketNo") ? c["TicketNo"]?.ToString() : "";
+    var company = c.ContainsKey("CompanyName") ? c["CompanyName"]?.ToString() : (c.ContainsKey("ClientName") ? c["ClientName"]?.ToString() : "");
+    var mobile = c.ContainsKey("Mobile") ? c["Mobile"]?.ToString() : "";
+    var problem = c.ContainsKey("Issue") ? c["Issue"]?.ToString() : "";
+    var assigned = c.ContainsKey("AssignedToName") ? c["AssignedToName"]?.ToString() : (c.ContainsKey("AssignedName") ? c["AssignedName"]?.ToString() : "");
+    var callId = c.ContainsKey("SupportId") ? c["SupportId"]?.ToString() : "";
+    <tr>
+        <td><span style="background:#111827;color:#fff;padding:3px 7px;border-radius:5px;font-size:11px;font-weight:700;">@ticketNo</span></td>
+        <td style="font-size:12px;white-space:nowrap;">@dateIn.ToString("dd-MM-yy hh:mm tt")</td>
+        <td style="font-size:13px;font-weight:500;white-space:nowrap;">@company</td>
+        <td style="white-space:nowrap;">@mobile</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="@problem">@problem</td>
+        <td><span class="badge-pri-@priority">@priority</span></td>
+        <td><span class="badge bg-light border text-dark" style="border-radius:12px;font-size:11px;white-space:nowrap;">@status</span></td>
+        <td style="font-size:12px;white-space:nowrap;">@assigned</td>
+        <td style="white-space:nowrap;">@(ageing==0 ? "Today" : ageing+"d")</td>
+        <td><button type="button" class="btn btn-sm border bg-white view-btn" data-id="@callId" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;"><i class="bi bi-eye" style="font-size:12px;"></i></button></td>
+    </tr>
+}
+
+@if (Model.Calls == null || !Model.Calls.Any())
+{
+    <tr><td colspan="10" class="text-center text-muted p-4">No records found</td></tr>
+}
+
+<!-- Hidden data for JS to update pagination info -->
+<input type="hidden" id="totalCalls" value="@Model.TotalCalls" />
+<input type="hidden" id="currentPage" value="@Model.CurrentPage" />
+<input type="hidden" id="totalPages" value="@totalPages" />
+<input type="hidden" id="pageSize" value="@Model.PageSize" />
+<input type="hidden" id="showingFrom" value="@((Model.CurrentPage-1)*Model.PageSize + 1)" />
+<input type="hidden" id="showingTo" value="@(Math.Min(Model.CurrentPage*Model.PageSize, Model.TotalCalls))" />

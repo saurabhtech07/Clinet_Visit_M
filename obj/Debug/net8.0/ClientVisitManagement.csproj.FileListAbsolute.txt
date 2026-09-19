@@ -1,0 +1,231 @@
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\appsettings.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.staticwebassets.runtime.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.staticwebassets.endpoints.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Black.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-BlackItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Bold.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-BoldItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraBold.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraLight.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraLightItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Italic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Light.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-LightItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Medium.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-MediumItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Regular.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-SemiBold.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-SemiBoldItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Thin.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ThinItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\OFL.txt
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.exe
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.deps.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.runtimeconfig.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.pdb
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Azure.Core.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Azure.Identity.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\BCrypt-Net-Next.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClosedXML.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClosedXML.Parser.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ExcelNumberFormat.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Identity.Client.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\QuestPDF.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\RBush.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\SixLabors.Fonts.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.ClientModel.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.IO.Packaging.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Memory.Data.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Runtime.Caching.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\de\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\es\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\fr\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\it\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ja\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ko\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ru\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\unix\lib\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win\lib\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-arm64\native\libQuestPdfSkia.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-arm64\native\libqpdf.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-musl-x64\native\libQuestPdfSkia.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-musl-x64\native\libqpdf.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-x64\native\libQuestPdfSkia.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-x64\native\libqpdf.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-arm64\native\libQuestPdfSkia.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-arm64\native\libqpdf.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-x64\native\libQuestPdfSkia.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-x64\native\libqpdf.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm64\native\QuestPdfSkia.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm64\native\qpdf.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x64\native\QuestPdfSkia.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x64\native\qpdf.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x86\native\QuestPdfSkia.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x86\native\qpdf.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Runtime.Caching.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.csproj.AssemblyReference.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.AssemblyInfoInputs.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.AssemblyInfo.cs
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.RazorAssemblyInfo.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.RazorAssemblyInfo.cs
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\scopedcss\bundle\ClientVisitManagement.styles.css
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.build.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.build.json.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.development.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\swae.build.ex.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVi.043A18A0.Up2Date
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\refint\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.pdb
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.genruntimeconfig.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ref\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\appsettings.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.staticwebassets.runtime.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.staticwebassets.endpoints.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Black.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-BlackItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Bold.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-BoldItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraBold.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraLight.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ExtraLightItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Italic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Light.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-LightItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Medium.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-MediumItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Regular.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-SemiBold.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-SemiBoldItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Thin.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ThinItalic.ttf
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\OFL.txt
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.exe
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.deps.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.runtimeconfig.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.pdb
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Azure.Core.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Azure.Identity.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\BCrypt-Net-Next.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClosedXML.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClosedXML.Parser.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ExcelNumberFormat.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Identity.Client.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\QuestPDF.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\RBush.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\SixLabors.Fonts.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.ClientModel.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.IO.Packaging.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Memory.Data.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Runtime.Caching.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\de\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\es\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\fr\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\it\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ja\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ko\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ru\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\unix\lib\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win\lib\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-arm64\native\libQuestPdfSkia.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-arm64\native\libqpdf.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-musl-x64\native\libQuestPdfSkia.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-musl-x64\native\libqpdf.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-x64\native\libQuestPdfSkia.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\linux-x64\native\libqpdf.so
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-arm64\native\libQuestPdfSkia.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-arm64\native\libqpdf.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-x64\native\libQuestPdfSkia.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\osx-x64\native\libqpdf.dylib
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm64\native\QuestPdfSkia.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-arm64\native\qpdf.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x64\native\QuestPdfSkia.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x64\native\qpdf.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x86\native\QuestPdfSkia.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win-x86\native\qpdf.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Runtime.Caching.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.csproj.AssemblyReference.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.AssemblyInfoInputs.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.AssemblyInfo.cs
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.RazorAssemblyInfo.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.RazorAssemblyInfo.cs
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\scopedcss\bundle\ClientVisitManagement.styles.css
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.build.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.build.json.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.development.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\swae.build.ex.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVi.043A18A0.Up2Date
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\refint\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.pdb
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.genruntimeconfig.cache
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ref\ClientVisitManagement.dll
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\web.config
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\appsettings.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\ClientVisitManagement.deps.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\ClientVisitManagement.runtimeconfig.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\ClientVisitManagement.staticwebassets.endpoints.json

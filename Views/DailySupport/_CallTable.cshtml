@@ -1,0 +1,71 @@
+@* @model DynamicTableViewModel
+<style>
+.table-card{border-radius:12px;border:0;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:hidden;}
+.table-container{max-height:58vh;overflow-y:auto;overflow-x:auto;}
+.table-container thead th{position:sticky!important;top:0!important;z-index:20!important;background:#f8fafc!important;}
+.table thead th{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;padding:14px 12px!important;white-space:nowrap;border:0;}
+.table tbody td{padding:13px 12px;vertical-align:middle;font-size:12.5px;border-color:#f1f5f9;background:white;}
+.badge-ticket{background:#0f172a;color:white;padding:6px 10px;border-radius:6px;font-weight:700;font-size:11px;}
+.badge-cat{background:#e0f2fe;color:#0284c7;padding:5px 8px;border-radius:6px;font-size:10px;font-weight:700;}
+</style>
+
+<div class="card table-card">
+    <div class="card-body p-0">
+        <div class="table-container">
+            <table class="table table-hover mb-0 align-middle" id="dssTable">
+                <thead>
+                    <tr>
+                        <th>TICKET NO</th><th>DATE & TIME</th><th>CLIENT [ID]</th><th>MOBILE</th><th>CHANNEL / TYPE</th><th>CATEGORY</th><th>PRIORITY</th><th>ASSIGNED</th><th>STATUS</th><th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var row in Model.Rows){
+                        var ticket = row.ContainsKey("TicketNo")? row["TicketNo"]?.ToString() : "";
+                        var clientId = row.ContainsKey("ClientId")? row["ClientId"]?.ToString() : "";
+                        var clientName = row.ContainsKey("ClientName")? row["ClientName"]?.ToString() : row.ContainsKey("CompanyName")? row["CompanyName"]?.ToString() : "";
+                        var mobile = row.ContainsKey("Mobile")? row["Mobile"]?.ToString() : "";
+                        var channel = row.ContainsKey("Channel")? row["Channel"]?.ToString() : "";
+                        var callType = row.ContainsKey("CallType")? row["CallType"]?.ToString() : "";
+                        var cat = row.ContainsKey("Category")? row["Category"]?.ToString() : "";
+                        var pri = row.ContainsKey("Priority")? row["Priority"]?.ToString() : "";
+                        var assigned = row.ContainsKey("AssignedName")? row["AssignedName"]?.ToString() : row["AssignedTo"]?.ToString();
+                        var status = row.ContainsKey("Status")? row["Status"]?.ToString() : "Open";
+                        var date = row.ContainsKey("SupportDate")? row["SupportDate"] : row.ContainsKey("CreatedOn")? row["CreatedOn"] : null;
+                        var id = row.ContainsKey("SupportId")? row["SupportId"]?.ToString() : "";
+                        <tr>
+                            <td><span class="badge-ticket">@ticket</span></td>
+                            <td><small>@(date!=null? Convert.ToDateTime(date).ToString("dd-MM-yy hh:mm tt") : "")</small></td>
+                            <td><div class="fw-bold" style="font-size:13px;">@clientName</div><small class="text-muted">[ID:@clientId]</small></td>
+                            <td class="fw-bold">@mobile</td>
+                            <td><small>@channel / @callType</small></td>
+                            <td><span class="badge-cat">@cat</span></td>
+                            <td><span class="badge bg-light border text-dark" style="font-size:10px;">@pri</span></td>
+                            <td><small>@assigned</small></td>
+                            <td><span class="badge bg-warning text-dark" style="font-size:10px;">@status</span></td>
+                            <td><a href="/DailySupport/Edit/@id" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a></td>
+                        </tr>
+                    }
+                    @if(!Model.Rows.Any()){<tr><td colspan="10" class="text-center py-5 text-muted">No calls found</td></tr>}
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 bg-light d-flex justify-content-between"><small class="text-muted">Total @Model.TotalRecords records</small><small class="text-muted">Page @Model.CurrentPage of @Model.TotalPages</small></div>
+    </div>
+</div> *@
+
+
+
+@model DynamicTableViewModel
+@{
+    var hideCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase){ "USERID","VISITTYPEID","SUPPORTID","CUSTOMERID" };
+    var fixedKeys = new[] { "TicketNo","SupportDate","ClientName","Mobile","Channel","Category","Priority","AssignedName","Status" };
+    var extraCols = Model.Columns.Where(c =>!fixedKeys.Contains(c, StringComparer.OrdinalIgnoreCase) &&!hideCols.Contains(c) && c!="CompanyName" && c!="AssignedTo" && c!="ClientId" && c!="CallType" && c!="CreatedOn" ).ToList();
+}
+<style>.table-card{border-radius:12px;border:0;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:hidden;}.table-container{max-height:58vh;overflow-y:auto;overflow-x:auto;}.table-container thead th{position:sticky!important;top:0!important;z-index:20!important;background:#f8fafc!important;}.table thead th{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;padding:14px 12px!important;white-space:nowrap;border:0;}.table tbody td{padding:13px 12px;vertical-align:middle;font-size:12.5px;border-color:#f1f5f9;background:white;}.badge-ticket{background:#0f172a;color:white;padding:6px 10px;border-radius:6px;font-weight:700;font-size:11px;}.badge-cat{background:#e0f2fe;color:#0284c7;padding:5px 8px;border-radius:6px;font-size:10px;font-weight:700;}</style>
+<div class="card table-card"><div class="card-body p-0"><div class="table-container"><table class="table table-hover mb-0 align-middle" id="dssTable"><thead><tr><th>TICKET NO</th><th>DATE & TIME</th><th>CLIENT [ID]</th><th>MOBILE</th><th>CHANNEL / TYPE</th><th>CATEGORY</th><th>PRIORITY</th><th>ASSIGNED</th><th>STATUS</th>@foreach(var ex in extraCols){<th>@ex.ToUpper()</th>}<th>ACTION</th></tr></thead><tbody>
+@foreach(var row in Model.Rows){
+    var ticket=row.ContainsKey("TicketNo")?row["TicketNo"]?.ToString():""; var clientId=row.ContainsKey("ClientId")?row["ClientId"]?.ToString():""; var clientName=row.ContainsKey("ClientName")?row["ClientName"]?.ToString():row.ContainsKey("CompanyName")?row["CompanyName"]?.ToString():""; var mobile=row.ContainsKey("Mobile")?row["Mobile"]?.ToString():""; var channel=row.ContainsKey("Channel")?row["Channel"]?.ToString():""; var callType=row.ContainsKey("CallType")?row["CallType"]?.ToString():""; var cat=row.ContainsKey("Category")?row["Category"]?.ToString():""; var pri=row.ContainsKey("Priority")?row["Priority"]?.ToString():""; var assigned=row.ContainsKey("AssignedName")?row["AssignedName"]?.ToString():row["AssignedTo"]?.ToString(); var status=row.ContainsKey("Status")?row["Status"]?.ToString():"Open"; var date=row.ContainsKey("SupportDate")?row["SupportDate"]:row.ContainsKey("CreatedOn")?row["CreatedOn"]:null; var id=row.ContainsKey("SupportId")?row["SupportId"]?.ToString():"";
+    <tr><td><span class="badge-ticket">@ticket</span></td><td><small>@(date!=null?Convert.ToDateTime(date).ToString("dd-MM-yy hh:mm tt"):"")</small></td><td><div class="fw-bold" style="font-size:13px;">@clientName</div><small class="text-muted">[ID:@clientId]</small></td><td class="fw-bold">@mobile</td><td><small>@channel / @callType</small></td><td><span class="badge-cat">@cat</span></td><td><span class="badge bg-light border text-dark" style="font-size:10px;">@pri</span></td><td><small>@assigned</small></td><td><span class="badge bg-warning text-dark" style="font-size:10px;">@status</span></td>@foreach(var ex in extraCols){<td>@(row.ContainsKey(ex)?row[ex]?.ToString():"-")</td>}<td><a href="/DailySupport/Edit/@id" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a></td></tr>
+}
+@if(!Model.Rows.Any()){<tr><td colspan="20" class="text-center py-5 text-muted">No calls found</td></tr>}
+</tbody></table></div><div class="p-3 bg-light d-flex justify-content-between"><small class="text-muted">Total @Model.TotalRecords records</small><small class="text-muted">Page @Model.CurrentPage of @Model.TotalPages</small></div></div></div>

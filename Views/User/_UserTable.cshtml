@@ -1,0 +1,132 @@
+
+
+@model ClientVisitManagement.Models.DynamicTableViewModel
+@{
+    var displayColumns = Model.Columns.Where(c =>!c.Equals("RoleId", StringComparison.OrdinalIgnoreCase) &&!c.Equals("RoleName", StringComparison.OrdinalIgnoreCase)).ToList();
+    int start = Model.TotalRecords == 0? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords);
+    int srNo = start;
+}
+
+<style>
+  .table-scroll-container {
+        max-height: 420px; /* yahi se scroll ka height control hoga */
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative;
+    }
+  .dss-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        color: #64748b; text-transform: uppercase;
+        background: #f8fafc!important; /* sticky ke liye background jaruri hai */
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px; white-space: nowrap;
+        box-shadow: 0 1px 0 #e2e8f0; /* header ke niche line */
+    }
+  .dss-table tbody td {
+        font-size: 13px; padding: 12px 14px;
+        border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+        background: #fff;
+    }
+   /* Scrollbar thoda sundar DSS jaisa */
+  .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
+</style>
+
+<div class="table-scroll-container">
+    <table class="table mb-0 dss-table table-hover">
+        <thead>
+            <tr>
+                <th style="width:70px;">Sr.No</th>
+                @foreach (var column in displayColumns)
+                {
+                    var nextDirection = Model.SortColumn == column && Model.SortDirection == "ASC"? "DESC" : "ASC";
+                    <th>
+                        <a href="/User?page=1&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm?? "")&sort=@Uri.EscapeDataString(column)&direction=@nextDirection"
+                           class="table-sort-link ajax-table-link">
+                            @column
+                            @if (Model.SortColumn == column)
+                            {
+                                <i class="bi @(Model.SortDirection == "ASC"? "bi-arrow-up" : "bi-arrow-down") ms-1"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-arrow-down-up ms-1" style="opacity:0.3; font-size:11px;"></i>
+                            }
+                        </a>
+                    </th>
+                }
+                <th style="width:100px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Any())
+            {
+                foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@srNo</td>
+                        @foreach (var column in displayColumns)
+                        {
+                            var value = row.ContainsKey(column)? row[column] : null;
+                            <td>
+                                @if (column.Equals("PasswordHash", StringComparison.OrdinalIgnoreCase))
+                                { <span>********</span> }
+                                else if (column.Equals("IsActive", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    bool active = value!= null && Convert.ToBoolean(value);
+                                    if (active) { <span class="badge rounded-pill" style="background:#dcfce7; color:#15803d; font-size:11px; padding:5px 10px;">Active</span> }
+                                    else { <span class="badge rounded-pill" style="background:#f1f5f9; color:#64748b; font-size:11px; padding:5px 10px;">Inactive</span> }
+                                }
+                                else { @(value?? "") }
+                            </td>
+                        }
+                        <td>
+                            @if (row.ContainsKey("UserId"))
+                            {
+                                <a href="/User/Edit/@row["UserId"]" title="Edit" class="me-2"><i class="bi bi-pencil-square text-warning"></i></a>
+                                <form asp-controller="User" asp-action="Delete" asp-route-id="@row["UserId"]" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" title="Delete" class="border-0 bg-transparent p-0"><i class="bi bi-trash text-danger"></i></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                    srNo++;
+                }
+            }
+            else
+            {
+                <tr><td colspan="@(displayColumns.Count + 2)" class="text-center text-muted py-4">No users found</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- FOOTER FIX RAHEGA - SCROLL NAHI HOGA -->
+<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+    <div class="d-flex align-items-center gap-2">
+        <select id="userPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
+            <option value="10" selected="@(Model.PageSize == 10)">10</option>
+            <option value="20" selected="@(Model.PageSize == 20)">20</option>
+            <option value="50" selected="@(Model.PageSize == 50)">50</option>
+            <option value="100" selected="@(Model.PageSize == 100)">100</option>
+        </select>
+        <span style="font-size:12px; color:#64748b;">records per page</span>
+    </div>
+    <div style="font-size:12px; color:#64748b;">Showing @start to @end of @Model.TotalRecords entries</div>
+    <div class="d-flex gap-1">
+        @if (Model.CurrentPage > 1) { <a class="btn btn-sm btn-light border ajax-table-link" href="/User?page=@(Model.CurrentPage - 1)&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm?? "")&sort=@Uri.EscapeDataString(Model.SortColumn?? "")&direction=@Model.SortDirection">Previous</a> }
+        else { <button class="btn btn-sm btn-light border" disabled>Previous</button> }
+        @for (int p = 1; p <= Model.TotalPages; p++) {
+            if (p == Model.CurrentPage) { <span class="btn btn-sm" style="background:#0f172a; color:#fff;">@p</span> }
+            else { <a class="btn btn-sm btn-light border ajax-table-link" href="/User?page=@p&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm?? "")&sort=@Uri.EscapeDataString(Model.SortColumn?? "")&direction=@Model.SortDirection">@p</a> }
+        }
+        @if (Model.CurrentPage < Model.TotalPages) { <a class="btn btn-sm btn-light border ajax-table-link" href="/User?page=@(Model.CurrentPage + 1)&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm?? "")&sort=@Uri.EscapeDataString(Model.SortColumn?? "")&direction=@Model.SortDirection">Next</a> }
+        else { <button class="btn btn-sm btn-light border" disabled>Next</button> }
+    </div>
+</div>

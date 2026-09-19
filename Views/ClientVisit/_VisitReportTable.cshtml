@@ -1,0 +1,92 @@
+@model ClientVisitManagement.Models.DynamicTableViewModel
+@{
+    var displayCols = Model.Columns.Where(c => c!= "UserId").ToList();
+    int startSr = (Model.CurrentPage - 1) * Model.PageSize + 1;
+}
+<style>
+   .report-table-responsive{ max-height: 65vh; overflow:auto; }
+   .report-table-responsive thead th{
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8f9fa!important;
+        box-shadow: 0 1px 0 #e9ecef;
+    }
+</style>
+
+<div class="table-responsive report-table-responsive">
+<table class="table table-hover align-middle mb-0" style="font-size:13px;">
+<thead style="font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase;">
+<tr>
+    <th style="width:50px;">Sr.No</th>
+    @foreach(var col in displayCols)
+    {
+        var isSorted = Model.SortColumn == col;
+        var arrow = isSorted? (Model.SortDirection=="ASC"?"▲":"▼") : "↕";
+        <th style="white-space:nowrap;">
+            <a href="javascript:void(0)" class="sort-link text-decoration-none d-flex align-items-center gap-1" style="color:#6c757d;" data-sort="@col">
+                @col <span style="@(isSorted?"color:#111;font-weight:900;":"color:#bbb;")">@arrow</span>
+            </a>
+        </th>
+    }
+    <th style="width:70px; text-align:center;">ACTION</th>
+</tr>
+</thead>
+<tbody>
+@if(!Model.Rows.Any())
+{
+    <tr><td colspan="@(displayCols.Count+2)" class="text-center text-muted py-5">No records found</td></tr>
+}
+else
+{
+    int sr = startSr;
+    foreach(var row in Model.Rows)
+    {
+        var visitId = row.ContainsKey("VisitId")? row["VisitId"]?.ToString() : "0";
+    <tr>
+        <td><span class="badge bg-dark" style="border-radius:6px;">@sr</span></td>
+        @foreach(var col in displayCols)
+        {
+            var val = row.ContainsKey(col)? row[col] : null;
+            string str = val==null? "-" : val.ToString()!;
+            if(DateTime.TryParse(str, out var d)) str = d.ToString("dd-MM-yyyy hh:mm");
+            <td title="@val" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@str</td>
+        }
+        <td style="text-align:center;">
+            <button type="button" class="btn btn-sm btn-outline-primary" style="width:28px; height:28px; padding:0; border-radius:6px;" onclick="viewReportDetails('@visitId')" title="View">
+                <i class="bi bi-eye"></i>
+            </button>
+        </td>
+    </tr>
+    sr++;
+    }
+}
+</tbody>
+</table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white">
+    <div class="d-flex align-items-center gap-2">
+        <span style="font-size:12px; color:#6c757d;">Show</span>
+        <select id="reportPageSize" class="form-select form-select-sm" style="width:75px; height:32px; border-radius:8px; background:#f8f9fa;">
+            <option value="10" selected="@(Model.PageSize==10)">10</option>
+            <option value="20" selected="@(Model.PageSize==20)">20</option>
+            <option value="50" selected="@(Model.PageSize==50)">50</option>
+            <option value="100" selected="@(Model.PageSize==100)">100</option>
+        </select>
+        <span style="font-size:12px; color:#6c757d;">Total: @Model.TotalRecords</span>
+    </div>
+    <div class="d-flex align-items-center gap-1">
+        @{
+            var prevPage = Model.CurrentPage - 1;
+            var nextPage = Model.CurrentPage + 1;
+        }
+        <a href="/ClientVisit/ClientVisitReport?page=@prevPage&term=@Model.SearchTerm&sort=@Model.SortColumn&direction=@Model.SortDirection&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate" class="btn btn-sm @(prevPage>=1? "btn-light border ajax-report-link" : "btn-light border disabled")" style="border-radius:8px;">Previous</a>
+        @for(int i=Math.Max(1, Model.CurrentPage-2); i<=Math.Min(Model.TotalPages, Model.CurrentPage+2); i++)
+        {
+            var url = $"/ClientVisit/ClientVisitReport?page={i}&term={Model.SearchTerm}&sort={Model.SortColumn}&direction={Model.SortDirection}&fromDate={ViewBag.FromDate}&toDate={ViewBag.ToDate}";
+            <a href="@url" class="btn btn-sm ajax-report-link @(i==Model.CurrentPage? "btn-dark" : "btn-light border")" style="border-radius:8px; min-width:32px;">@i</a>
+        }
+        <a href="/ClientVisit/ClientVisitReport?page=@nextPage&term=@Model.SearchTerm&sort=@Model.SortColumn&direction=@Model.SortDirection&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate" class="btn btn-sm @(nextPage<=Model.TotalPages? "btn-light border ajax-report-link" : "btn-light border disabled")" style="border-radius:8px;">Next</a>
+    </div>
+</div>

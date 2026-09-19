@@ -1,0 +1,63 @@
+@model Dictionary<string, object>
+@{
+    var visitId = Model.ContainsKey("VisitId") ? Model["VisitId"]?.ToString() : "0";
+}
+
+<div class="modal-header" style="background:#f8f9fa; border-bottom:1px solid #eef0f2;">
+    <h5 class="modal-title fw-bold" style="font-size:16px;">
+        <i class="bi bi-eye-fill me-2 text-primary"></i> Visit Details - #@visitId
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body" style="max-height:70vh; overflow-y:auto; background:#fff;">
+    <div class="row g-3">
+        @foreach (var kv in Model)
+        {
+            // UserId hide kar diya
+            if (kv.Key == "UserId") { continue; }
+
+            var raw = kv.Value?.ToString() ?? "-";
+            var displayVal = raw;
+
+            // Date format
+            if (DateTime.TryParse(raw, out var d))
+            {
+                displayVal = d.ToString("dd-MM-yyyy hh:mm tt");
+            }
+
+            var isStatus = kv.Key.ToLower().Contains("status");
+            var isLongText = kv.Key == "DiscussionRequirement" || kv.Key == "Remarks";
+
+            <div class="@(isLongText ? "col-12" : "col-md-6")">
+                <label style="font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase; margin-bottom:5px; display:block;">
+                    @kv.Key
+                </label>
+
+                @if (isStatus)
+                {
+                    var bg = displayVal == "Pending" ? "#ffc107" : displayVal == "Done" ? "#198754" : "#6f42c1";
+                    var txt = displayVal == "Pending" ? "#000" : "#fff";
+                    <div>
+                        <span class="badge" style="background:@bg; color:@txt; border-radius:20px; padding:6px 12px; font-size:11px;">@displayVal</span>
+                    </div>
+                }
+                else
+                {
+                    <div style="font-size:13px; font-weight:500; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; padding:9px 11px; word-break:break-word; min-height:38px;">
+                        @displayVal
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal-footer" style="background:#f8f9fa; border-top:1px solid #eef0f2;">
+    <a href="/ClientVisit/Edit/@visitId" class="btn btn-dark btn-sm" style="border-radius:8px; padding:6px 16px;">
+        <i class="bi bi-pencil me-1"></i> Edit
+    </a>
+    <button type="button" class="btn btn-light border btn-sm" data-bs-dismiss="modal" style="border-radius:8px; padding:6px 16px;">
+        Close
+    </button>
+</div>

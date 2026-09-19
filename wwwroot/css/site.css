@@ -1,0 +1,1163 @@
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    height: 100vh;
+    background: #16336b;
+    color: #fff;
+    padding-top: 0;
+    transition: width .25s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+/* ================= SIDEBAR HEADER ================= */
+
+.sidebar-header {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(255,255,255,.15);
+}
+
+.sidebar-toggle {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 19px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255,255,255,.10);
+}
+
+.sidebar-title {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+
+/* ================= SECTION TITLES ================= */
+
+.sidebar-section-title {
+    padding: 12px 14px 5px;
+    color: #aebbd0;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+
+/* ================= NAV LINKS ================= */
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 36px;
+    padding: 7px 16px;
+    color: #d5deed;
+    text-decoration: none;
+    font-size: 12px;
+    border-left: 3px solid transparent;
+    white-space: nowrap;
+    transition: all .15s ease;
+}
+
+.sidebar .nav-link i {
+    width: 16px;
+    min-width: 16px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background: #1f4a94;
+    color: #fff;
+    border-left-color: #fff;
+}
+
+
+/* =========================================================
+   COLLAPSED SIDEBAR
+   ========================================================= */
+
+body.sidebar-collapsed .sidebar {
+    width: 70px;
+}
+
+body.sidebar-collapsed .main-content {
+    margin-left: 70px;
+}
+
+body.sidebar-collapsed .topbar {
+    left: 70px;
+}
+
+body.sidebar-collapsed .sidebar-header {
+    justify-content: center;
+    padding: 0;
+}
+
+body.sidebar-collapsed .sidebar-title {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar-section-title {
+    display: none;
+}
+
+
+/* ONLY ICONS */
+body.sidebar-collapsed .sidebar .nav-link {
+    justify-content: center;
+    height: 40px;
+    padding: 8px 0;
+    border-left: 0;
+}
+
+body.sidebar-collapsed .sidebar .nav-link > span {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar .nav-link i {
+    width: auto;
+    min-width: 0;
+    font-size: 15px;
+}
+
+
+/* HEADER ICON */
+body.sidebar-collapsed .sidebar-toggle {
+    margin: 0 auto;
+}
+
+
+/* HOVER */
+body.sidebar-collapsed .sidebar .nav-link:hover {
+    border-left: 0;
+}
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 220px;
+    right: 0;
+    height: 55px;
+    background: #16336b;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 25px;
+    gap: 8px;
+    font-size: 14px;
+    z-index: 10;
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+.logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 7px;
+    background: transparent;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all .2s ease;
+}
+
+.logout-btn:hover {
+    background: #fff;
+    color: #111827;
+    border-color: #fff;
+    text-decoration: none;
+}
+
+.logout-btn:hover i {
+    color: #111827;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+.main-content {
+    margin-left: 220px;
+    margin-top: 55px;
+    padding: 25px;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.card-section {
+    background: #fff;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    margin-bottom: 20px;
+}
+
+.card-section h6 {
+    color: #16336b;
+    font-weight: 700;
+    border-bottom: 1px solid #e5e9f0;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.form-control,
+.form-select {
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn-primary {
+    background: #16336b;
+    border-color: #16336b;
+}
+
+.btn-primary:hover {
+    background: #1f4a94;
+    border-color: #1f4a94;
+}
+
+.btn-success {
+    background: #1b8a4a;
+    border-color: #1b8a4a;
+}
+
+
+/* =========================================================
+   TABLE BASIC
+   ========================================================= */
+
+table.table th {
+    background: #f0f3f8;
+    font-size: 13px;
+    color: #16336b;
+}
+
+table.table td {
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.action-icons a {
+    margin-right: 8px;
+    font-size: 15px;
+}
+
+
+/* =========================================================
+   MASTER DROPDOWN
+   ========================================================= */
+
+.master-dropdown {
+    width: 100%;
+}
+
+.master-dropdown summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.master-dropdown summary::-webkit-details-marker {
+    display: none;
+}
+
+.master-dropdown .submenu {
+    padding-left: 15px;
+}
+
+.master-dropdown .submenu .nav-link {
+    font-size: 14px;
+    padding-left: 30px;
+}
+
+.master-dropdown .submenu .nav-link:hover {
+    background-color: rgba(255,255,255,.08);
+}
+
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.kpi-card {
+    background: #fff;
+    border: 1px solid #e6e9ef;
+    border-radius: 10px;
+    height: 72px;
+    padding: 9px 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    display: flex;
+    align-items: center;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+
+.kpi-content {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 40px auto 1fr auto;
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+    column-gap: 10px;
+}
+
+.kpi-icon {
+    grid-row: 1 / 3;
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    color: #fff;
+}
+
+.kpi-title {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 12px;
+    font-weight: 500;
+    color: #596273;
+    white-space: nowrap;
+}
+
+.kpi-value {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1f2937;
+}
+
+.kpi-period {
+    grid-column: 3 / 5;
+    grid-row: 1;
+    justify-self: start;
+    font-size: 10px;
+    font-weight: 600;
+    color: #159447;
+    white-space: nowrap;
+}
+
+.kpi-orange {
+    border-top: 3px solid #f5a623;
+}
+
+.kpi-orange .kpi-icon {
+    background: #f5a623;
+}
+
+.kpi-blue {
+    border-top: 3px solid #3478f6;
+}
+
+.kpi-blue .kpi-icon {
+    background: #3478f6;
+}
+
+.kpi-green {
+    border-top: 3px solid #20b873;
+}
+
+.kpi-green .kpi-icon {
+    background: #20b873;
+}
+
+.kpi-purple {
+    border-top: 3px solid #8a4ff3;
+}
+
+.kpi-purple .kpi-icon {
+    background: #8a4ff3;
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.client-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.client-toolbar form {
+    margin: 0;
+}
+
+.client-search-box {
+    width: 280px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 9px;
+    background: #fff;
+    border: 1px solid #dfe4eb;
+    border-radius: 6px;
+}
+
+.client-search-box i {
+    color: #7d8793;
+    font-size: 12px;
+}
+
+.client-search-box input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    font-size: 12px;
+    background: transparent;
+}
+
+.client-search-box input::placeholder {
+    color: #9aa2ad;
+}
+
+
+/* =========================================================
+   EXPORT BUTTONS
+   ========================================================= */
+
+.export-buttons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.export-buttons .btn {
+    width: auto;
+    height: 34px;
+    padding: 5px 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 0;
+    border-radius: 6px;
+    color: #fff !important;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.export-excel {
+    background: #1b8a4a;
+}
+
+.export-excel:hover {
+    background: #15743e;
+}
+
+.export-csv {
+    background: #1688c9;
+}
+
+.export-csv:hover {
+    background: #0f73aa;
+}
+
+.export-print {
+    background: #5248d8;
+}
+
+.export-print:hover {
+    background: #4339bd;
+}
+
+
+/* =========================================================
+   ADD USER / CLIENT
+   ========================================================= */
+
+.add-client-btn {
+    margin-left: auto;
+    height: 34px;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   TABLE SCROLL
+   ========================================================= */
+
+.table-scroll {
+    max-height: 430px;
+    overflow: auto;
+    border: 1px solid #e3e7ed;
+    border-radius: 8px;
+}
+
+.table-scroll table {
+    min-width: max-content;
+    margin-bottom: 0;
+}
+
+.table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #eef2f7;
+    color: #16336b;
+    white-space: nowrap;
+    box-shadow: 0 1px 0 #d8dde6;
+    font-size: 12px;
+    padding: 8px;
+}
+
+.table-scroll th,
+.table-scroll td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.table-scroll tbody td {
+    font-size: 12px;
+    padding: 8px;
+}
+
+.serial-column {
+    width: 60px;
+    min-width: 60px;
+}
+
+.actions-column {
+    width: 80px;
+    min-width: 80px;
+}
+
+
+/* =========================================================
+   SORT
+   ========================================================= */
+
+.table-sort-link {
+    color: #16336b;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.table-sort-link:hover {
+    color: #1f4a94;
+}
+
+.sort-neutral {
+    font-size: 10px;
+    opacity: .45;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.table-scroll .badge {
+    font-size: 10px;
+    padding: 4px 7px;
+    border-radius: 5px;
+}
+
+
+/* =========================================================
+   USER TABLE FOOTER
+   ========================================================= */
+
+.table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding-top: 10px;
+    font-size: 12px;
+}
+
+.records-per-page {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #596273;
+    white-space: nowrap;
+}
+
+.records-per-page select {
+    width: 50px;
+    height: 30px;
+    padding: 3px 6px;
+    border: 1px solid #dfe4eb;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #fff;
+}
+
+.showing-records {
+    color: #7d8793;
+    white-space: nowrap;
+}
+
+.pagination-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pagination-area .btn {
+    height: 30px;
+    padding: 4px 9px;
+    font-size: 11px;
+}
+
+.pagination-area .btn-primary {
+    background: #16336b;
+    border-color: #16336b;
+}
+
+
+/* =========================================================
+   COLLAPSED SIDEBAR
+   ========================================================= */
+
+body.sidebar-collapsed .sidebar {
+    width: 70px;
+}
+
+body.sidebar-collapsed .main-content {
+    margin-left: 70px;
+}
+
+body.sidebar-collapsed .topbar {
+    left: 70px;
+}
+
+body.sidebar-collapsed .sidebar-header {
+    justify-content: center;
+    padding: 0;
+}
+
+body.sidebar-collapsed .sidebar-title {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar .nav-link > span,
+body.sidebar-collapsed .master-dropdown summary span > span,
+body.sidebar-collapsed .master-arrow {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar .nav-link {
+    text-align: center;
+    padding: 12px 0;
+}
+
+body.sidebar-collapsed .master-dropdown .submenu {
+    display: none;
+}
+
+body.sidebar-collapsed .master-dropdown summary {
+    justify-content: center;
+}
+
+
+/* =========================================================
+   PRINT - ONLY USER TABLE
+   ========================================================= */
+
+@media print {
+
+    body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Hide everything except table card */
+    .sidebar,
+    .topbar,
+    .kpi-card,
+    .card-section > .client-toolbar,
+    .table-footer,
+    .action-icons,
+    .pagination-area,
+    .records-per-page,
+    .showing-records,
+    h4 {
+        display: none !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card-section {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+    }
+
+    #userTable {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .table-scroll {
+        display: block !important;
+        width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+        border: none !important;
+    }
+
+    .table-scroll table {
+        width: 100% !important;
+        min-width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: auto !important;
+    }
+
+    .table-scroll thead th {
+        position: static !important;
+        background: #eef2f7 !important;
+        color: #16336b !important;
+        border: 1px solid #cfd6df !important;
+    }
+
+    .table-scroll th,
+    .table-scroll td {
+        padding: 6px !important;
+        font-size: 11px !important;
+        border: 1px solid #cfd6df !important;
+        white-space: nowrap !important;
+    }
+
+    .table-sort-link {
+        color: #16336b !important;
+        text-decoration: none !important;
+    }
+
+    /* Hide sort arrows */
+    .table-sort-link i {
+        display: none !important;
+    }
+
+    @page {
+        size: landscape;
+        margin: 10mm;
+    }
+}
+
+
+/* =========================================================
+   USER MASTER EXPORT BUTTONS - FINAL
+   ========================================================= */
+
+.export-buttons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.export-buttons a.export-btn {
+    width: auto !important;
+    min-width: 54px !important;
+    height: 34px !important;
+    padding: 5px 12px !important;
+    margin: 0 !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+
+    border: none !important;
+    border-radius: 6px !important;
+
+    color: #fff !important;
+    text-decoration: none !important;
+
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+
+    box-sizing: border-box !important;
+}
+
+.export-buttons a.export-btn i {
+    font-size: 13px !important;
+    color: #fff !important;
+}
+
+
+/* EXCEL */
+.export-buttons a.export-excel {
+    background: #1b8a4a !important;
+}
+
+.export-buttons a.export-excel:hover {
+    background: #15743e !important;
+    color: #fff !important;
+}
+
+
+/* CSV */
+.export-buttons a.export-csv {
+    background: #1688c9 !important;
+}
+
+.export-buttons a.export-csv:hover {
+    background: #0f73aa !important;
+    color: #fff !important;
+}
+
+
+/* PRINT */
+.export-buttons a.export-print {
+    background: #5248d8 !important;
+}
+
+.export-buttons a.export-print:hover {
+    background: #4339bd !important;
+    color: #fff !important;
+}
+
+
+
+/* ================= CLIENT VISIT TABLE ================= */
+
+#visitTable .table-scroll {
+    max-height: 430px;
+    overflow: auto;
+    border: 1px solid #e3e7ed;
+    border-radius: 8px;
+}
+
+#visitTable .table-scroll table {
+    min-width: 1050px;
+    margin-bottom: 0;
+}
+
+#visitTable .table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #eef2f7;
+    color: #16336b;
+    white-space: nowrap;
+    box-shadow: 0 1px 0 #d8dde6;
+}
+
+#visitTable .table-scroll th,
+#visitTable .table-scroll td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+#visitTable .table-sort-link {
+    color: #16336b;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#visitTable .table-sort-link:hover {
+    color: #1f4a94;
+}
+
+#visitTable .sort-neutral {
+    font-size: 10px;
+    opacity: .45;
+}
+
+
+/* ================= CLIENT VISIT FILTER ================= */
+
+.visit-clear-btn {
+    width: 100%;
+    height: 38px;
+    padding: 7px 14px;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    background: #fff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .2s ease;
+}
+
+.visit-clear-btn:hover {
+    background: #f1f5f9;
+    border-color: #b8c1cf;
+    color: #16336b;
+}
+
+
+/* ================= EXPORT DROPDOWN ================= */
+
+.export-dropdown {
+    width: 100%;
+}
+
+.export-main-btn {
+    width: 100%;
+    height: 38px;
+    padding: 7px 14px;
+    border: 0 !important;
+    border-radius: 6px;
+    background: #1b8a4a !important;
+    color: #fff !important;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.export-main-btn:hover,
+.export-main-btn:focus {
+    background: #15743e !important;
+    color: #fff !important;
+}
+
+.export-dropdown .dropdown-menu {
+    min-width: 150px;
+    padding: 5px;
+    border: 1px solid #e1e5eb;
+    border-radius: 7px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.10);
+}
+
+.export-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.export-dropdown .dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+/* =========================================================
+   CLIENT VISIT PAGE LAYOUT
+   ========================================================= */
+
+.visit-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.visit-page-header h4 {
+    margin: 0;
+}
+
+.visit-subtitle {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.add-visit-btn {
+    height: 40px;
+    padding: 8px 14px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+
+/* ================= FILTER CARD ================= */
+
+.visit-filter-card {
+    margin-bottom: 15px;
+    padding: 14px 18px;
+}
+
+.visit-filter-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) 190px 190px 110px 120px;
+    gap: 10px;
+    align-items: end;
+}
+
+.visit-filter label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.visit-search-box {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 10px;
+    border: 1px solid #dfe4eb;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.visit-search-box i {
+    color: #7d8793;
+    font-size: 13px;
+}
+
+.visit-search-box input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    font-size: 12px;
+}
+
+.visit-clear-btn {
+    width: 100%;
+    height: 38px;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    background: #fff;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.visit-clear-btn:hover {
+    background: #f1f5f9;
+}
+
+
+/* ================= EXPORT ================= */
+
+.export-dropdown {
+    width: 100%;
+}
+
+.export-main-btn {
+    width: 100%;
+    height: 38px;
+    border: 0 !important;
+    border-radius: 6px;
+    background: #1b8a4a !important;
+    color: #fff !important;
+    font-size: 12px;
+}
+
+.export-dropdown .dropdown-menu {
+    min-width: 150px;
+}
+
+.export-dropdown .dropdown-item {
+    font-size: 12px;
+    padding: 8px 10px;
+}
+
+
+/* ================= TABLE CARD ================= */
+
+.visit-table-card {
+    padding: 14px;
+}

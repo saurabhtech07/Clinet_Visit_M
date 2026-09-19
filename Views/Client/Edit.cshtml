@@ -1,0 +1,92 @@
+@using Microsoft.AspNetCore.Html
+@model List<DynamicField>
+@{
+    var row = (Dictionary<string, object?>)ViewBag.RowData;
+    var states = ((DynamicTableViewModel)ViewBag.States).Rows;
+    var companyTypes = ((DynamicTableViewModel)ViewBag.CompanyTypes).Rows;
+
+    var companyFields = new[] { "ClientName", "Address1", "Address2", "City", "StateId", "Pincode" };
+    var contactFields = new[] { "LandlineNo", "MobileNo", "Email" };
+    var businessFields = new[] { "CompanyTypeId" };
+
+    IHtmlContent RenderField(DynamicField f)
+    {
+        var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name;
+        var label = $"<label class=\"form-label mt-2 mb-1 small fw-bold\">{displayName}{(f.IsNullable ? "" : " *")}</label>";
+        string input;
+
+        if (f.Name == "StateId")
+        {
+            var currentStateId = row.ContainsKey("StateId") ? row["StateId"]?.ToString() : "";
+            var opts = string.Join("", states.Select(s => {
+                var id = s["StateId"]?.ToString(); var name = s["StateName"]?.ToString();
+                var selected = id == currentStateId ? " selected" : "";
+                return $"<option value=\"{id}\"{selected}>{name}</option>";
+            }));
+            input = $@"<select class=""form-select form-select-sm"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
+        }
+        else if (f.Name == "CompanyTypeId")
+        {
+            var currentCompId = row.ContainsKey("CompanyTypeId") ? row["CompanyTypeId"]?.ToString() : "";
+            var opts = string.Join("", companyTypes.Select(s => {
+                var id = s["Id"]?.ToString(); var name = s["Name"]?.ToString();
+                var selected = id == currentCompId ? " selected" : "";
+                return $"<option value=\"{id}\"{selected}>{name}</option>";
+            }));
+            input = $@"<select class=""form-select form-select-sm"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
+        }
+        else
+        {
+            var type = f.DataType.Contains("int") ? "number" : f.DataType.Contains("date") ? "date" : "text";
+            var req = f.IsNullable ? "" : "required";
+            var val = row.ContainsKey(f.Name) ? row[f.Name]?.ToString() : "";
+            input = $@"<input class=""form-control form-control-sm"" name=""{f.Name}"" type=""{type}"" value=""{val}"" {req} />";
+        }
+        return new HtmlString(label + input);
+    }
+}
+
+<h4 class="mb-3">Edit Client</h4>
+
+<form method="post">
+    <input type="hidden" name="ClientId" value="@ViewBag.ClientId" />
+
+    <div class="row g-4 align-items-stretch">
+
+        <!-- COMPANY -->
+        <div class="col-md-6 d-flex">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6 class="fw-bold">Company Information</h6>
+                @foreach (var f in Model.Where(f => companyFields.Contains(f.Name)))
+                {
+                    @RenderField(f)
+                }
+            </div>
+        </div>
+
+        <!-- CONTACT + BUSINESS -->
+        <div class="col-md-6 d-flex flex-column gap-4">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6 class="fw-bold">Contact Information</h6>
+                @foreach (var f in Model.Where(f => contactFields.Contains(f.Name)))
+                {
+                    @RenderField(f)
+                }
+            </div>
+
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6 class="fw-bold">Business Information</h6>
+                @foreach (var f in Model.Where(f => businessFields.Contains(f.Name)))
+                {
+                    @RenderField(f)
+                }
+
+                <!-- BUTTONS AB YAHAN -->
+                <div class="text-end mt-4 pt-3 border-top">
+                    <a href="/Client" class="btn btn-light border btn-sm px-3">Back</a>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

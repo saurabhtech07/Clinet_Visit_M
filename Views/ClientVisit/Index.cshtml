@@ -1,0 +1,779 @@
+@* @model VisitListViewModel
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="visit-page-header">
+
+    <div>
+        <h4 class="mb-1">Client Visit List</h4>
+
+        <div class="visit-subtitle">
+            Track and manage all client visits, follow-ups and field performance
+        </div>
+    </div>
+
+    <a href="/ClientVisit/SelectClient"
+       class="btn btn-primary add-visit-btn">
+
+        <i class="bi bi-plus-lg"></i>
+        Add Visit for Existing Client
+
+    </a>
+
+</div>
+
+
+<!-- =========================================================
+     KPI CARDS
+     ========================================================= -->
+
+<div class="row g-3 mb-3">
+
+    <!-- TOTAL CLIENTS VISITED -->
+    <div class="col-md-3">
+        <div class="kpi-card kpi-orange">
+
+            <div class="kpi-content">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-buildings"></i>
+                </div>
+
+                <span class="kpi-title">
+                    Total Clients Visited
+                </span>
+
+                <span class="kpi-value">
+                    @(ViewBag.TotalClientsVisited ?? 0)
+                </span>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- VISITS THIS MONTH -->
+    <div class="col-md-3">
+        <div class="kpi-card kpi-blue">
+
+            <div class="kpi-content">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+
+                <span class="kpi-title">
+                    Visits This Month
+                </span>
+
+                <span class="kpi-value">
+                    @(ViewBag.VisitsThisMonth ?? 0)
+                </span>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- TODAY'S VISITS -->
+    <div class="col-md-3">
+        <div class="kpi-card kpi-green">
+
+            <div class="kpi-content">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+
+                <span class="kpi-title">
+                    Today's Visits
+                </span>
+
+                <span class="kpi-value">
+                    @(ViewBag.TodaysVisits ?? 0)
+                </span>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- PENDING FOLLOW UPS -->
+    <div class="col-md-3">
+        <div class="kpi-card kpi-purple">
+
+            <div class="kpi-content">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+
+                <span class="kpi-title">
+                    Pending Follow-ups
+                </span>
+
+                <span class="kpi-value">
+                    @(ViewBag.PendingFollowUps ?? 0)
+                </span>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FILTER / SEARCH SECTION
+     ========================================================= -->
+
+<div class="card-section visit-filter-card">
+
+    <div class="visit-filter-row">
+
+        <!-- SEARCH -->
+        <div class="visit-filter search-filter">
+
+            <label>Search</label>
+
+            <div class="visit-search-box">
+
+                <i class="bi bi-search"></i>
+
+                <input id="visitSearch"
+                       type="text"
+                       value="@Model.SearchTerm"
+                       placeholder="Client, mobile, user, city..."
+                       autocomplete="off" />
+
+            </div>
+
+        </div>
+
+
+        <!-- FROM DATE -->
+        <div class="visit-filter date-filter">
+
+            <label>From Date</label>
+
+            <input id="fromDate"
+                   class="form-control"
+                   type="date"
+                   value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+
+        </div>
+
+
+        <!-- TO DATE -->
+        <div class="visit-filter date-filter">
+
+            <label>To Date</label>
+
+            <input id="toDate"
+                   class="form-control"
+                   type="date"
+                   value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+
+        </div>
+
+
+        <!-- CLEAR -->
+        <div class="visit-filter action-filter">
+
+            <label>&nbsp;</label>
+
+            <button type="button"
+                    id="clearVisitFilter"
+                    class="visit-clear-btn">
+
+                <i class="bi bi-x-lg"></i>
+                Clear
+
+            </button>
+
+        </div>
+
+
+        <!-- EXPORT -->
+        <div class="visit-filter action-filter">
+
+            <label>&nbsp;</label>
+
+            <div class="dropdown export-dropdown">
+
+                <button class="btn export-main-btn dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown">
+
+                    <i class="bi bi-download"></i>
+                    Export
+
+                </button>
+
+                <ul class="dropdown-menu">
+
+                    <li>
+                        <a id="visitExportExcel"
+                           class="dropdown-item"
+                           href="/ClientVisit/ExportToExcel">
+
+                            <i class="bi bi-file-earmark-excel text-success"></i>
+                            Excel
+
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="javascript:void(0);"
+                           onclick="exportVisitCsv();">
+
+                            <i class="bi bi-filetype-csv text-info"></i>
+                            CSV
+
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="javascript:void(0);"
+                           onclick="printVisitTable();">
+
+                            <i class="bi bi-printer text-primary"></i>
+                            Print
+
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TABLE SECTION
+     ========================================================= -->
+
+<div class="card-section visit-table-card">
+
+    <div id="visitTable">
+
+        @await Html.PartialAsync("_VisitTable", Model)
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     DETAILS MODAL
+     ========================================================= -->
+
+<div class="modal fade"
+     id="detailsModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content"
+             id="detailsModalContent">
+
+            <div class="modal-body text-center py-5">
+                Loading...
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- DELETE -->
+<form id="deleteForm"
+      method="post"
+      style="display:none">
+
+    @Html.AntiForgeryToken()
+
+</form>
+
+
+@section Scripts {
+
+<script>
+
+    let searchTimer;
+
+    const searchInput =
+        document.getElementById("visitSearch");
+
+    const fromDate =
+        document.getElementById("fromDate");
+
+    const toDate =
+        document.getElementById("toDate");
+
+    const visitTable =
+        document.getElementById("visitTable");
+
+    const exportExcel =
+        document.getElementById("visitExportExcel");
+
+
+    // =========================================================
+    // BUILD URL
+    // =========================================================
+
+    function buildUrl(page = 1) {
+
+        const p = new URLSearchParams();
+
+        const term =
+            searchInput.value.trim();
+
+        if (term)
+            p.append("term", term);
+
+        if (fromDate.value)
+            p.append("fromDate", fromDate.value);
+
+        if (toDate.value)
+            p.append("toDate", toDate.value);
+
+        p.append("page", page);
+
+        p.append(
+            "pageSize",
+            document.getElementById("visitPageSize")?.value || 10
+        );
+
+        return "/ClientVisit?" + p.toString();
+    }
+
+
+    // =========================================================
+    // EXPORT URL
+    // =========================================================
+
+    function updateExportUrl() {
+
+        const p =
+            new URLSearchParams();
+
+        const term =
+            searchInput.value.trim();
+
+        if (term)
+            p.append("term", term);
+
+        if (fromDate.value)
+            p.append(
+                "fromDate",
+                fromDate.value
+            );
+
+        if (toDate.value)
+            p.append(
+                "toDate",
+                toDate.value
+            );
+
+        exportExcel.href =
+            "/ClientVisit/ExportToExcel?" +
+            p.toString();
+    }
+
+
+    // =========================================================
+    // AJAX TABLE
+    // =========================================================
+
+    function loadVisitTable(url) {
+
+        fetch(url, {
+            headers: {
+                "X-Requested-With":
+                    "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+
+            if (!response.ok)
+                throw new Error(
+                    "Failed to load visits."
+                );
+
+            return response.text();
+
+        })
+        .then(html => {
+
+            visitTable.innerHTML = html;
+
+            updateExportUrl();
+
+        })
+        .catch(error => {
+
+            console.error(
+                "Visit table error:",
+                error
+            );
+
+        });
+    }
+
+
+    // =========================================================
+    // LIVE SEARCH
+    // =========================================================
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            clearTimeout(searchTimer);
+
+            searchTimer =
+                setTimeout(() => {
+
+                    loadVisitTable(
+                        buildUrl(1)
+                    );
+
+                }, 300);
+        }
+    );
+
+
+    // =========================================================
+    // DATE FILTER
+    // =========================================================
+
+    fromDate.addEventListener(
+        "change",
+        () => loadVisitTable(buildUrl(1))
+    );
+
+    toDate.addEventListener(
+        "change",
+        () => loadVisitTable(buildUrl(1))
+    );
+
+
+    // =========================================================
+    // PAGE SIZE
+    // =========================================================
+
+    document.addEventListener(
+        "change",
+        function (event) {
+
+            if (
+                event.target.id !==
+                "visitPageSize"
+            )
+                return;
+
+            loadVisitTable(
+                buildUrl(1)
+            );
+
+        }
+    );
+
+
+    // =========================================================
+    // CLEAR
+    // =========================================================
+
+    document.getElementById(
+        "clearVisitFilter"
+    ).addEventListener(
+        "click",
+        function () {
+
+            searchInput.value = "";
+            fromDate.value = "";
+            toDate.value = "";
+
+            const size =
+                document.getElementById(
+                    "visitPageSize"
+                );
+
+            if (size)
+                size.value = "10";
+
+            loadVisitTable(
+                buildUrl(1)
+            );
+
+            updateExportUrl();
+
+        }
+    );
+
+
+    // =========================================================
+    // SORT + PAGINATION
+    // =========================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    ".ajax-visit-link"
+                );
+
+            if (!link)
+                return;
+
+            event.preventDefault();
+
+            loadVisitTable(
+                link.href
+            );
+
+        }
+    );
+
+
+    // =========================================================
+    // DETAILS
+    // =========================================================
+
+    function viewDetails(id) {
+
+        $.get(
+            "/ClientVisit/Details/" + id,
+            function (html) {
+
+                $("#detailsModalContent")
+                    .html(html);
+
+                new bootstrap.Modal(
+                    document.getElementById(
+                        "detailsModal"
+                    )
+                ).show();
+
+            }
+        );
+    }
+
+
+    // =========================================================
+    // DELETE
+    // =========================================================
+
+    function deleteVisit(id) {
+
+        if (!confirm(
+            "Are you sure you want to delete this visit?"
+        ))
+            return;
+
+        $("#deleteForm")
+            .attr(
+                "action",
+                "/ClientVisit/Delete/" + id
+            )
+            .submit();
+    }
+
+
+    // =========================================================
+    // EXPORT CSV
+    // =========================================================
+
+    function exportVisitCsv() {
+
+        const p =
+            new URLSearchParams();
+
+        const term =
+            searchInput.value.trim();
+
+        if (term)
+            p.append("term", term);
+
+        if (fromDate.value)
+            p.append(
+                "fromDate",
+                fromDate.value
+            );
+
+        if (toDate.value)
+            p.append(
+                "toDate",
+                toDate.value
+            );
+
+        window.location.href =
+            "/ClientVisit/ExportToCsv?" +
+            p.toString();
+    }
+
+
+    // =========================================================
+    // PRINT
+    // =========================================================
+
+    function printVisitTable() {
+        window.print();
+    }
+
+
+    updateExportUrl();
+
+</script>
+
+} *@
+
+
+@model ClientVisitManagement.Models.DynamicTableViewModel
+@{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+    ViewData["Title"] = "Client Visit List";
+}
+<style>
+   .visit-page-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;}
+   .visit-page-header h4{font-weight:800; font-size:22px; margin:0;}
+   .visit-subtitle{font-size:13px; color:#6c757d; margin-top:2px;}
+   .add-visit-btn{border-radius:8px; height:38px; font-weight:600; font-size:13px; display:flex; align-items:center;}
+   .kpi-card-daily{ background:#fff; border:1px solid #eef0f2; border-radius:12px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; height:92px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+   .kpi-title-daily{font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase;}
+   .kpi-value-daily{font-size:26px; font-weight:800; line-height:1.1; margin-top:4px;}
+   .kpi-sub-daily{font-size:11px; color:#6c757d; margin-top:3px;}
+   .kpi-icon-daily{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;}
+   .visit-filter-card-daily{background:#fff; border:1px solid #eef0f2; border-radius:12px; padding:14px 16px;}
+   .visit-filter-card-daily label{font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px; display:block;}
+   .visit-search-box{position:relative;}.visit-search-box i{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#888;}
+   .visit-search-box input{padding-left:38px; height:38px; border-radius:8px; background:#f8f9fa; border:1px solid #e9ecef;}
+   .date-filter{height:38px; border-radius:8px; background:#f8f9fa; border:1px solid #e9ecef;}
+   .visit-clear-btn{height:38px; border-radius:8px; border:1px solid #e9ecef; background:#fff; font-size:13px; font-weight:600; padding:0 16px;}
+   .export-main-btn{height:38px; border-radius:8px; background:#111; color:#fff; font-size:13px; font-weight:600; border:none;}
+   .visit-table-card{background:#fff; border:1px solid #eef0f2; border-radius:12px; overflow:hidden;}
+</style>
+
+<div class="visit-page-header">
+    <div><h4>Client Visit List</h4><div class="visit-subtitle">Track and manage all client visits, follow-ups and field performance</div></div>
+    <a href="/ClientVisit/Create" class="btn btn-dark add-visit-btn"><i class="bi bi-plus-lg me-1"></i> Add Visit for Existing Client</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Total Clients Visited</div><div class="kpi-value-daily">@(ViewBag.TotalClientsVisited?? Model.TotalRecords)</div><div class="kpi-sub-daily">Total visits</div></div><div class="kpi-icon-daily" style="background:#ff9f1c;"><i class="bi bi-bar-chart-line-fill"></i></div></div></div>
+    <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Visits This Month</div><div class="kpi-value-daily" style="color:#0d6efd;">@(ViewBag.VisitsThisMonth?? 0)</div><div class="kpi-sub-daily">This month</div></div><div class="kpi-icon-daily" style="background:#0d6efd;"><i class="bi bi-calendar-check-fill"></i></div></div></div>
+    <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Today's Visits</div><div class="kpi-value-daily" style="color:#198754;">@(ViewBag.TodaysVisits?? 0)</div><div class="kpi-sub-daily">Done today</div></div><div class="kpi-icon-daily" style="background:#198754;"><i class="bi bi-check-circle-fill"></i></div></div></div>
+    <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Pending Follow-ups</div><div class="kpi-value-daily" style="color:#6f42c1;">@(ViewBag.PendingFollowUps?? 0)</div><div class="kpi-sub-daily">In Progress</div></div><div class="kpi-icon-daily" style="background:#6f42c1;"><i class="bi bi-hourglass-split"></i></div></div></div>
+</div>
+
+<div class="visit-filter-card-daily mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label>SEARCH TICKET / CUSTOMER / MOBILE</label>
+            <div class="visit-search-box"><i class="bi bi-search"></i><input id="visitSearch" type="text" value="@Model.SearchTerm" placeholder="Ticket, customer, mobile..." autocomplete="off" /></div>
+        </div>
+        <div class="col-md-2"><label>FROM DATE</label><input id="fromDate" class="form-control date-filter" type="date" /></div>
+        <div class="col-md-2"><label>TO DATE</label><input id="toDate" class="form-control date-filter" type="date" /></div>
+        <div class="col-md-3 d-flex gap-2 justify-content-end">
+            <button type="button" id="clearVisitFilter" class="visit-clear-btn"><i class="bi bi-x"></i> Clear</button>
+            <div class="dropdown export-dropdown">
+                <button class="btn export-main-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-download me-1"></i> Export</button>
+                <ul class="dropdown-menu">
+                    <li><a id="visitExportExcel" class="dropdown-item" href="/ClientVisit/ExportExcel?search=@Model.SearchTerm"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="exportVisitCsv();"><i class="bi bi-filetype-csv text-info"></i> CSV</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.print();"><i class="bi bi-printer text-primary"></i> Print</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="visit-table-card">
+    <div id="visitTable">
+        @await Html.PartialAsync("_VisitTable", Model)
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content" id="detailsModalContent"><div class="modal-body text-center py-5">Loading...</div></div></div></div>
+<form id="deleteForm" method="post" style="display:none">@Html.AntiForgeryToken()</form>
+
+<script>
+    var searchTimer;
+    var currentSort = "@Model.SortColumn";
+    var currentDir = "@Model.SortDirection";
+    var searchInput = document.getElementById("visitSearch");
+    var fromDate = document.getElementById("fromDate");
+    var toDate = document.getElementById("toDate");
+    var visitTable = document.getElementById("visitTable");
+    var exportExcel = document.getElementById("visitExportExcel");
+
+    function buildUrl(page = 1) {
+        const p = new URLSearchParams();
+        if (searchInput.value.trim()) p.append("term", searchInput.value.trim());
+        if (fromDate.value) p.append("fromDate", fromDate.value);
+        if (toDate.value) p.append("toDate", toDate.value);
+        if(currentSort) p.append("sort", currentSort);
+        if(currentDir) p.append("direction", currentDir);
+        p.append("page", page);
+        p.append("pageSize", document.getElementById("visitPageSize")?.value || 10);
+        return "/ClientVisit?" + p.toString();
+    }
+    function updateExportUrl() {
+        const p = new URLSearchParams();
+        if (searchInput.value.trim()) p.append("search", searchInput.value.trim());
+        exportExcel.href = "/ClientVisit/ExportExcel?" + p.toString();
+    }
+    function loadVisitTable(url) {
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+       .then(r => r.text()).then(html => { visitTable.innerHTML = html; updateExportUrl(); });
+    }
+    searchInput.addEventListener("input", function () { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadVisitTable(buildUrl(1)), 300); });
+    fromDate.addEventListener("change", () => loadVisitTable(buildUrl(1)));
+    toDate.addEventListener("change", () => loadVisitTable(buildUrl(1)));
+    document.addEventListener("change", function (e) { if (e.target.id === "visitPageSize") loadVisitTable(buildUrl(1)); });
+    document.getElementById("clearVisitFilter").addEventListener("click", function () {
+        searchInput.value = ""; fromDate.value = ""; toDate.value = "";
+        const size = document.getElementById("visitPageSize"); if (size) size.value = "10";
+        currentSort=""; currentDir="DESC";
+        loadVisitTable(buildUrl(1));
+    });
+    // SORTING + PAGINATION + ACTION
+    document.addEventListener("click", function (e) {
+        const sortLink = e.target.closest(".sort-link");
+        if(sortLink){
+            e.preventDefault();
+            const col = sortLink.dataset.sort;
+            if(currentSort === col) currentDir = currentDir==="ASC"?"DESC":"ASC";
+            else { currentSort = col; currentDir = "ASC"; }
+            loadVisitTable(buildUrl(1));
+            return;
+        }
+        const pageLink = e.target.closest(".ajax-visit-link");
+        if(pageLink){ e.preventDefault(); loadVisitTable(pageLink.href); }
+    });
+    function viewDetails(id) { $.get("/ClientVisit/Details/" + id, function (html) { $("#detailsModalContent").html(html); new bootstrap.Modal(document.getElementById("detailsModal")).show(); }); }
+    function deleteVisit(id) { if (!confirm("Are you sure?")) return; $("#deleteForm").attr("action", "/ClientVisit/Delete/" + id).submit(); }
+    function exportVisitCsv() { window.location.href = "/ClientVisit/ExportCsv?search=" + encodeURIComponent(searchInput.value.trim()); }
+    updateExportUrl();
+</script>

@@ -1,0 +1,35 @@
+@using ClientVisitManagement.Models
+
+<h4 class="mb-3">Select Client for New Visit</h4>
+
+<div class="card-section" style="max-width:500px">
+
+    <form method="post" action="/ClientVisit/SelectClient">
+        @Html.AntiForgeryToken()
+
+        <label>Choose Existing Client *</label>
+
+        <select class="form-select" name="clientId" required>
+            <option value="">-- Select Client --</option>
+
+            @foreach (var c in (List<Client>)ViewBag.Clients)
+            {
+                <option value="@c.ClientId">
+                   @c.ClientId - @c.ClientName (@c.City)
+                </option>
+            }
+        </select>
+
+        <button type="submit" class="btn btn-primary mt-3">
+            Continue to Visit Form
+        </button>
+    </form>
+
+    <hr />
+
+    <p class="text-muted mb-0">
+        Client not in list?
+        <a href="/Client/Create">Create New Client</a>
+    </p>
+
+</div>

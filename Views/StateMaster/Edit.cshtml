@@ -1,0 +1,53 @@
+@model List<ClientVisitManagement.Models.DynamicField>
+
+@{
+    var row = (Dictionary<string, object?>)ViewBag.RowData;
+}
+
+<h4 class="mb-3">Edit State</h4>
+
+<div class="card-section" style="max-width:500px">
+
+    <form method="post"
+          action="/StateMaster/Edit/@ViewBag.StateId">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="StateId"
+               value="@ViewBag.StateId" />
+
+        @foreach (var f in Model)
+        {
+            <div class="mb-3">
+
+                <label class="form-label">
+                    @f.Name
+                    @(f.IsNullable ? "" : "*")
+                </label>
+
+                <input class="form-control"
+                       name="@f.Name"
+                       value="@(row.ContainsKey(f.Name) ? row[f.Name] : "")"
+                       @(f.IsNullable ? null : "required") />
+
+            </div>
+        }
+
+        <div class="mt-3 text-end">
+
+            <a href="/StateMaster"
+               class="btn btn-light border">
+                Back
+            </a>
+
+            <button type="submit"
+                    class="btn btn-primary">
+                Update
+            </button>
+
+        </div>
+
+    </form>
+
+</div>

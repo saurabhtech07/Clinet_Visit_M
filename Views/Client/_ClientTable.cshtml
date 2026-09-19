@@ -1,0 +1,167 @@
+@model ClientVisitManagement.Models.DynamicTableViewModel
+@{
+    int start = Model.TotalRecords == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords);
+}
+
+<style>
+  .table-scroll-container {
+        max-height: 420px;
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative;
+    }
+  .dss-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        color: #64748b; text-transform: uppercase;
+        background: #f8fafc!important; /* sticky ke liye background jaruri hai */
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px; white-space: nowrap;
+        box-shadow: 0 1px 0 #e2e8f0; /* header ke niche line */
+    }
+  .dss-table tbody td {
+        font-size: 13px; padding: 12px 14px;
+        border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+        background: #fff;
+    }
+  .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
+  .client-id-pill {
+        background: #1e293b; color: #fff;
+        padding: 3px 10px; border-radius: 6px;
+        font-size: 11px; font-weight: 600;
+    }
+  .action-edit {
+        width: 32px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 8px;
+        border: 1px solid #dbeafe;
+        background: #eff6ff;
+        color: #2563eb !important;
+        transition: all 0.2s;
+    }
+  .action-edit:hover { background: #2563eb; color: #fff !important; }
+  .table-sort-link { color: #475569 !important; }
+  .table-sort-link:hover { color: #0f172a !important; }
+  .sort-neutral { opacity: 0.4; }
+</style>
+
+<div class="table-scroll-container">
+    <table class="table mb-0 dss-table table-hover">
+        <thead>
+            <tr>
+                <th style="width:70px;">Sr.No</th>
+                <th>
+                    @{
+                        var clientIdDirection = Model.SortColumn == "ClientId" && Model.SortDirection == "ASC" ? "DESC" : "ASC";
+                    }
+                    <a class="table-sort-link ajax-client-link text-decoration-none" href="/Client?page=1&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=ClientId&direction=@clientIdDirection">
+                        ClientId
+                        @if (Model.SortColumn == "ClientId")
+                        {
+                            <i class="bi @(Model.SortDirection == "ASC" ? "bi-arrow-up" : "bi-arrow-down") ms-1"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-arrow-down-up ms-1" style="opacity:0.3; font-size:11px;"></i>
+                        }
+                    </a>
+                </th>
+                <th>
+                    @{
+                        var clientNameDirection = Model.SortColumn == "ClientName" && Model.SortDirection == "ASC" ? "DESC" : "ASC";
+                    }
+                    <a class="table-sort-link ajax-client-link text-decoration-none" href="/Client?page=1&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=ClientName&direction=@clientNameDirection">
+                        Client Name
+                        @if (Model.SortColumn == "ClientName")
+                        {
+                            <i class="bi @(Model.SortDirection == "ASC" ? "bi-arrow-up" : "bi-arrow-down") ms-1"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-arrow-down-up ms-1" style="opacity:0.3; font-size:11px;"></i>
+                        }
+                    </a>
+                </th>
+                <th>City</th>
+                <th>
+                    @{
+                        var stateDirection = Model.SortColumn == "StateName" && Model.SortDirection == "ASC" ? "DESC" : "ASC";
+                    }
+                    <a class="table-sort-link ajax-client-link text-decoration-none" href="/Client?page=1&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=StateName&direction=@stateDirection">
+                        State Name
+                        @if (Model.SortColumn == "StateName")
+                        {
+                            <i class="bi @(Model.SortDirection == "ASC" ? "bi-arrow-up" : "bi-arrow-down") ms-1"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-arrow-down-up ms-1" style="opacity:0.3; font-size:11px;"></i>
+                        }
+                    </a>
+                </th>
+                <th>Pincode</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th style="width:80px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Any())
+            {
+                foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td class="serial-col" style="color:#64748b;">@start</td>
+                        <td><span class="client-id-pill">@(row.ContainsKey("ClientId") ? row["ClientId"] : "")</span></td>
+                        <td class="fw-semibold" style="color:#0f172a;">@(row.ContainsKey("ClientName") ? row["ClientName"] : "")</td>
+                        <td>@(row.ContainsKey("City") ? row["City"] : "")</td>
+                        <td>@(row.ContainsKey("StateName") ? row["StateName"] : "")</td>
+                        <td>@(row.ContainsKey("Pincode") ? row["Pincode"] : "")</td>
+                        <td class="fw-medium">@(row.ContainsKey("MobileNo") ? row["MobileNo"] : "")</td>
+                        <td style="color:#64748b;">@(row.ContainsKey("Email") ? row["Email"] : "")</td>
+                        <td>
+                            @if (row.ContainsKey("ClientId"))
+                            {
+                                <a href="/Client/Edit/@row["ClientId"]" title="Edit" class="action-edit"><i class="bi bi-pencil"></i></a>
+                            }
+                        </td>
+                    </tr>
+                    start++;
+                }
+            }
+            else
+            {
+                <tr><td colspan="9" class="text-center text-muted py-5">No clients found</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- FOOTER - User Master jaisa (scroll nahi hoga) -->
+<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+    <div class="d-flex align-items-center gap-2">
+        <select id="clientPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
+            <option value="10" selected="@(Model.PageSize == 10)">10</option>
+            <option value="20" selected="@(Model.PageSize == 20)">20</option>
+            <option value="50" selected="@(Model.PageSize == 50)">50</option>
+            <option value="100" selected="@(Model.PageSize == 100)">100</option>
+        </select>
+        <span style="font-size:12px; color:#64748b;">records per page</span>
+    </div>
+    <div style="font-size:12px; color:#64748b;">Showing @start to @end of @Model.TotalRecords entries</div>
+    <div class="d-flex gap-1">
+        @if (Model.CurrentPage > 1) { <a class="btn btn-sm btn-light border ajax-client-link" href="/Client?page=@(Model.CurrentPage - 1)&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=@Uri.EscapeDataString(Model.SortColumn ?? "")&direction=@Model.SortDirection">Previous</a> }
+        else { <button class="btn btn-sm btn-light border" disabled>Previous</button> }
+        @for (int p = 1; p <= Model.TotalPages; p++) {
+            if (p == Model.CurrentPage) { <span class="btn btn-sm" style="background:#0f172a; color:#fff;">@p</span> }
+            else { <a class="btn btn-sm btn-light border ajax-client-link" href="/Client?page=@p&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=@Uri.EscapeDataString(Model.SortColumn ?? "")&direction=@Model.SortDirection">@p</a> }
+        }
+        @if (Model.CurrentPage < Model.TotalPages) { <a class="btn btn-sm btn-light border ajax-client-link" href="/Client?page=@(Model.CurrentPage + 1)&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=@Uri.EscapeDataString(Model.SortColumn ?? "")&direction=@Model.SortDirection">Next</a> }
+        else { <button class="btn btn-sm btn-light border" disabled>Next</button> }
+    </div>
+</div>

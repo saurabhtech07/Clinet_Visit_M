@@ -1,0 +1,61 @@
+@model List<ClientVisitManagement.Models.ClientVisit>
+
+<h4 class="mb-3">Transaction</h4>
+
+<div class="card-section">
+
+    <div class="mb-3">
+        <strong>Master → Transaction Relationship</strong>
+
+        <p class="text-muted mb-0">
+            Client table is the Master and ClientVisit table stores the Transaction.
+        </p>
+    </div>
+
+    <table class="table table-bordered table-hover">
+
+        <thead>
+            <tr>
+                <th>Client ID</th>
+                <th>Company Name</th>
+                <th>Visit ID</th>
+                <th>Visit Date</th>
+                <th>Person Name</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Discussion</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.ClientId</td>
+                <td>@t.ClientName</td>
+                <td>@t.VisitId</td>
+                <td>@t.VisitDate.ToString("dd-MM-yyyy")</td>
+                <td>@t.PersonName</td>
+                <td>@t.City</td>
+                <td>@t.State</td>
+                <td>@t.DiscussionRequirement</td>
+                <td>@t.Remarks</td>
+            </tr>
+        }
+
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="9" class="text-center text-muted">
+                    No transactions found
+                </td>
+            </tr>
+        }
+
+        </tbody>
+
+    </table>
+
+</div>

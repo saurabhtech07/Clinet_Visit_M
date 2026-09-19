@@ -1,0 +1,377 @@
+@model ClientVisitManagement.Models.ClientDashboardViewModel
+@{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+}
+
+<style>
+    .dss-kpi-card{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:12px 14px;height:72px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+    .dss-kpi-label{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:2px;letter-spacing:0.5px}
+    .dss-kpi-value{font-size:22px;font-weight:800;color:#0f172a;line-height:1}
+    .dss-kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
+    .dss-toolbar{background:#fff;border-radius:14px;border:1px solid #eef2f7;padding:14px 18px}
+    .dss-toolbar-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px}
+    .dss-search-input{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;padding:9px 14px}
+    .dss-table-card{background:#fff;border-radius:14px;border:1px solid #eef2f7;overflow:hidden}
+    .btn-dss-dark{background:#0f172a;color:#fff;border-radius:10px;font-size:13px;padding:9px 16px}
+    .table-scroll-container{max-height:420px;overflow-y:auto;position:relative}
+    .dss-table thead th{position:sticky;top:0;z-index:10;background:#f8fafc!important;border-bottom:1px solid #e2e8f0;padding:12px 14px;font-size:10.5px;white-space:nowrap}
+    .dss-table tbody td{font-size:13px;padding:12px 14px;border-bottom:1px solid #f1f5f9}
+
+    @@media print{
+      body *{visibility:hidden}
+      .dss-table-card, .dss-table-card *{visibility:visible}
+      .dss-table-card{position:absolute;left:0;top:0;width:100%;border:none;overflow:visible!important}
+      .table-scroll-container{max-height:none!important;overflow:visible!important;height:auto!important}
+      .dss-table thead th{position:static!important}
+      .dss-kpi-card,.dss-toolbar .btn,.form-select{display:none!important}
+    }
+</style>
+
+<h4 class="fw-bold mb-3">Client Master</h4>
+
+<!-- KPI CARDS - User Master jaisa -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total Clients</div>
+                <div class="dss-kpi-value">@Model.TotalClients</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#f59e0b;"><i class="bi bi-people-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Active Clients</div>
+                <div class="dss-kpi-value">@Model.ActiveClients</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#ef4444;"><i class="bi bi-person-check-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Visits Scheduled</div>
+                <div class="dss-kpi-value">@Model.ThisMonthVisits</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#10b981;"><i class="bi bi-person-plus-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total Visits</div>
+                <div class="dss-kpi-value">@Model.TotalVisits</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-shield-check"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOOLBAR - User Master jaisa -->
+<div class="dss-toolbar mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <div class="dss-toolbar-label">Search Client / City / Mobile</div>
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute" style="left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+                <input type="text" id="clientSearch" value="@Model.Clients.SearchTerm" class="form-control dss-search-input ps-5" placeholder="Search client..." autocomplete="off" />
+            </div>
+        </div>
+        <div class="col-md-7 d-flex gap-2 justify-content-end align-items-center">
+            <button id="clearClientSearch" class="btn btn-light border" style="border-radius:10px; font-size:13px;">Clear</button>
+            <div class="btn-group">
+                <a href="/Client/ExportExcel" class="btn btn-light border" style="font-size:13px; border-radius:10px 0 0 10px;"><i class="bi bi-file-earmark-excel me-1"></i> Excel</a>
+                <a href="/Client/ExportCsv" class="btn btn-light border" style="font-size:13px;"><i class="bi bi-filetype-csv me-1"></i> CSV</a>
+                <a href="javascript:void(0);" onclick="window.print();" class="btn btn-light border" style="font-size:13px; border-radius:0 10px 10px 0;"><i class="bi bi-printer me-1"></i> Print</a>
+            </div>
+            <a href="/Client/Create" class="btn btn-dss-dark ms-2"><i class="bi bi-plus-circle me-1"></i> Add Client</a>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE - User Master jaisa -->
+<div class="dss-table-card">
+    <div id="clientTable">
+        @await Html.PartialAsync("_ClientTable", Model.Clients)
+    </div>
+</div>
+
+
+<script>
+
+    window.__clientNav = window.__clientNav || {};
+
+    function loadClientTable(url) {
+        fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to load clients.");
+            return response.text();
+        })
+        .then(html => {
+            const table = document.getElementById("clientTable");
+            if (table) table.innerHTML = html;
+        })
+        .catch(error => {
+            console.error("Client table error:", error);
+        });
+    }
+
+    // SORT + PAGINATION + PAGE SIZE - sirf ek baar register (AJAX nav safe)
+    if (!window.__clientNav.delegates) {
+        window.__clientNav.delegates = true;
+
+        document.addEventListener("click", function (event) {
+            if (event.__ajaxNavHandled) return;
+            const link = event.target.closest(".ajax-client-link");
+            if (!link) return;
+            event.preventDefault();
+            event.__ajaxNavHandled = true;
+            loadClientTable(link.href);
+        });
+
+        document.addEventListener("change", function (event) {
+            if (event.__ajaxNavHandled) return;
+            if (event.target.id !== "clientPageSize") return;
+            event.__ajaxNavHandled = true;
+            const search = document.getElementById("clientSearch");
+            const term = search ? search.value.trim() : "";
+            const url = "/Client?page=1&pageSize=" + event.target.value + "&search=" + encodeURIComponent(term);
+            loadClientTable(url);
+        });
+    }
+
+    // LIVE SEARCH - DSS jaisa automatic (keyup par turant)
+    var clientSearch = document.getElementById("clientSearch");
+    if (clientSearch) {
+        clientSearch.addEventListener("keyup", function () {
+            const pageSize = document.getElementById("clientPageSize")?.value || 10;
+            const url =
+                "/Client?page=1" +
+                "&pageSize=" + pageSize +
+                "&search=" + encodeURIComponent(clientSearch.value.trim());
+            loadClientTable(url);
+        });
+    }
+
+    // CLEAR SEARCH
+    var clearClientSearch = document.getElementById("clearClientSearch");
+    if (clearClientSearch) {
+        clearClientSearch.addEventListener("click", function () {
+            if (clientSearch) clientSearch.value = "";
+            const pageSize = document.getElementById("clientPageSize")?.value || 10;
+            loadClientTable("/Client?page=1&pageSize=" + pageSize);
+            if (clientSearch) clientSearch.focus();
+        });
+    }
+
+</script>
+
+@* 
+
+@model ClientVisitManagement.Models.ClientDashboardViewModel
+
+<style>
+  /* === USER MASTER JAISA EXACT DESIGN === */
+  .dss-kpi-card{
+    background:#fff;
+    border-radius:12px;
+    border:1px solid #f1f5f9;
+    padding:12px 16px;
+    height:68px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 1px 3px rgba(0,0,0,0.05);
+  }
+  .dss-kpi-label{
+    font-size:9px;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+  }
+  .dss-kpi-value{
+    font-size:20px;
+    font-weight:800;
+    color:#0f172a;
+    line-height:1;
+  }
+  .dss-kpi-icon{
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:14px;
+    flex-shrink:0;
+  }
+
+  /* TOOLBAR - EXACT USER MASTER JAISA */
+  .dss-toolbar{
+    background:#fff;
+    border-radius:14px;
+    border:1px solid #f1f5f9;
+    padding:16px 18px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.03);
+  }
+  .dss-toolbar-label{
+    font-size:10px;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:8px;
+  }
+  .dss-search-wrap{position:relative;}
+  .dss-search-wrap i{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#94a3b8;
+    font-size:14px;
+  }
+  .dss-search-input{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    font-size:13px;
+    padding:10px 14px 10px 36px;
+    height:38px;
+    width:100%;
+  }
+  .dss-search-input:focus{
+    background:#fff;
+    border-color:#cbd5e1;
+    box-shadow:none;
+    outline:none;
+  }
+  .dss-table-card{background:#fff;border-radius:14px;border:1px solid #f1f5f9;overflow:hidden}
+  .btn-dss-dark{background:#0f172a;color:#fff;border-radius:10px;font-size:13px;padding:8px 16px;border:0}
+  .table-scroll-container{max-height:420px;overflow-y:auto;position:relative}
+  .dss-table thead th{position:sticky;top:0;z-index:10;background:#f8fafc!important;border-bottom:1px solid #e2e8f0;padding:12px 14px;font-size:10.5px;white-space:nowrap}
+  .dss-table tbody td{font-size:13px;padding:12px 14px;border-bottom:1px solid #f1f5f9}
+</style>
+
+<h4 class="fw-bold mb-3" style="color:#1e293b; font-size:20px;">Client Master</h4>
+
+<!-- CARDS - USER MASTER JAISA COMPACT -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total Clients</div>
+                <div class="dss-kpi-value">@Model.TotalClients</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#f59e0b;"><i class="bi bi-people-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Active Clients</div>
+                <div class="dss-kpi-value">@Model.ActiveClients</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#ef4444;"><i class="bi bi-person-check-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Visits Scheduled</div>
+                <div class="dss-kpi-value">@Model.ThisMonthVisits</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#10b981;"><i class="bi bi-person-plus-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total Visits</div>
+                <div class="dss-kpi-value">@Model.TotalVisits</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-shield-check"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOOLBAR - USER MASTER JAISA -->
+<div class="dss-toolbar mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <div class="dss-toolbar-label">Search Client / City / Mobile</div>
+            <div class="dss-search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" id="clientSearch" value="@Model.Clients.SearchTerm" class="form-control dss-search-input" placeholder="Search client..." autocomplete="off" />
+            </div>
+        </div>
+        <div class="col-md-7 d-flex gap-2 justify-content-end align-items-center">
+            <button id="clearClientFilter" class="btn btn-light border" style="border-radius:10px; font-size:13px; padding:7px 14px;">Clear</button>
+            <div class="btn-group">
+                <a id="clientExportExcel" href="/Client/ExportExcel" class="btn btn-light border" style="font-size:13px; border-radius:10px 0 0 10px;"><i class="bi bi-file-earmark-excel me-1"></i> Excel</a>
+                <a href="javascript:void(0);" onclick="exportClientCsv();" class="btn btn-light border" style="font-size:13px;"><i class="bi bi-filetype-csv me-1"></i> CSV</a>
+                <a href="javascript:void(0);" onclick="printClientTable();" class="btn btn-light border" style="font-size:13px; border-radius:0 10px 10px 0;"><i class="bi bi-printer me-1"></i> Print</a>
+            </div>
+            <a href="/Client/Create" class="btn btn-dss-dark ms-2"><i class="bi bi-plus-circle me-1"></i> Add Client</a>
+        </div>
+    </div>
+</div>
+
+<div class="dss-table-card" id="printArea"><div id="clientTable">@await Html.PartialAsync("_ClientTable", Model.Clients)</div></div>
+
+<script>
+    let clientSearchTimer;
+    const clientSearch = document.getElementById("clientSearch");
+    const clientTable = document.getElementById("clientTable");
+    const exportExcel = document.getElementById("clientExportExcel");
+
+    function buildUrl(page=1){
+        const p=new URLSearchParams();
+        const term=clientSearch.value.trim();
+        if(term) p.append("search",term);
+        p.append("page",page);
+        p.append("pageSize",document.getElementById("clientPageSize")?.value || 10);
+        return "/Client?"+p.toString();
+    }
+    function updateExportUrl(){
+        const p=new URLSearchParams();
+        const term=clientSearch.value.trim();
+        if(term) p.append("search",term);
+        exportExcel.href="/Client/ExportExcel?"+p.toString();
+    }
+    function loadClientTable(url){
+        fetch(url,{headers:{"X-Requested-With":"XMLHttpRequest"}})
+        .then(r=>{if(!r.ok)throw new Error(); return r.text();})
+        .then(html=>{clientTable.innerHTML=html; updateExportUrl();})
+        .catch(e=>console.error(e));
+    }
+    function printClientTable() {
+        var printContents = document.getElementById("printArea").innerHTML;
+        var printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<html><head><title>Client List - Print</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{padding:20px} table{width:100% !important} .btn, .pagination, .form-select{display:none !important}</style></head><body><h4 style="margin-bottom:15px">Client Master - Print</h4>'+printContents+'</body></html>');
+        printWindow.document.close(); printWindow.focus();
+        setTimeout(function(){printWindow.print(); printWindow.close();},500);
+    }
+    function exportClientCsv(){
+        const p=new URLSearchParams(); const term=clientSearch.value.trim();
+        if(term) p.append("search",term);
+        window.location.href="/Client/ExportCsv?"+p.toString();
+    }
+    clientSearch.addEventListener("input",function(){clearTimeout(clientSearchTimer); clientSearchTimer=setTimeout(()=>{loadClientTable(buildUrl(1));},300);});
+    document.getElementById("clearClientFilter").addEventListener("click",function(){clientSearch.value=""; loadClientTable(buildUrl(1)); updateExportUrl();});
+    document.addEventListener("click",function(e){const link=e.target.closest(".ajax-client-link"); if(!link) return; e.preventDefault(); loadClientTable(link.href);});
+    document.addEventListener("change",function(e){if(e.target.id!=="clientPageSize") return; loadClientTable(buildUrl(1));});
+    updateExportUrl();
+</script> *@

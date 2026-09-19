@@ -1,0 +1,103 @@
+@using Microsoft.AspNetCore.Html
+@model List<ClientVisitManagement.Models.DynamicField>
+
+@{
+    var fields = Model;
+
+IHtmlContent RenderField(DynamicField f)
+{
+    var label = $"<label>{f.Name}{(f.IsNullable ? "" : " *")}</label>";
+    var req = f.IsNullable ? "" : "required";
+
+    string input;
+
+    if (f.Name.Equals("PasswordHash", StringComparison.OrdinalIgnoreCase))
+    {
+        input = $"<input class=\"form-control\" name=\"PasswordHash\" type=\"password\" {req} />";
+    }
+else if (f.Name.Equals("RoleId", StringComparison.OrdinalIgnoreCase))
+{
+    var roles = ViewBag.Roles as List<ClientVisitManagement.Models.Role>
+                ?? new List<ClientVisitManagement.Models.Role>();
+
+    var options = "<option value=\"\">Select Role</option>";
+
+    foreach (var role in roles)
+    {
+        options += $"<option value=\"{role.RoleId}\">{role.RoleName}</option>";
+    }
+
+    label = "<label>Role *</label>";
+    input = $"<select class=\"form-select\" name=\"RoleId\" required>{options}</select>";
+}
+    else if (f.Name.Equals("IsActive", StringComparison.OrdinalIgnoreCase))
+    {
+        input = "<select class=\"form-select\" name=\"IsActive\">" +
+                "<option value=\"1\" selected>Active</option>" +
+                "<option value=\"0\">Inactive</option>" +
+                "</select>";
+    }
+    else
+    {
+        var type = f.DataType.Contains("int", StringComparison.OrdinalIgnoreCase)
+            ? "number"
+            : f.DataType.Contains("date", StringComparison.OrdinalIgnoreCase)
+                ? "date"
+                : "text";
+
+        input = $"<input class=\"form-control\" name=\"{f.Name}\" type=\"{type}\" {req} />";
+    }
+
+    return new HtmlString(label + input);
+}
+}
+
+<h4 class="mb-3">Create New User</h4>
+
+<form method="post" action="/User/Create">
+    @Html.AntiForgeryToken()
+
+    <div class="card-section">
+
+        <h6>User Information</h6>
+
+        <div class="row g-3">
+
+            @foreach (var f in fields)
+            {
+                if (f.Name.Equals("UserId", StringComparison.OrdinalIgnoreCase) ||
+                    f.Name.Equals("CreatedDate", StringComparison.OrdinalIgnoreCase) ||
+                    f.Name.Equals("RoleName", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                <div class="col-md-6">
+                    @RenderField(f)
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <div class="text-end mt-4">
+
+        <a href="/User"
+           class="btn btn-light border">
+            Cancel
+        </a>
+
+        <button type="reset"
+                class="btn btn-light border">
+            Reset
+        </button>
+
+        <button type="submit"
+                class="btn btn-primary">
+            Save User
+        </button>
+
+    </div>
+
+</form>

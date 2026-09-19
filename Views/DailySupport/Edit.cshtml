@@ -1,0 +1,73 @@
+@* @{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var row = (Dictionary<string, object>)ViewBag.RowData;
+    var customers = ViewBag.Customers as List<Dictionary<string, object>>;
+    var engineers = ViewBag.Engineers as List<Dictionary<string, object>>;
+}
+<h5 class="fw-bold mb-3">Edit Call - @row["TicketNo"]</h5>
+<form method="post" class="card border-0 shadow-sm">
+    @Html.AntiForgeryToken()
+    <div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-3"><label class="form-label small fw-bold">Ticket No</label><input class="form-control form-control-sm bg-light" value="@row["TicketNo"]" readonly /></div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Client</label>
+                <select name="ClientId" class="form-select form-select-sm">
+                    @foreach(var c in customers){
+                        var cId = c["ClientId"]?.ToString();
+                        var cName = c["ClientName"]?.ToString();
+                        if(cId == row["ClientId"]?.ToString()){<option value="@cId" selected>@cName [ID:@cId]</option>}
+                        else{<option value="@cId">@cName [ID:@cId]</option>}
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Assigned To</label>
+                <select name="AssignedTo" class="form-select form-select-sm">
+                    <option value="">Select User</option>
+                    @foreach(var e in engineers){
+                        var eId = e.ContainsKey("UserId")? e["UserId"]?.ToString() : "";
+                        var eName = e.ContainsKey("FullName")? e["FullName"]?.ToString() : "";
+                        if(eId == row["AssignedTo"]?.ToString()){<option value="@eId" selected>@eName</option>}
+                        else{<option value="@eId">@eName</option>}
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Status</label>
+                <select name="Status" class="form-select form-select-sm">
+                    <option selected="@(row["Status"]?.ToString()=="Open")">Open</option>
+                    <option selected="@(row["Status"]?.ToString()=="In Progress")">In Progress</option>
+                    <option selected="@(row["Status"]?.ToString()=="Closed")">Closed</option>
+                    <option selected="@(row["Status"]?.ToString()=="On Hold")">On Hold</option>
+                </select>
+            </div>
+            <div class="col-md-4"><label class="form-label small fw-bold">Channel</label><input name="Channel" class="form-control form-control-sm" value="@row["Channel"]" /></div>
+            <div class="col-md-4"><label class="form-label small fw-bold">Category</label><input name="Category" class="form-control form-control-sm" value="@row["Category"]" /></div>
+            <div class="col-md-4"><label class="form-label small fw-bold">Priority</label><select name="Priority" class="form-select form-select-sm"><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select></div>
+            <div class="col-12"><label class="form-label small fw-bold">Issue</label><input name="Issue" class="form-control form-control-sm" value="@row["Issue"]" /></div>
+            <div class="col-12"><label class="form-label small fw-bold">Description</label><textarea name="Description" class="form-control form-control-sm" rows="3">@row["Description"]</textarea></div>
+        </div>
+        <div class="text-end mt-4 pt-3 border-top">
+            <a href="/DailySupport" class="btn btn-light border btn-sm">Back</a>
+            <button type="submit" class="btn btn-dark btn-sm px-4">Update Ticket</button>
+        </div>
+    </div>
+</form> *@
+
+@model List<DynamicField>
+@{ Layout="~/Views/Shared/_Layout.cshtml"; var row=(Dictionary<string,object?>)ViewBag.RowData; var customers=ViewBag.Customers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>(); var engineers=ViewBag.Engineers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>(); var known=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"SupportId","TicketNo","ClientId","AssignedTo","Status","Channel","Category","Priority","Issue","Description","CustomerID","UserId","VisitTypeId"}; var extra=Model.Where(f=>!known.Contains(f.Name)).ToList(); }
+<h5 class="fw-bold mb-3">Edit Call - @row["TicketNo"]</h5>
+<form method="post" class="card border-0 shadow-sm">@Html.AntiForgeryToken()
+<div class="card-body p-4"><div class="row g-3">
+<div class="col-md-3"><label class="form-label small fw-bold">Ticket No</label><input class="form-control form-control-sm bg-light" value="@row["TicketNo"]" readonly /></div>
+<div class="col-md-3"><label class="form-label small fw-bold">Client</label><select name="ClientId" class="form-select form-select-sm">@foreach(var c in customers){var cId=c["ClientId"]?.ToString();var cName=c["ClientName"]?.ToString(); if(cId==row["ClientId"]?.ToString()){<option value="@cId" selected>@cName [ID:@cId]</option>}else{<option value="@cId">@cName [ID:@cId]</option>}}</select></div>
+<div class="col-md-3"><label class="form-label small fw-bold">Assigned To</label><select name="AssignedTo" class="form-select form-select-sm"><option value="">Select User</option>@foreach(var e in engineers){var eId=e.ContainsKey("UserId")?e["UserId"]?.ToString():"";var eName=e.ContainsKey("FullName")?e["FullName"]?.ToString():""; if(eId==row["AssignedTo"]?.ToString()){<option value="@eId" selected>@eName</option>}else{<option value="@eId">@eName</option>}}</select></div>
+<div class="col-md-3"><label class="form-label small fw-bold">Status</label><select name="Status" class="form-select form-select-sm"><option selected="@(row["Status"]?.ToString()=="Open")">Open</option><option selected="@(row["Status"]?.ToString()=="In Progress")">In Progress</option><option selected="@(row["Status"]?.ToString()=="Closed")">Closed</option><option selected="@(row["Status"]?.ToString()=="On Hold")">On Hold</option></select></div>
+<div class="col-md-4"><label class="form-label small fw-bold">Channel</label><input name="Channel" class="form-control form-control-sm" value="@row["Channel"]" /></div>
+<div class="col-md-4"><label class="form-label small fw-bold">Category</label><input name="Category" class="form-control form-control-sm" value="@row["Category"]" /></div>
+<div class="col-md-4"><label class="form-label small fw-bold">Priority</label><select name="Priority" class="form-select form-select-sm"><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select></div>
+<div class="col-12"><label class="form-label small fw-bold">Issue</label><input name="Issue" class="form-control form-control-sm" value="@row["Issue"]" /></div>
+<div class="col-12"><label class="form-label small fw-bold">Description</label><textarea name="Description" class="form-control form-control-sm" rows="3">@row["Description"]</textarea></div>
+@if(extra.Any()){<div class="col-12"><hr/><p class="small fw-bold text-primary">DYNAMIC EXTRA FIELDS - DB SE AUTO</p></div>@foreach(var f in extra){<div class="col-md-3"><label class="form-label small fw-bold">@f.Name</label><input name="@f.Name" class="form-control form-control-sm" value="@(row.ContainsKey(f.Name)?row[f.Name]?.ToString():"")" /></div>}}
+</div><div class="text-end mt-4 pt-3 border-top"><a href="/DailySupport" class="btn btn-light border btn-sm">Back</a><button type="submit" class="btn btn-dark btn-sm px-4">Update Ticket</button></div></div></form>

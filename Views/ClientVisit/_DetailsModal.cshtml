@@ -1,0 +1,35 @@
+@model ClientVisit
+<div class="modal-header">
+    <h5 class="modal-title">Client Visit Details</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-6">
+            <h6 class="text-primary">Client Information</h6>
+            <p><strong>Client ID:</strong> @Model.ClientCode</p>
+            <p><strong>Client Name:</strong> @Model.ClientName</p>
+            <p><strong>City:</strong> @Model.City</p>
+            <p><strong>State:</strong> @Model.State</p>
+            <p><strong>Pincode:</strong> @Model.Pincode</p>
+        </div>
+        <div class="col-md-6">
+            <h6 class="text-primary">Visit Information</h6>
+            <p><strong>Visit Date:</strong> @Model.VisitDate.ToString("dd-MM-yyyy")</p>
+            <p><strong>Visit Time:</strong> @Model.VisitTime</p>
+            <p><strong>Person Met:</strong> @Model.PersonMet</p>
+            <p><strong>Person Name:</strong> @Model.PersonName</p>
+            <p><strong>Designation:</strong> @Model.Designation</p>
+            <p><strong>Contact No:</strong> @Model.ContactNo</p>
+            <p><strong>Email:</strong> @Model.Email</p>
+        </div>
+    </div>
+    <hr />
+    <h6 class="text-primary">Discussion / Requirement</h6>
+    <p>@Model.DiscussionRequirement</p>
+    <h6 class="text-primary">Remarks</h6>
+    <p>@Model.Remarks</p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>

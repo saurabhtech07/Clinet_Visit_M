@@ -1,0 +1,204 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Client Visit Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+    <div class="sidebar">
+        <!-- SIDEBAR HEADER -->
+        <div class="sidebar-header">
+            <button type="button" id="sidebarToggle" class="sidebar-toggle" title="Toggle Menu">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="sidebar-title">
+                <span>Client Visit Management</span>
+            </div>
+        </div>
+
+        <!-- =================================================
+             MASTER MODULES
+             ================================================= -->
+        <div class="sidebar-section-title">
+            <span>MASTER MODULES</span>
+        </div>
+
+        <!-- CLIENT MASTER -->
+        <a class="nav-link" href="/Client">
+            <i class="bi bi-building"></i>
+            <span>Client Master</span>
+        </a>
+
+        <!-- USER MASTER -->
+        <a class="nav-link" href="/User">
+            <i class="bi bi-people"></i>
+            <span>User Master</span>
+        </a>
+
+        <!-- STATE MASTER -->
+        <a class="nav-link" href="/StateMaster">
+            <i class="bi bi-geo-alt"></i>
+            <span>State Master</span>
+        </a>
+
+        <!-- =================================================
+             TRANSACTION MODULES
+             ================================================= -->
+        <div class="sidebar-section-title">
+            <span>TRANSACTION MODULES</span>
+        </div>
+
+        <!-- CLIENT VISIT DETAILS - YE AAPKA DASHBOARD HAI -->
+        <a class="nav-link" href="/ClientVisit">
+            <i class="bi bi-geo-alt"></i>
+            <span>Client Visit Details</span>
+        </a>
+
+        <!-- DAILY SUPPORT SYSTEM - FIX KIYA -->
+        <a class="nav-link" href="/DailySupport">
+            <i class="bi bi-headset"></i>
+            <span>Daily Support System</span>
+        </a>
+
+        <!-- =================================================
+             ANALYTICS & REPORTS
+             ================================================= -->
+        <div class="sidebar-section-title">
+            <span>ANALYTICS &amp; REPORTS</span>
+        </div>
+
+        <!-- CLIENT VISIT REPORT - YE FULL REPORT HAI -->
+        <a class="nav-link" href="/ClientVisit/ClientVisitReport">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            <span>Client Visit Report</span>
+        </a>
+
+        <!-- MIS REPORTS - DSS Reports bhi DailySupport se -->
+        <a class="nav-link" href="/DailySupport/DSSReports">
+            <i class="bi bi-bar-chart-line"></i>
+            <span>DSS Reports</span>
+        </a>
+    </div>
+
+    <!-- =====================================================
+         TOPBAR
+         ===================================================== -->
+    <div class="topbar">
+        <div class="topbar-user">
+            <span>
+                <i class="bi bi-person-circle"></i>
+                @Context.Session.GetString("FullName")
+                <small>
+                    (@Context.Session.GetString("Role"))
+                </small>
+            </span>
+            <a href="/Account/Logout" class="logout-btn">
+                <i class="bi bi-box-arrow-right"></i>
+                Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         MAIN CONTENT - Yahi par DailySupport ka Index.cshtml Render Hoga
+         ===================================================== -->
+    <div class="main-content" id="mainContentArea">
+        @RenderBody()
+    </div>
+
+    <!-- =====================================================
+         SCRIPTS
+         ===================================================== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- =====================================================
+         SIDEBAR TOGGLE
+         ===================================================== -->
+    <script>
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        sidebarToggle.addEventListener("click", function () {
+            document.body.classList.toggle("sidebar-collapsed");
+            const icon = this.querySelector("i");
+            if (document.body.classList.contains("sidebar-collapsed")) {
+                icon.className = "bi bi-layout-sidebar-inset";
+            } else {
+                icon.className = "bi bi-list";
+            }
+        });
+    </script>
+
+    <!-- =====================================================
+         AJAX NAVIGATION - Sidebar /Client, /User, /StateMaster
+         ===================================================== -->
+    <script>
+        (function () {
+            var masterPaths = ["/Client", "/User", "/StateMaster", "/ClientVisit", "/DailySupport", "/ClientVisit/ClientVisitReport", "/DailySupport/DSSReports"];
+
+            function reExecuteScripts(container) {
+                container.querySelectorAll("script").forEach(function (oldScript) {
+                    var freshScript = document.createElement("script");
+                    if (oldScript.src) {
+                        freshScript.src = oldScript.src;
+                    } else {
+                        freshScript.textContent = oldScript.textContent;
+                    }
+                    oldScript.replaceWith(freshScript);
+                });
+            }
+
+            function loadPage(url) {
+                fetch(url, {
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                })
+                .then(function (response) {
+                    if (!response.ok) throw new Error("HTTP " + response.status);
+                    return response.text();
+                })
+                .then(function (html) {
+                    var main = document.getElementById("mainContentArea");
+                    if (!main) { window.location.href = url; return; }
+                    main.innerHTML = html;
+                    reExecuteScripts(main);
+                    window.history.pushState({ url: url }, "", url);
+                    window.scrollTo(0, 0);
+                })
+                .catch(function (err) {
+                    console.error("AJAX navigation failed:", err);
+                    window.location.href = url;
+                });
+            }
+
+            document.addEventListener("click", function (event) {
+                if (event.defaultPrevented || event.button !== 0 ||
+                    event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+                var link = event.target.closest("a.nav-link");
+                if (!link) return;
+                var href = link.getAttribute("href");
+                if (!href) return;
+                var path = href.split("?")[0];
+                if (masterPaths.indexOf(path) === -1) return;
+                event.preventDefault();
+                loadPage(href);
+            });
+
+            window.addEventListener("popstate", function () {
+                loadPage(window.location.pathname + window.location.search);
+            });
+        })();
+    </script>
+</body>
+</html>
