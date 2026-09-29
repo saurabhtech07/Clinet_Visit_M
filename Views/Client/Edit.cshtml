@@ -48,7 +48,8 @@
 
 <h4 class="mb-3">Edit Client</h4>
 
-<form method="post">
+<form method="post" id="clientForm">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="ClientId" value="@ViewBag.ClientId" />
 
     <div class="row g-4 align-items-stretch">
@@ -90,3 +91,18 @@
         </div>
     </div>
 </form>
+
+<script>
+    (function () {
+        var form = document.getElementById("clientForm");
+        if (!form) return;
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            Ajax.submit({
+                url: "/Client/Edit/@ViewBag.ClientId",
+                form: form,
+                onSuccess: function () { window.loadPage("/Client"); }
+            });
+        });
+    })();
+</script>

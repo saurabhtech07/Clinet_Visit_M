@@ -4,7 +4,7 @@
 
 <div class="card-section" style="max-width:500px">
 
-    <form method="post"
+    <form method="post" id="stateForm"
           action="/StateMaster/Create">
 
         @Html.AntiForgeryToken()
@@ -42,3 +42,18 @@
     </form>
 
 </div>
+
+<script>
+    (function () {
+        var f = document.getElementById("stateForm");
+        if (!f) return;
+        f.addEventListener("submit", function (e) {
+            e.preventDefault();
+            Ajax.submit({
+                url: "/StateMaster/Create",
+                form: f,
+                onSuccess: function () { window.loadPage("/StateMaster"); }
+            });
+        });
+    })();
+</script>

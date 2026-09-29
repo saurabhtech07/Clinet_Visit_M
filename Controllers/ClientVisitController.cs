@@ -308,8 +308,19 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     public IActionResult Create(Dictionary<string,string> values)
     {
         values.Remove("__RequestVerificationToken");
-        _dynamicRepo.Insert("ClientVisit", values);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            _dynamicRepo.Insert("ClientVisit", values);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, message = "Visit saved successfully." });
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
     }
 
     // ================== YAHAN SE NAYA ADD KIYA HAI ==================
@@ -345,18 +356,38 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         values.Remove("__RequestVerificationToken");
         values.Remove("VisitId");
         values.Remove("UserId");
-        _dynamicRepo.Update("ClientVisit", "VisitId", id, values);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            _dynamicRepo.Update("ClientVisit", "VisitId", id, values);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, id = id, message = "Visit updated successfully." });
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
     }
 
     // DELETE - AJAX + NORMAL DONO KE LIYE
     [HttpPost][ValidateAntiForgeryToken]
     public IActionResult Delete(int id)
     {
-        _dynamicRepo.Delete("ClientVisit", "VisitId", id);
-        if(Request.Headers["X-Requested-With"]=="XMLHttpRequest")
-            return Json(new { success = true });
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            _dynamicRepo.Delete("ClientVisit", "VisitId", id);
+            if(Request.Headers["X-Requested-With"]=="XMLHttpRequest")
+                return Json(new { success = true, message = "Visit deleted successfully." });
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
     }
 
     // EXPORT EXCEL - DATABASE JAISA VAISA

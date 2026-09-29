@@ -96,14 +96,19 @@
     reportSearch.addEventListener("input", function(){ clearTimeout(reportSearchTimer); reportSearchTimer = setTimeout(()=> loadReport(buildReportUrl(1)), 300); });
     reportFrom.addEventListener("change", ()=> loadReport(buildReportUrl(1)));
     reportTo.addEventListener("change", ()=> loadReport(buildReportUrl(1)));
-    document.addEventListener("change", function(e){ if(e.target.id==="reportPageSize") loadReport(buildReportUrl(1)); });
+    if (!window.__reportNav) window.__reportNav = {};
+    if (!window.__reportNav.delegates) {
+    window.__reportNav.delegates = true;
+    document.addEventListener("change", function(e){ if(e.target.id==="reportPageSize" && !e.__reportNavHandled){ e.__reportNavHandled = true; loadReport(buildReportUrl(1)); } });
     document.getElementById("clearReportFilter").addEventListener("click", ()=>{ reportSearch.value=""; reportFrom.value=""; reportTo.value=""; currentSort=""; currentDir="DESC"; loadReport(buildReportUrl(1)); });
     document.addEventListener("click", function(e){
+        if (e.__reportNavHandled) return;
         const sortLink = e.target.closest(".sort-link");
-        if(sortLink){ e.preventDefault(); const col=sortLink.dataset.sort; if(currentSort===col) currentDir=currentDir==="ASC"?"DESC":"ASC"; else {currentSort=col; currentDir="ASC";} loadReport(buildReportUrl(1)); return; }
+        if(sortLink){ e.preventDefault(); e.__reportNavHandled = true; const col=sortLink.dataset.sort; if(currentSort===col) currentDir=currentDir==="ASC"?"DESC":"ASC"; else {currentSort=col; currentDir="ASC";} loadReport(buildReportUrl(1)); return; }
         const pageLink = e.target.closest(".ajax-report-link");
-        if(pageLink){ e.preventDefault(); loadReport(pageLink.href); }
+        if(pageLink){ e.preventDefault(); e.__reportNavHandled = true; loadReport(pageLink.href); }
     });
+    }
     function viewReportDetails(id){
         $("#reportDetailsModalContent").html('<div class="modal-body text-center py-5">Loading...</div>');
         var modal = new bootstrap.Modal(document.getElementById('reportDetailsModal'));

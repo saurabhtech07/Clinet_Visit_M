@@ -39,8 +39,11 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
     }
 }
 <style>
- .stat-card{border-radius:12px;border:0;box-shadow:0 3px 12px rgba(0,0,0,0.06);}
- .icon-box{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;}
+ .stat-card{background:#fff;border:1px solid #eef0f2;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;height:78px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+ .stat-label{font-size:10px;font-weight:700;color:#6c757d;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;}
+ .stat-value{font-size:24px;font-weight:800;line-height:1.1;margin-top:2px;}
+ .stat-sub{font-size:10px;color:#6c757d;margin-top:2px;}
+ .icon-box{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;}
  .filter-card{border-radius:12px;border:0;box-shadow:0 3px 12px rgba(0,0,0,0.06);}
  .search-box{border-radius:8px;height:38px;font-size:12px;}
  .table-card{border-radius:12px;border:0;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:visible;}
@@ -77,11 +80,11 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
         <a href="/DailySupport/Create" class="btn btn-dark px-3" style="border-radius:8px;height:38px;font-size:13px;">+ New Call Entry</a>
     </div>
 </div>
-<div class="row g-2 mb-3">
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body d-flex justify-content-between align-items-center p-3"><div><p class="text-muted mb-1" style="font-size:9px;font-weight:700;">TODAY CALLS</p><h4>@Model.TodayCalls</h4><small class="text-muted" style="font-size:10px;">Total @Model.TotalCalls calls</small></div><div class="icon-box" style="background:#f59e0b;"><i class="bi bi-telephone-fill"></i></div></div></div></div>
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body d-flex justify-content-between align-items-center p-3"><div><p class="text-muted mb-1" style="font-size:9px;font-weight:700;">OPEN CALLS</p><h4 class="text-danger">@Model.OpenCalls</h4><small class="text-danger" style="font-size:10px;">Need action</small></div><div class="icon-box" style="background:#ef4444;"><i class="bi bi-exclamation-circle-fill"></i></div></div></div></div>
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body d-flex justify-content-between align-items-center p-3"><div><p class="text-muted mb-1" style="font-size:9px;font-weight:700;">CLOSED TODAY</p><h4 class="text-success">@Model.ClosedToday</h4><small class="text-success" style="font-size:10px;">Done today</small></div><div class="icon-box" style="background:#10b981;"><i class="bi bi-check-circle-fill"></i></div></div></div></div>
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body d-flex justify-content-between align-items-center p-3"><div><p class="text-muted mb-1" style="font-size:9px;font-weight:700;">PENDING</p><h4 style="color:#8b5cf6;">@Model.PendingCalls</h4><small class="text-muted" style="font-size:10px;">In Progress</small></div><div class="icon-box" style="background:#8b5cf6;"><i class="bi bi-hourglass-split"></i></div></div></div></div>
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Today Calls</div><div class="stat-value">@Model.TodayCalls</div><div class="stat-sub">Total @Model.TotalCalls calls</div></div><div class="icon-box" style="background:#f59e0b;"><i class="bi bi-telephone-fill"></i></div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Open Calls</div><div class="stat-value" style="color:#dc3545;">@Model.OpenCalls</div><div class="stat-sub" style="color:#dc3545;">Need action</div></div><div class="icon-box" style="background:#ef4444;"><i class="bi bi-exclamation-circle-fill"></i></div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Closed Today</div><div class="stat-value" style="color:#198754;">@Model.ClosedToday</div><div class="stat-sub" style="color:#198754;">Done today</div></div><div class="icon-box" style="background:#10b981;"><i class="bi bi-check-circle-fill"></i></div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Pending</div><div class="stat-value" style="color:#6f42c1;">@Model.PendingCalls</div><div class="stat-sub">In Progress</div></div><div class="icon-box" style="background:#8b5cf6;"><i class="bi bi-hourglass-split"></i></div></div></div>
 </div>
 <div class="card filter-card mb-3"><div class="card-body p-3"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SEARCH TICKET / CUSTOMER / MOBILE</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, customer, mobile..." /></div></div><div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
 <div class="col-md-3 d-flex justify-content-end gap-2 align-items-end">
@@ -102,8 +105,14 @@ function loadTable(){
   var s=document.getElementById('dssSearch').value;
   var f=document.getElementById('fromDate').value;
   var t=document.getElementById('toDate').value;
-  fetch(`/DailySupport/Index?search=${s}&fromDate=${f}&toDate=${t}`,{headers:{'X-Requested-With':'XMLHttpRequest'}})
-  .then(r=>r.text()).then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting();});
+  var p=new URLSearchParams();
+  if(s) p.append('search',s);
+  if(f) p.append('fromDate',f);
+  if(t) p.append('toDate',t);
+  fetch('/DailySupport/Index?'+p.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}})
+  .then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();})
+  .then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting();})
+  .catch(e=>Ajax.toast(e.message,'error'));
 }
 document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
 document.getElementById('fromDate')?.addEventListener('change',loadTable);

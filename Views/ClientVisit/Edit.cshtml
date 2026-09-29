@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<form method="post">
+<form method="post" id="visitForm">
     @Html.AntiForgeryToken()
     <input type="hidden" name="VisitId" value="@row["VisitId"]" />
     <input type="hidden" name="ClientId" value="@client.ClientId" />
@@ -95,6 +95,19 @@
 
 @section Scripts {
 <script>
+    (function(){
+        var form = document.getElementById("visitForm");
+        if(form){
+            form.addEventListener("submit", function(e){
+                e.preventDefault();
+                Ajax.submit({
+                    url: "/ClientVisit/Edit/@ViewBag.VisitId",
+                    form: form,
+                    onSuccess: function(){ window.loadPage("/ClientVisit"); }
+                });
+            });
+        }
+    })();
     var rec=null, listening=false;
     function toggleDictation(){
         var SR=window.SpeechRecognition||window.webkitSpeechRecognition;

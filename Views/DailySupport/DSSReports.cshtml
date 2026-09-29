@@ -358,7 +358,8 @@ function loadData(page){
         for(let p=s;p<=e;p++){ div.innerHTML+= `<button class="page-btn ${p==currentPage?'active':''} page-number" data-page="${p}">${p}</button>`; }
         div.innerHTML+= `<button class="page-btn" id="nextBtn" ${currentPage>=tPages?'disabled':''}><i class="bi bi-chevron-right"></i></button>`;
         updateExcelLink();
-    }).finally(()=>{ document.getElementById('loadingOverlay').classList.remove('show'); });
+    }).catch(e=>{ Ajax.toast('Could not load report data.','error'); console.error(e); })
+      .finally(()=>{ document.getElementById('loadingOverlay').classList.remove('show'); });
 }
 function fmtLabel(k){ return k.replace(/([a-z])([A-Z])/g,'$1 $2'); }
 function buildRows(obj, skip){

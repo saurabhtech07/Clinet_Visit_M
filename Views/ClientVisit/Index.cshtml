@@ -758,11 +758,16 @@
         currentSort=""; currentDir="DESC";
         loadVisitTable(buildUrl(1));
     });
-    // SORTING + PAGINATION + ACTION
+    // SORTING + PAGINATION + ACTION - sirf ek baar register (AJAX nav safe)
+    if (!window.__visitNav) window.__visitNav = {};
+    if (!window.__visitNav.delegates) {
+    window.__visitNav.delegates = true;
     document.addEventListener("click", function (e) {
+        if (e.__visitNavHandled) return;
         const sortLink = e.target.closest(".sort-link");
         if(sortLink){
             e.preventDefault();
+            e.__visitNavHandled = true;
             const col = sortLink.dataset.sort;
             if(currentSort === col) currentDir = currentDir==="ASC"?"DESC":"ASC";
             else { currentSort = col; currentDir = "ASC"; }
@@ -770,10 +775,15 @@
             return;
         }
         const pageLink = e.target.closest(".ajax-visit-link");
-        if(pageLink){ e.preventDefault(); loadVisitTable(pageLink.href); }
+        if(pageLink){ e.preventDefault(); e.__visitNavHandled = true; loadVisitTable(pageLink.href); }
     });
+    }
     function viewDetails(id) { $.get("/ClientVisit/Details/" + id, function (html) { $("#detailsModalContent").html(html); new bootstrap.Modal(document.getElementById("detailsModal")).show(); }); }
-    function deleteVisit(id) { if (!confirm("Are you sure?")) return; $("#deleteForm").attr("action", "/ClientVisit/Delete/" + id).submit(); }
+    function deleteVisit(id) {
+        if (!confirm("Are you sure?")) return;
+        Ajax.postSimple("/ClientVisit/Delete/" + id, null, function () { loadVisitTable(buildUrl(1)); });
+    }
     function exportVisitCsv() { window.location.href = "/ClientVisit/ExportCsv?search=" + encodeURIComponent(searchInput.value.trim()); }
+    window.refreshCurrentTable = function () { loadVisitTable(buildUrl(1)); };
     updateExportUrl();
 </script>

@@ -309,7 +309,7 @@
 
 @section Scripts {
 <script>
-    function onClientChange(id){ if(id && id!=="0") window.location.href='/ClientVisit/Create?clientId='+id; }
+    function onClientChange(id){ if(id && id!=="0") window.loadPage('/ClientVisit/Create?clientId='+id); }
     const searchBox = document.getElementById("clientSearchBox");
     const dropdown = document.getElementById("clientDropdown");
     if(searchBox){
@@ -333,7 +333,18 @@
         });
         searchBox.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); return false; } });
     }
-    function clearAll(){ window.location.href='/ClientVisit/Create'; }
+    function clearAll(){ window.loadPage('/ClientVisit/Create'); }
+    var visitForm = document.getElementById("visitForm");
+    if(visitForm){
+        visitForm.addEventListener("submit", function(e){
+            e.preventDefault();
+            Ajax.submit({
+                url: "/ClientVisit/Create",
+                form: visitForm,
+                onSuccess: function(){ window.loadPage("/ClientVisit"); }
+            });
+        });
+    }
     var rec=null, listening=false;
     function toggleDictation(){
         var SR=window.SpeechRecognition||window.webkitSpeechRecognition;

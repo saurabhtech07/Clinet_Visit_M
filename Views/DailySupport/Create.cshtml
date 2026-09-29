@@ -415,5 +415,13 @@ document.getElementById('clearFormBtn').addEventListener('click',function(){
     document.getElementById('clientDropdown').style.display='none';
     document.getElementById('mobileSuggestionBox').style.display='none';
 });
+(function(){
+    var f=document.getElementById('addCallForm');
+    if(!f) return;
+    f.addEventListener('submit',function(e){
+        e.preventDefault();
+        Ajax.submit({url:'/DailySupport/Create',form:f,onSuccess:function(){ window.loadPage('/DailySupport'); }});
+    });
+})();
 // Mobile field ko readonly se editable kar diya hai taaki naya number type kar sake
 </script>

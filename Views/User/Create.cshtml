@@ -54,7 +54,7 @@ else if (f.Name.Equals("RoleId", StringComparison.OrdinalIgnoreCase))
 
 <h4 class="mb-3">Create New User</h4>
 
-<form method="post" action="/User/Create">
+<form method="post" id="userForm" action="/User/Create">
     @Html.AntiForgeryToken()
 
     <div class="card-section">
@@ -101,3 +101,18 @@ else if (f.Name.Equals("RoleId", StringComparison.OrdinalIgnoreCase))
     </div>
 
 </form>
+
+<script>
+    (function () {
+        var f = document.getElementById("userForm");
+        if (!f) return;
+        f.addEventListener("submit", function (e) {
+            e.preventDefault();
+            Ajax.submit({
+                url: "/User/Create",
+                form: f,
+                onSuccess: function () { window.loadPage("/User"); }
+            });
+        });
+    })();
+</script>

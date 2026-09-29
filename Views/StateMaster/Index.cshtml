@@ -342,6 +342,8 @@
         .catch(e => console.error(e));
     }
 
+    window.refreshCurrentTable = function () { loadTable(1); };
+
     // SORT + PAGINATION + PAGE SIZE - sirf ek baar register (AJAX nav safe)
     if (!window.__stateNav.delegates) {
         window.__stateNav.delegates = true;

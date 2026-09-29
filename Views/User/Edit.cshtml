@@ -9,7 +9,7 @@ var roles = ViewBag.Roles as List<ClientVisitManagement.Models.Role>
 
 <h4 class="mb-3">Edit User</h4>
 
-<form method="post" action="/User/Edit/@ViewBag.UserId">
+<form method="post" id="userForm" action="/User/Edit/@ViewBag.UserId">
     @Html.AntiForgeryToken()
 
     <input type="hidden"
@@ -154,3 +154,18 @@ var roles = ViewBag.Roles as List<ClientVisitManagement.Models.Role>
     </div>
 
 </form>
+
+<script>
+    (function () {
+        var f = document.getElementById("userForm");
+        if (!f) return;
+        f.addEventListener("submit", function (e) {
+            e.preventDefault();
+            Ajax.submit({
+                url: "/User/Edit/@ViewBag.UserId",
+                form: f,
+                onSuccess: function () { window.loadPage("/User"); }
+            });
+        });
+    })();
+</script>

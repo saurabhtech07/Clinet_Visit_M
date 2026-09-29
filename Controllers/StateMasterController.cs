@@ -303,10 +303,19 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
         if (values.ContainsKey("StateCode") && values["StateCode"]!= null)
             values["StateCode"] = values["StateCode"].ToUpper().Trim();
 
-        _repo.Insert("StateMaster", values);
+        try
+        {
+            _repo.Insert("StateMaster", values);
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            return Json(new { success = true });
+            return Json(new { success = true, message = "State saved successfully." });
 
         return RedirectToAction(nameof(Index));
     }
@@ -334,10 +343,19 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
         if (values.ContainsKey("StateCode") && values["StateCode"]!= null)
             values["StateCode"] = values["StateCode"].ToUpper().Trim();
 
-        _repo.Update("StateMaster", "StateId", id, values);
+        try
+        {
+            _repo.Update("StateMaster", "StateId", id, values);
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            return Json(new { success = true });
+            return Json(new { success = true, id = id, message = "State updated successfully." });
 
         return RedirectToAction(nameof(Index));
     }
@@ -347,12 +365,26 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
     public IActionResult Delete(int id)
     {
         var state = _repo.GetById("StateMaster", "StateId", id);
-        if (state == null) return NotFound();
+        if (state == null)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = "State not found." }, StatusCode(StatusCodes.Status404NotFound));
+            return NotFound();
+        }
 
-        _repo.Delete("StateMaster", "StateId", id);
+        try
+        {
+            _repo.Delete("StateMaster", "StateId", id);
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-            return Json(new { success = true });
+            return Json(new { success = true, message = "State deleted successfully." });
 
         return RedirectToAction(nameof(Index));
     }

@@ -207,14 +207,26 @@ public class ClientController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Create(IFormCollection form)
     {
         var exclude = new[] { "ClientId", "CreatedOn", "CompanyType", "__RequestVerificationToken" };
         var values = form.Keys.Where(k =>!exclude.Contains(k, StringComparer.OrdinalIgnoreCase))
          .ToDictionary(k => k, k => form[k].ToString());
 
-        int newId = _dynamicRepo.Insert("Client", values);
-        return Redirect($"/ClientVisit/Create?clientId={newId}");
+        try
+        {
+            int newId = _dynamicRepo.Insert("Client", values);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, id = newId, message = "Client saved successfully." });
+            return Redirect($"/ClientVisit/Create?clientId={newId}");
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
     }
 
     [HttpGet]
@@ -238,14 +250,26 @@ public class ClientController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Edit(int id, IFormCollection form)
     {
         var exclude = new[] { "ClientId", "CreatedOn", "CompanyType", "__RequestVerificationToken" };
         var values = form.Keys.Where(k =>!exclude.Contains(k, StringComparer.OrdinalIgnoreCase))
          .ToDictionary(k => k, k => form[k].ToString());
 
-        _dynamicRepo.Update("Client", "ClientId", id, values);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            _dynamicRepo.Update("Client", "ClientId", id, values);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, id = id, message = "Client updated successfully." });
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+            throw;
+        }
     }
 
     [HttpGet]

@@ -433,7 +433,10 @@ public class DailySupportController : Controller
         var values=form.Keys.Where(k=>k!="__RequestVerificationToken").ToDictionary(k=>k,k=>form[k].ToString());
         if(!values.ContainsKey("TicketNo")||string.IsNullOrWhiteSpace(values["TicketNo"])) values["TicketNo"]=$"TKT-{DateTime.Now:ddMMyy}-{new Random().Next(10,99)}";
         if(!values.ContainsKey("SupportDate")) values["SupportDate"]=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        _dynamicRepo.Insert("DailySupport",values); return RedirectToAction(nameof(Index));
+        try{ _dynamicRepo.Insert("DailySupport",values);
+            if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,message="Call entry saved successfully."});
+            return RedirectToAction(nameof(Index));
+        }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=false,message=ex.Message},StatusCode(StatusCodes.Status400BadRequest)); throw; }
     }
     [HttpGet] public IActionResult Edit(int id){
         var cols=_dynamicRepo.GetColumns("DailySupport");
@@ -444,7 +447,10 @@ public class DailySupportController : Controller
     }
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Edit(int id,IFormCollection form){
         var values=form.Keys.Where(k=>k!="__RequestVerificationToken"&&k!="SupportId"&&k!="TicketNo").ToDictionary(k=>k,k=>form[k].ToString());
-        _dynamicRepo.Update("DailySupport","SupportId",id,values); return RedirectToAction(nameof(Index));
+        try{ _dynamicRepo.Update("DailySupport","SupportId",id,values);
+            if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,id=id,message="Call entry updated successfully."});
+            return RedirectToAction(nameof(Index));
+        }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=false,message=ex.Message},StatusCode(StatusCodes.Status400BadRequest)); throw; }
     }
     [HttpGet] public IActionResult GetDetails(int id){
         using var con=_db.GetConnection(); con.Open(); Dictionary<string,object?>? ticket=null; Dictionary<string,object?>? customer=null; List<Dictionary<string,object?>> history=new();
