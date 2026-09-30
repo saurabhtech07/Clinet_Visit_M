@@ -1,0 +1,580 @@
+/* =========================================================
+   IMPORT - Excel/CSV to grid
+   Visual language matches Daily Support System (.stat-card,
+   .filter-card, .table-card, sticky thead, #f8fafc headers).
+   ========================================================= */
+
+/* ---------------- KPI / stat cards ---------------- */
+
+.imp-stat-card {
+    background: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 78px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+.imp-stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6c757d;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.imp-stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-top: 2px;
+}
+
+.imp-stat-sub {
+    font-size: 10px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.imp-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* ---------------- filter card ---------------- */
+
+.imp-filter-card {
+    border-radius: 12px;
+    border: 0;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .06);
+}
+
+.imp-search-box {
+    border-radius: 8px;
+    height: 38px;
+    font-size: 12px;
+}
+
+.imp-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+/* ---------------- drop zone ---------------- */
+
+.imp-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f1f4f9;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease;
+}
+
+.imp-dropzone:hover,
+.imp-dropzone:focus {
+    border-color: #1f4a94;
+    background: #eef2f9;
+    outline: none;
+}
+
+.imp-dropzone.is-dragover {
+    border-color: #1f4a94;
+    background: #e6edf8;
+}
+
+.imp-drop-icon {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1f4a94;
+    color: #fff;
+    font-size: 21px;
+}
+
+.imp-drop-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #16336b;
+}
+
+.imp-drop-hint {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 3px;
+}
+
+.imp-browse {
+    color: #1f4a94;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.imp-drop-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: .3px;
+}
+
+/* ---------------- status / info bar ---------------- */
+
+.imp-status {
+    display: none;
+    margin-top: 12px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #f1f4f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.imp-status.is-ok {
+    background: #eaf7ef;
+    color: #198754;
+    border-color: #c9ead6;
+}
+
+.imp-status.is-err {
+    background: #fdecea;
+    color: #dc3545;
+    border-color: #f5c6cb;
+}
+
+.imp-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.imp-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    background: #f1f4f9;
+    border: 1px solid #e6e9ef;
+}
+
+.imp-stat b {
+    font-size: 13px;
+    font-weight: 800;
+    color: #16336b;
+}
+
+.imp-stat small {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.imp-file {
+    font-size: 11px;
+    color: #6c757d;
+    margin-left: auto;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------------- table card ---------------- */
+
+.imp-table-card {
+    border-radius: 12px;
+    border: 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+    overflow: hidden;
+}
+
+#gridContainer {
+    overflow: auto;
+    max-height: 60vh;
+}
+
+.imp-table {
+    width: 100%;
+    margin: 0;
+    font-size: 12px;
+    color: #0f172a;
+}
+
+.imp-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 12px 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.imp-table thead th:hover {
+    background: #f1f5f9;
+}
+
+.imp-table thead th.active {
+    color: #16336b;
+}
+
+.imp-table thead th .sort-icon {
+    font-size: 11px;
+    margin-left: 5px;
+    opacity: .55;
+}
+
+.imp-table thead th.active .sort-icon {
+    opacity: 1;
+}
+
+.imp-table tbody td {
+    padding: 9px 10px;
+    border-top: 1px solid #f1f5f9;
+    vertical-align: middle;
+    white-space: nowrap;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.imp-table tbody tr:hover td {
+    background: #f8fafc;
+}
+
+.imp-idx {
+    width: 52px;
+    text-align: right;
+    color: #94a3b8;
+    font-weight: 600;
+    background: #fcfdfe;
+}
+
+.imp-empty {
+    text-align: center;
+    padding: 34px 10px !important;
+    color: #94a3b8;
+    font-size: 13px;
+    white-space: normal !important;
+}
+
+/* ---------------- pagination ---------------- */
+
+.imp-pager {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 12px 14px;
+    border-top: 1px solid #eef0f2;
+    background: #fcfdfe;
+}
+
+.imp-pager:empty {
+    display: none;
+}
+
+/* ---------------- empty state ---------------- */
+
+.imp-empty {
+    padding: 48px 16px;
+    text-align: center;
+    color: #8a94a6;
+    font-size: 14px;
+}
+
+.imp-empty::before {
+    content: "\F5D3";           /* bi-table */
+    display: block;
+    font-family: "bootstrap-icons";
+    font-size: 30px;
+    margin-bottom: 10px;
+    opacity: .45;
+}
+
+/* ================= tabs ================= */
+
+.imp-tabs {
+    border: 0;
+    gap: 4px;
+    margin-bottom: 14px;
+}
+
+.imp-tabs .nav-link {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: #64748b;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 9px 16px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.imp-tabs .nav-link:hover {
+    color: #16336b;
+    background: #f8fafc;
+}
+
+.imp-tabs .nav-link.active {
+    color: #16336b;
+    background: transparent;
+    border-bottom-color: #16336b;
+}
+
+.imp-tab-count {
+    display: inline-block;
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 20px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.imp-tabs .nav-link.active .imp-tab-count {
+    background: #16336b;
+    color: #fff;
+}
+
+/* ================= saved file list ================= */
+
+.imp-filelist {
+    border: 1px solid #eef0f2;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.imp-fileitem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 14px;
+    background: #fff;
+    border: 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    cursor: pointer;
+    transition: background .12s ease;
+}
+
+.imp-fileitem:last-child {
+    border-bottom: 0;
+}
+
+.imp-fileitem:hover {
+    background: #f8fafc;
+}
+
+.imp-fileitem.is-open {
+    background: #eef2f9;
+    box-shadow: inset 3px 0 0 #16336b;
+}
+
+.imp-fileitem:focus-visible {
+    outline: 2px solid #16336b;
+    outline-offset: -2px;
+}
+
+.imp-fileicon {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: #eaf7f1;
+    color: #0f8a5f;
+    font-size: 15px;
+}
+
+.imp-fileitem.is-open .imp-fileicon {
+    background: #16336b;
+    color: #fff;
+}
+
+.imp-filemeta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.imp-filename {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.imp-filesub {
+    font-size: 11.5px;
+    color: #8a94a6;
+    margin-top: 2px;
+}
+
+.imp-filedel {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: #b6becb;
+    font-size: 14px;
+    padding: 5px 7px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.imp-filedel:hover {
+    background: #fdeaea;
+    color: #d64545;
+}
+
+.imp-filedel:focus-visible {
+    outline: 2px solid #d64545;
+    outline-offset: 1px;
+}
+
+.imp-listpager {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    background: #fcfdfe;
+    border-top: 1px solid #eef0f2;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.imp-listpager button {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 7px;
+    font-size: 12px;
+    padding: 4px 11px;
+    cursor: pointer;
+    color: #475569;
+}
+
+.imp-listpager button:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+/* ================= save bar ================= */
+
+.imp-savebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 13px 16px;
+    background: #fcfdfe;
+    border-top: 1px solid #eef0f2;
+}
+
+.imp-savebar .btn {
+    border-radius: 8px;
+    height: 38px;
+    font-size: 13px;
+    padding: 0 18px;
+}
+
+.imp-savebar-note {
+    font-size: 11.5px;
+    color: #8a94a6;
+}
+
+.imp-setuperr {
+    background: #fdeaea;
+    border: 1px solid #f5c2c2;
+    color: #96222a;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 12.5px;
+    margin-bottom: 12px;
+}
+
+.imp-page {
+    min-width: 34px;
+    height: 32px;
+    padding: 0 9px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.imp-page:hover:not(:disabled) {
+    border-color: #1f4a94;
+    color: #1f4a94;
+}
+
+.imp-page.active {
+    background: #1f4a94;
+    border-color: #1f4a94;
+    color: #fff;
+}
+
+.imp-page:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* ---------------- scrollbar ---------------- */
+
+#gridContainer::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+#gridContainer::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+#gridContainer::-webkit-scrollbar-track {
+    background: #f8fafc;
+}

@@ -133,7 +133,6 @@ C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\Clie
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-Thin.ttf
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\Lato-ThinItalic.ttf
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\LatoFont\OFL.txt
-C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.exe
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.deps.json
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.runtimeconfig.json
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.dll
@@ -224,8 +223,83 @@ C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\Clie
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.pdb
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.genruntimeconfig.cache
 C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ref\ClientVisitManagement.dll
-C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\web.config
-C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\appsettings.json
-C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\ClientVisitManagement.deps.json
-C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\ClientVisitManagement.runtimeconfig.json
-C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\publish\ClientVisitManagement.staticwebassets.endpoints.json
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\obj\Debug\net8.0\ClientVisitManagement.sourcelink.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\appsettings.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Black.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-BlackItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Bold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-BoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-ExtraBold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-ExtraLight.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-ExtraLightItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Italic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Light.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-LightItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Medium.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-MediumItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Regular.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-SemiBold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-SemiBoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-Thin.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\Lato-ThinItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\LatoFont\OFL.txt
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\ClientVisitManagement.staticwebassets.runtime.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\ClientVisitManagement.staticwebassets.endpoints.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\ClientVisitManagement.deps.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\ClientVisitManagement.runtimeconfig.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\ClientVisitManagement.dll
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build\ClientVisitManagement.pdb
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\appsettings.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\ClientVisitManagement.staticwebassets.runtime.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\ClientVisitManagement.staticwebassets.endpoints.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Black.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-BlackItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Bold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-BoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-ExtraBold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-ExtraLight.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-ExtraLightItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Italic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Light.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-LightItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Medium.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-MediumItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Regular.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-SemiBold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-SemiBoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-Thin.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\Lato-ThinItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\LatoFont\OFL.txt
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\ClientVisitManagement.deps.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\ClientVisitManagement.runtimeconfig.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\ClientVisitManagement.dll
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvm-build2\ClientVisitManagement.pdb
+C:\Users\Lenovo\Desktop\ClientVisitManagement 1 (3)\ClientVisitManagement 1\ClientVisitManagement\bin\Debug\net8.0\ClientVisitManagement.exe
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\appsettings.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\ClientVisitManagement.staticwebassets.runtime.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\ClientVisitManagement.staticwebassets.endpoints.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Black.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-BlackItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Bold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-BoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-ExtraBold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-ExtraBoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-ExtraLight.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-ExtraLightItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Italic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Light.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-LightItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Medium.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-MediumItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Regular.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-SemiBold.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-SemiBoldItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-Thin.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\Lato-ThinItalic.ttf
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\LatoFont\OFL.txt
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\ClientVisitManagement.deps.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\ClientVisitManagement.runtimeconfig.json
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\ClientVisitManagement.dll
+C:\Users\Lenovo\AppData\Local\Temp\opencode\cvmbuild\ClientVisitManagement.pdb

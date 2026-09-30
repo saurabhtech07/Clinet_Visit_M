@@ -330,7 +330,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
 </div>
 <div class="mb-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">DESCRIPTION</label><textarea name="Description" rows="3" placeholder="Client ne kya bola..." class="form-control" style="border-radius:8px;font-size:13px;"></textarea></div>
 @if(extra.Any()){
-<hr style="opacity:0.1;" /><p class="mb-3" style="font-size:11px;font-weight:700;color:#8b5cf6;">DYNAMIC FIELDS - DB SE AUTO</p>
+@* <hr style="opacity:0.1;" /><p class="mb-3" style="font-size:11px;font-weight:700;color:#8b5cf6;">DYNAMIC FIELDS - DB SE AUTO</p> *@
 <div class="row g-3 mb-3">@foreach(var f in extra){<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">@f.Name.ToUpper()</label>@if(f.DataType.Contains("date")){<input type="date" name="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}else if(f.DataType.Contains("int")||f.DataType.Contains("decimal")||f.DataType.Contains("numeric")){<input type="number" name="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}else{<input type="text" name="@f.Name" placeholder="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}</div>}</div>
 }
 <div class="text-end d-flex justify-content-end gap-2"><button type="button" class="btn btn-light border px-4" id="clearFormBtn" style="border-radius:8px;height:38px;font-size:13px;">Clear</button><button type="submit" class="btn btn-dark px-4" style="border-radius:8px;height:38px;font-size:13px;">Save Call</button></div>

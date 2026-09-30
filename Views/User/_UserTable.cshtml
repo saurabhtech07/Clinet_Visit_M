@@ -35,6 +35,11 @@
   .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
   .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
   .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
+  .user-id-pill {
+        background: #1e293b; color: #fff;
+        padding: 3px 10px; border-radius: 6px;
+        font-size: 11px; font-weight: 600;
+    }
 </style>
 
 <div class="table-scroll-container">
@@ -76,6 +81,8 @@
                             <td>
                                 @if (column.Equals("PasswordHash", StringComparison.OrdinalIgnoreCase))
                                 { <span>********</span> }
+                                else if (column.Equals("UserId", StringComparison.OrdinalIgnoreCase))
+                                { <span class="user-id-pill">@(value?? "")</span> }
                                 else if (column.Equals("IsActive", StringComparison.OrdinalIgnoreCase))
                                 {
                                     bool active = value!= null && Convert.ToBoolean(value);

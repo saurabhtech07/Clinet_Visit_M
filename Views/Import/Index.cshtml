@@ -1,0 +1,260 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+
+    var cfg = (ViewBag.Cfg as Dictionary<string, string>) ?? new Dictionary<string, string>();
+    var pageSizes = (ViewBag.PageSizes as List<int>) ?? new List<int> { 25, 50, 100, 200 };
+    var defaultSize = (int)(ViewBag.DefaultPageSize ?? 50);
+    if (!pageSizes.Contains(defaultSize)) { pageSizes.Add(defaultSize); pageSizes.Sort(); }
+    var allowDelete = (bool)(ViewBag.AllowDelete ?? true);
+    var savedLabel = ViewBag.TabSavedLabel as string ?? "Saved Files";
+    var currentLabel = ViewBag.TabCurrentLabel as string ?? "Current File";
+    var maxRows = (int)(ViewBag.MaxRows ?? 10000);
+    var largeFileWarnRows = (int)(ViewBag.LargeFileWarnRows ?? 50000);
+    var maxFileBytes = (long)(ViewBag.MaxFileBytes ?? 10485760L);
+    var setupError = ViewBag.SetupError as string;
+    var acceptExt = cfg.TryGetValue("AllowedExtensions", out var ax) ? ax : "xlsx,xls,xlsm,csv";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="fw-bold mb-0">Import Excel / CSV</h4>
+</div>
+
+@Html.AntiForgeryToken()
+
+@if (!string.IsNullOrEmpty(setupError))
+{
+    <div class="imp-setuperr"><i class="bi bi-exclamation-triangle me-1"></i>@setupError</div>
+}
+
+<ul class="nav nav-tabs imp-tabs" role="tablist">
+    @* Current File opens first: the page is for dropping a file, and the saved
+   list is a place to go back to. *@
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tabBtnCurrent" data-bs-toggle="tab" data-bs-target="#tabCurrent"
+                type="button" role="tab" aria-controls="tabCurrent" aria-selected="true">
+            <i class="bi bi-cloud-arrow-up"></i>@currentLabel
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tabBtnSaved" data-bs-toggle="tab" data-bs-target="#tabSaved"
+                type="button" role="tab" aria-controls="tabSaved" aria-selected="false">
+            <i class="bi bi-folder2-open"></i>@savedLabel
+            <span class="imp-tab-count" id="savedCount">0</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    @* ==================== TAB 2 : SAVED FILES ==================== *@
+    <div class="tab-pane fade" id="tabSaved" role="tabpanel" aria-labelledby="tabBtnSaved">
+
+        <div class="card imp-filter-card mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md">
+                        <label class="form-label imp-label" for="savedSearch">SEARCH SAVED FILES</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="savedSearch" class="form-control border-start-0 imp-search-box"
+                                   placeholder="Type a file name..." autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+                <div id="savedStatus" class="imp-status"></div>
+            </div>
+        </div>
+
+        <div class="imp-filelist mb-3" id="savedList"></div>
+        <div class="imp-listpager mb-3" id="savedListPager"></div>
+
+        <div class="card imp-filter-card mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md">
+                        <label class="form-label imp-label" for="savedGridSearch">SEARCH INSIDE THE OPEN FILE</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="savedGridSearch" class="form-control border-start-0 imp-search-box"
+                                   placeholder="Type to filter any column of the open file..." autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-2">
+                        <label class="form-label imp-label" for="savedGridSize">ROWS PER PAGE</label>
+                        <select id="savedGridSize" class="form-select imp-search-box">
+                            @foreach (var s in pageSizes)
+                            {
+                                <option value="@s" selected="@(s == defaultSize)">@s</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div id="savedGridInfo" class="imp-info"></div>
+            </div>
+        </div>
+
+        <div class="card imp-table-card">
+            <div id="savedGrid"></div>
+            <div id="savedPager" class="imp-pager"></div>
+        </div>
+    </div>
+
+    @* ==================== TAB 1 : CURRENT FILE ==================== *@
+    <div class="tab-pane fade show active" id="tabCurrent" role="tabpanel" aria-labelledby="tabBtnCurrent">
+
+        <div class="card imp-filter-card mb-3">
+            <div class="card-body p-3">
+                <div class="imp-dropzone" id="dropZone" tabindex="0" role="button"
+                     aria-label="Drop Excel or CSV file here, or click to browse">
+                    <div class="imp-drop-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                    <div class="imp-drop-title">Drop Excel/CSV or <span class="imp-browse">Click to Upload</span></div>
+                    <div class="imp-drop-hint">First sheet is used. Nothing leaves your browser until you press Save.</div>
+                    <div class="imp-drop-badge">@acceptExt.ToUpperInvariant().Replace(",", " &nbsp;")</div>
+                </div>
+                <input type="file" id="excelFile" accept="@string.Join(",", acceptExt.Split(',').Select(e => "." + e.Trim().TrimStart('.')))" class="d-none" />
+            </div>
+        </div>
+
+        <div class="card imp-filter-card mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md">
+                        <label class="form-label imp-label" for="gridSearch">SEARCH ALL COLUMNS</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="gridSearch" class="form-control border-start-0 imp-search-box"
+                                   placeholder="Type to filter any column..." autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-2">
+                        <label class="form-label imp-label" for="gridPageSize">ROWS PER PAGE</label>
+                        <select id="gridPageSize" class="form-select imp-search-box">
+                            @foreach (var s in pageSizes)
+                            {
+                                <option value="@s" selected="@(s == defaultSize)">@s</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div id="currentStatus" class="imp-status"></div>
+            </div>
+        </div>
+
+        <div class="card imp-table-card">
+            <div id="gridContainer"></div>
+            <div id="gridPager" class="imp-pager"></div>
+            <div class="imp-savebar">
+                <span class="imp-savebar-note">
+                    Saving keeps the data in the database so you can open it again later. Up to
+                    @maxRows.ToString("N0") rows per file.
+                </span>
+                <span class="d-flex gap-2">
+                    <button type="button" id="gridExport" class="btn btn-light border">
+                        <i class="bi bi-download me-1"></i>Export
+                    </button>
+                    <button type="button" id="gridClear" class="btn btn-light border">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                    <button type="button" id="btnSave" class="btn btn-primary">
+                        <i class="bi bi-database me-1"></i>Save to Database
+                    </button>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        /* Static <script src="~/..."> tags break when this page is injected by the
+           sidebar AJAX nav, because "~" is only expanded by the server for
+           server-rendered attributes. The base is taken from the already-resolved
+           site.css href, which is correct on a virtual directory too. */
+        function appBase() {
+            var link = document.querySelector('link[href*="css/site.css"]');
+            if (link && link.href) return link.href.replace(/css\/site\.css.*$/, '');
+            return '/';
+        }
+
+        function loadOnce(path, isReady, ready) {
+            if (isReady()) { ready(); return; }
+            var tag = document.createElement('script');
+            tag.src = appBase() + path;
+            tag.onload = function () { tag.setAttribute('data-loaded', '1'); ready(); };
+            tag.onerror = function () {
+                tag.parentNode.removeChild(tag);
+                if (window.console) window.console.error('Failed to load ' + tag.src);
+            };
+            document.body.appendChild(tag);
+        }
+
+        function boot() {
+            /* Two grids on one page: the live file (tab 2) and the saved-file
+               view (tab 1), which pages on the server. init() returns the
+               instance, so each is driven separately. clearId/exportId are null
+               on the saved grid so it never binds the live file's buttons. */
+            var currentGrid = ExcelCsvToGrid.init({
+                fileInputId: 'excelFile',
+                dropZoneId: 'dropZone',
+                gridId: 'gridContainer',
+                searchId: 'gridSearch',
+                statusId: 'currentStatus',
+                infoId: 'currentInfo',
+                pagerId: 'gridPager',
+                clearId: 'gridClear',
+                exportId: 'gridExport',
+                pageSize: @defaultSize,
+                largeFileRows: @largeFileWarnRows,
+                maxFileBytes: @maxFileBytes
+            });
+
+            var savedGrid = ExcelCsvToGrid.init({
+                gridId: 'savedGrid',
+                searchId: 'savedGridSearch',
+                statusId: 'savedStatus',
+                infoId: 'savedGridInfo',
+                pagerId: 'savedPager',
+                clearId: null,
+                exportId: null,
+                pageSize: @defaultSize
+            });
+
+            var size = document.getElementById('gridPageSize');
+            if (size) {
+                size.addEventListener('change', function () { currentGrid.setPageSize(size.value); });
+            }
+
+            var gridSize = document.getElementById('savedGridSize');
+            if (gridSize) {
+                gridSize.addEventListener('change', function () { savedGrid.setPageSize(gridSize.value); });
+            }
+
+            ImportSave.init({
+                currentGrid: currentGrid,
+                savedGrid: savedGrid,
+                pageSize: @defaultSize,
+                maxRows: @maxRows,
+                allowDelete: @(allowDelete ? "true" : "false"),
+                tabSavedLabel: '@savedLabel',
+                tabCurrentLabel: '@currentLabel'
+            });
+        }
+
+        /* Chained, because boot() needs both grid helpers already defined. */
+        loadOnce('lib/xlsx/xlsx.full.min.js', function () { return !!window.XLSX; }, function () {
+            loadOnce('js/excel-csv-to-grid.js', function () { return !!window.ExcelCsvToGrid; }, function () {
+                loadOnce('js/import-save.js', function () { return !!window.ImportSave; }, boot);
+            });
+        });
+    })();
+</script>
