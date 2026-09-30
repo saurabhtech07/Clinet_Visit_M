@@ -118,11 +118,31 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    /* Re-execute the failing request against itself so the original exception is
+       logged by the host. The old "/Home/Error" target was useless here - there
+       is no HomeController, so the error page 404'd and hid the real cause. */
+    app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        if (feature?.Error is not null)
+        {
+            app.Logger.LogError(feature.Error, "Unhandled exception for {Path}.", context.Request.Path);
+        }
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsync("Something went wrong. Please try again.");
+    }));
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+/* MonsterASP's free tier serves plain HTTP only. Forcing HTTPS there produces a
+   redirect to a port nothing is listening on, so the site never loads. Opt in
+   with HttpsRedirect=true once a certificate is actually configured. */
+if (builder.Configuration.GetValue("HttpsRedirect", app.Environment.IsDevelopment()))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();

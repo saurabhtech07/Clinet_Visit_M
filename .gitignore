@@ -1,0 +1,28 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+publish/
+
+## Publish profiles - machine specific, contain credentials
+*.pubxml
+*.publishsettings
+
+## Local secrets / env
+appsettings.Local.json
+appsettings.*.Local.json
+*.env
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## OS / misc
+Thumbs.db
+*.swp
+*.tmp
+*.log
