@@ -78,25 +78,34 @@
 
     function SavedFiles(opts) {
         this.opts = opts;
-        this.page = 1;
-        this.pageSize = opts.pageSize;
+        this.page = 1;              /* last page fetched */
+        this.pageSize = 5;          /* first batch: 5 files, rest lazy-loaded */
+        this.total = 0;
+        this.totalPages = 1;
+        this.busy = false;          /* guards concurrent lazy loads */
+        this.io = null;             /* IntersectionObserver for lazy loading */
+        this.tbody = null;          /* the <tbody> rows append to */
         this.search = '';
         this.sortBy = 'recent';
         this.period = 'all';
         this.openId = 0;
     }
 
+    SavedFiles.prototype.fetchPage = function (page) {
+        return get('Import/Files?page=' + page + '&pageSize=' + this.pageSize +
+                   (this.search ? '&search=' + encodeURIComponent(this.search) : '') +
+                   '&sortBy=' + encodeURIComponent(this.sortBy) +
+                   '&period=' + encodeURIComponent(this.period));
+    };
+
     SavedFiles.prototype.refresh = function () {
         var self = this;
+        this.page = 1;
+        this.disarmLazy();
         var list = byId('savedList');
         if (list) { list.textContent = ''; list.appendChild(mkEmpty('Loading saved files...')); }
 
-        var path = 'Import/Files?page=' + this.page + '&pageSize=' + this.pageSize +
-                   (this.search ? '&search=' + encodeURIComponent(this.search) : '') +
-                   '&sortBy=' + encodeURIComponent(this.sortBy) +
-                   '&period=' + encodeURIComponent(this.period);
-
-        return get(path).then(function (d) { self.render(d); })
+        return this.fetchPage(1).then(function (d) { self.render(d); })
             .catch(function (err) {
                 if (list) { list.textContent = ''; list.appendChild(mkEmpty(err.message)); }
             });
@@ -104,66 +113,95 @@
 
     SavedFiles.prototype.render = function (d) {
         var self = this;
-        var list = byId('savedList');
-        if (!list) return;
+        this.total = d.total;
+        this.totalPages = d.totalPages || 1;
 
         var count = byId('savedCount');
         if (count) count.textContent = fmt(d.total);
 
+        var list = byId('savedList');
+        if (!list) return;
+
         list.textContent = '';
+        list.className = 'imp-save-table-wrap';
+
         var files = d.files || [];
         if (!files.length) {
+            list.className = '';
             list.appendChild(mkEmpty(this.search
                 ? 'No saved file matches that search.'
                 : 'Nothing saved yet. Open "' + this.opts.tabCurrentLabel + '", drop a file and press Save.'));
-            this.renderListPager(d);
+            this.renderLazyFooter(d);
             return;
         }
 
-        files.forEach(function (f) { list.appendChild(self.buildRow(f)); });
-        this.renderListPager(d);
+        var table = document.createElement('table');
+        table.className = 'imp-save-table';
+        var thead = document.createElement('thead');
+        var hr = document.createElement('tr');
+        ['File', 'Rows', 'Cols', 'Saved By', 'Saved On', ''].forEach(function (h) {
+            var th = document.createElement('th');
+            th.textContent = h;
+            hr.appendChild(th);
+        });
+        thead.appendChild(hr);
+        this.tbody = document.createElement('tbody');
+        table.appendChild(thead);
+        table.appendChild(this.tbody);
+        list.appendChild(table);
+
+        var sentinel = document.createElement('div');
+        sentinel.className = 'imp-lazy-sentinel';
+        sentinel.id = 'savedLazySentinel';
+        sentinel.textContent = 'Loading more...';
+        list.appendChild(sentinel);
+
+        files.forEach(function (f) { self.tbody.appendChild(self.buildRow(f)); });
+        this.armLazy();
+        this.renderLazyFooter(d);
     };
 
     SavedFiles.prototype.buildRow = function (f) {
         var self = this;
 
-        var row = document.createElement('div');
-        row.className = 'imp-fileitem' + (f.fileId === this.openId ? ' is-open' : '');
-        row.tabIndex = 0;
-        row.setAttribute('role', 'button');
+        var tr = document.createElement('tr');
+        tr.className = f.fileId === this.openId ? 'is-open' : '';
+        tr.setAttribute('data-id', f.fileId);
+        tr.tabIndex = 0;
+        tr.setAttribute('role', 'button');
+        tr.title = 'Open ' + f.fileName;
 
+        /* File cell: type icon + name */
+        var tdName = document.createElement('td');
+        tdName.className = 'imp-filecell';
         var icon = document.createElement('span');
         var ext = String(f.fileName || '').split('.').pop().toLowerCase();
         if (['csv', 'xlsx', 'xls'].indexOf(ext) === -1) ext = 'xlsx';
         icon.className = 'imp-fileicon is-' + ext;
         icon.textContent = extIcon(f.fileName);
-        row.appendChild(icon);
-
-        var meta = document.createElement('span');
-        meta.className = 'imp-filemeta';
-
+        tdName.appendChild(icon);
         var name = document.createElement('span');
         name.className = 'imp-filename';
         name.textContent = f.fileName;
         name.title = f.fileName;
-        meta.appendChild(name);
+        tdName.appendChild(name);
+        tr.appendChild(tdName);
 
-        var bits = [fmt(f.rowCount) + ' rows', fmt(f.columnCount) + ' cols'];
-        if (f.savedOnDisplay) bits.push(f.savedOnDisplay);
-        if (f.savedByName) bits.push(f.savedByName);
+        tr.appendChild(tblCell(fmt(f.rowCount), 'imp-num'));
+        tr.appendChild(tblCell(fmt(f.columnCount), 'imp-num'));
+        tr.appendChild(tblCell(f.savedByName || '\u2014'));
+        tr.appendChild(tblCell(f.savedOnDisplay || '\u2014'));
 
-        var sub = document.createElement('span');
-        sub.className = 'imp-filesub';
-        sub.textContent = bits.join('   \u00b7   ');
-        meta.appendChild(sub);
-        row.appendChild(meta);
-
-        var openBadge = document.createElement('span');
-        openBadge.className = 'imp-openbadge';
-        openBadge.textContent = 'Open';
-        openBadge.setAttribute('aria-hidden', 'true');
-        row.appendChild(openBadge);
-
+        var tdAct = document.createElement('td');
+        tdAct.className = 'imp-actions';
+        var openBtn = document.createElement('button');
+        openBtn.type = 'button';
+        openBtn.className = 'imp-rowopen';
+        openBtn.textContent = '\uF31F';   /* bi-eye-fill */
+        openBtn.title = 'Open this file';
+        openBtn.setAttribute('aria-label', 'Open ' + f.fileName);
+        openBtn.addEventListener('click', function (e) { e.stopPropagation(); self.open(f); });
+        tdAct.appendChild(openBtn);
         if (this.opts.allowDelete) {
             var del = document.createElement('button');
             del.type = 'button';
@@ -172,55 +210,104 @@
             del.title = 'Delete this saved file';
             del.setAttribute('aria-label', 'Delete ' + f.fileName);
             del.addEventListener('click', function (e) { e.stopPropagation(); self.remove(f); });
-            row.appendChild(del);
+            tdAct.appendChild(del);
         }
+        tr.appendChild(tdAct);
 
-        row.addEventListener('click', function () { self.open(f); });
-        row.addEventListener('keydown', function (e) {
+        tr.addEventListener('click', function () { self.open(f); });
+        tr.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); self.open(f); }
         });
 
-        return row;
+        return tr;
     };
 
-    SavedFiles.prototype.renderListPager = function (d) {
+    function tblCell(text, cls) {
+        var td = document.createElement('td');
+        td.textContent = text;
+        if (cls) td.className = cls;
+        return td;
+    }
+
+    /* ---------------- lazy loading ---------------- */
+
+    SavedFiles.prototype.disarmLazy = function () {
+        if (this.io) { this.io.disconnect(); this.io = null; }
+    };
+
+    SavedFiles.prototype.armLazy = function () {
+        var self = this;
+        this.disarmLazy();
+        var sentinel = byId('savedLazySentinel');
+        if (!sentinel) { this.renderLazyFooter(); return; }
+
+        if (this.page >= this.totalPages) {
+            sentinel.style.display = 'none';
+            this.renderLazyFooter();
+            return;
+        }
+        sentinel.style.display = '';
+        this.io = new IntersectionObserver(function (entries) {
+            if (entries.some(function (e) { return e.isIntersecting; })) self.loadMore();
+        }, { root: byId('savedList'), rootMargin: '120px 0px' });
+        this.io.observe(sentinel);
+    };
+
+    SavedFiles.prototype.loadMore = function () {
+        var self = this;
+        if (this.busy || this.page >= this.totalPages) return;
+        this.busy = true;
+        var sentinel = byId('savedLazySentinel');
+        if (sentinel) sentinel.textContent = 'Loading more...';
+
+        this.fetchPage(this.page + 1).then(function (d) {
+            self.busy = false;
+            self.total = d.total;
+            self.totalPages = d.totalPages || 1;
+            self.page++;
+            (d.files || []).forEach(function (f) {
+                if (self.tbody) self.tbody.appendChild(self.buildRow(f));
+            });
+            self.armLazy();
+            self.renderLazyFooter(d);
+        }).catch(function () {
+            self.busy = false;
+            self.armLazy();
+        });
+    };
+
+    SavedFiles.prototype.renderLazyFooter = function (d) {
         var box = byId('savedListPager');
         if (!box) return;
         box.textContent = '';
+        var total = d ? d.total : this.total;
+        if (!total) return;
 
-        var pages = d.totalPages || 0;
-        if (pages <= 1) return;
-
-        var self = this;
-
-        var info = document.createElement('span');
-        info.textContent = 'Page ' + d.page + ' of ' + pages + '   \u00b7   ' + fmt(d.total) + ' files';
-        box.appendChild(info);
-
-        var nav = document.createElement('span');
-
-        var prev = document.createElement('button');
-        prev.type = 'button';
-        prev.textContent = 'Prev';
-        prev.disabled = d.page <= 1;
-        prev.addEventListener('click', function () { self.page--; self.refresh(); });
-        nav.appendChild(prev);
-
-        var next = document.createElement('button');
-        next.type = 'button';
-        next.textContent = 'Next';
-        next.style.marginLeft = '6px';
-        next.disabled = d.page >= pages;
-        next.addEventListener('click', function () { self.page++; self.refresh(); });
-        nav.appendChild(next);
-
-        box.appendChild(nav);
+        var loaded = Math.min(this.page * this.pageSize, total);
+        var span = document.createElement('span');
+        span.className = 'imp-lazyfooter';
+        if (loaded >= total) {
+            span.textContent = 'All ' + fmt(total) + ' file' + (total === 1 ? '' : 's') + ' loaded.';
+        } else {
+            span.textContent = 'Loaded ' + fmt(loaded) + ' of ' + fmt(total) +
+                ' files \u00b7 keep scrolling to load more\u2026';
+        }
+        box.appendChild(span);
     };
 
     SavedFiles.prototype.open = function (f) {
         var self = this;
         this.openId = f.fileId;
         setStatus('savedStatus', 'Loading ' + f.fileName + '...', null);
+
+        /* Highlight the opened row in the saved-files table. */
+        var list = byId('savedList');
+        if (list) {
+            var openRows = list.querySelectorAll('tbody tr.is-open');
+            for (var i = 0; i < openRows.length; i++) openRows[i].classList.remove('is-open');
+            var cur = list.querySelector('tbody tr[data-id="' + f.fileId + '"]');
+            if (cur) cur.classList.add('is-open');
+        }
 
         var t = byId('savedOpenTitle');
         var m = byId('savedOpenMeta');

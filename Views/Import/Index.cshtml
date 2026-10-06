@@ -53,69 +53,78 @@
     @* ==================== TAB 2 : SAVED FILES ==================== *@
     <div class="tab-pane fade" id="tabSaved" role="tabpanel" aria-labelledby="tabBtnSaved">
 
-        <div class="row g-3">
-
-            @* ---------- LEFT PANE : file list ---------- *@
-            <div class="col-12 col-lg-4 col-xl-3">
-                <div class="card imp-filter-card mb-3">
-                    <div class="card-body p-3">
+        @* ---------- FILTER BAR : search + sort + period in one row ---------- *@
+        <div class="card imp-filter-card mb-3">
+            <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4">
                         <label class="form-label imp-label" for="savedSearch">SEARCH FILES</label>
-                        <div class="input-group mb-2">
+                        <div class="input-group">
                             <span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input type="text" id="savedSearch" class="form-control border-start-0 imp-search-box"
                                    placeholder="Type a file name..." autocomplete="off" />
                         </div>
-                        <label class="form-label imp-label mb-1" for="savedSort">SORT BY</label>
-                        <select id="savedSort" class="form-select imp-search-box mb-2">
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label imp-label" for="savedSort">SORT BY</label>
+                        <select id="savedSort" class="form-select imp-search-box">
                             <option value="recent">Most Recent</option>
                             <option value="name">Name (A&ndash;Z)</option>
                             <option value="name_desc">Name (Z&ndash;A)</option>
                             <option value="rows">Most Rows</option>
                         </select>
+                    </div>
+                    <div class="col-6 col-md-6">
+                        <label class="form-label imp-label">FILTER</label>
                         <div class="imp-chiprow" id="savedPeriod" role="group" aria-label="Filter by date">
                             <button type="button" class="imp-filterchip active" data-period="all">All</button>
                             <button type="button" class="imp-filterchip" data-period="today">Today</button>
                             <button type="button" class="imp-filterchip" data-period="week">Week</button>
                             <button type="button" class="imp-filterchip" data-period="month">Month</button>
                         </div>
-                        <div id="savedStatus" class="imp-status"></div>
                     </div>
                 </div>
-                <div class="imp-filelist mb-2" id="savedList"></div>
-                <div class="imp-listpager mb-3" id="savedListPager"></div>
+                <div id="savedStatus" class="imp-status"></div>
             </div>
+        </div>
 
-            @* ---------- RIGHT PANE : opened file data ---------- *@
-            <div class="col-12 col-lg-8 col-xl-9">
-                <div class="card imp-table-card">
-                    <div class="imp-openhead">
-                        <div class="imp-openhead-name" id="savedOpenTitle">Pick a file from the list to view it here.</div>
-                        <div class="imp-openhead-meta" id="savedOpenMeta"></div>
-                    </div>
-                    <div class="imp-opensearch d-flex flex-wrap align-items-end gap-2 px-3 pt-3">
-                        <div class="flex-grow-1 min-w-0">
-                            <label class="form-label imp-label" for="savedGridSearch">SEARCH INSIDE THIS FILE</label>
-                            <input type="text" id="savedGridSearch" class="form-control imp-search-box"
-                                   placeholder="Type to filter any column..." autocomplete="off" />
-                        </div>
-                        <div class="col-auto">
-                            <label class="form-label imp-label" for="savedGridSize">ROWS PER PAGE</label>
-                            <select id="savedGridSize" class="form-select imp-search-box">
-                                @foreach (var s in pageSizes)
-                                {
-                                    <option value="@s" selected="@(s == defaultSize)">@s</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                    <div id="savedGrid"></div>
-                    <div id="savedPager" class="imp-pager"></div>
-                    <div id="savedGridInfo" class="imp-info px-3 pb-3"></div>
+        @* ---------- SAVED FILES TABLE (5 files first, rest lazy-loaded) ---------- *@
+        <div class="card imp-table-card mb-3">
+            <div class="imp-gridhead">
+                <span class="imp-gridhead-title"><i class="bi bi-folder2-open me-1"></i>SAVED FILES</span>
+                <span class="imp-gridhead-count" id="savedCount">0</span>
+            </div>
+            <div id="savedList"></div>
+            <div id="savedListPager" class="imp-pager"></div>
+        </div>
+
+        @* ---------- OPENED FILE GRID ---------- *@
+        <div class="card imp-table-card">
+            <div class="imp-openhead">
+                <div class="imp-openhead-name" id="savedOpenTitle">Pick a file from the list to view it here.</div>
+                <div class="imp-openhead-meta" id="savedOpenMeta"></div>
+            </div>
+            <div class="imp-opensearch d-flex flex-wrap align-items-end gap-2 px-3 pt-3">
+                <div class="flex-grow-1 min-w-0">
+                    <label class="form-label imp-label" for="savedGridSearch">SEARCH INSIDE THIS FILE</label>
+                    <input type="text" id="savedGridSearch" class="form-control imp-search-box"
+                           placeholder="Type to filter any column..." autocomplete="off" />
+                </div>
+                <div class="col-auto">
+                    <label class="form-label imp-label" for="savedGridSize">ROWS PER PAGE</label>
+                    <select id="savedGridSize" class="form-select imp-search-box">
+                        @foreach (var s in pageSizes)
+                        {
+                            <option value="@s" selected="@(s == defaultSize)">@s</option>
+                        }
+                    </select>
                 </div>
             </div>
-
+            <div id="savedGrid"></div>
+            <div id="savedPager" class="imp-pager"></div>
+            <div id="savedGridInfo" class="imp-info px-3 pb-3"></div>
         </div>
     </div>
 
