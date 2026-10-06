@@ -78,11 +78,16 @@
                     </div>
                     <div class="col-6 col-md-6">
                         <label class="form-label imp-label">FILTER</label>
-                        <div class="imp-chiprow" id="savedPeriod" role="group" aria-label="Filter by date">
-                            <button type="button" class="imp-filterchip active" data-period="all">All</button>
-                            <button type="button" class="imp-filterchip" data-period="today">Today</button>
-                            <button type="button" class="imp-filterchip" data-period="week">Week</button>
-                            <button type="button" class="imp-filterchip" data-period="month">Month</button>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="imp-chiprow" id="savedPeriod" role="group" aria-label="Filter by date">
+                                <button type="button" class="imp-filterchip active" data-period="all">All</button>
+                                <button type="button" class="imp-filterchip" data-period="today">Today</button>
+                                <button type="button" class="imp-filterchip" data-period="week">Week</button>
+                                <button type="button" class="imp-filterchip" data-period="month">Month</button>
+                            </div>
+                            <button type="button" id="savedReset" class="imp-resetbtn" title="Reset search, sort and date filter">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                            </button>
                         </div>
                     </div>
                 </div>

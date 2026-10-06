@@ -452,6 +452,25 @@
                 });
             }
 
+            var resetBtn = byId('savedReset');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    self.saved.search = '';
+                    if (filesSearch) filesSearch.value = '';
+                    self.saved.sortBy = 'recent';
+                    if (sortSel) sortSel.value = 'recent';
+                    self.saved.period = 'all';
+                    if (periodRow) {
+                        periodRow.querySelectorAll('.imp-filterchip').forEach(function (x) {
+                            x.classList.toggle('active', x.getAttribute('data-period') === 'all');
+                        });
+                    }
+                    self.saved.page = 1;
+                    self.saved.refresh();
+                    if (global.ImportToast) global.ImportToast('Filters reset.', 'ok');
+                });
+            }
+
             var saveBtn = byId('btnSave');
             if (saveBtn) saveBtn.addEventListener('click', save);
 

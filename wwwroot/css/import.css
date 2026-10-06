@@ -885,6 +885,32 @@
     color: #fff;
 }
 
+.imp-resetbtn {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s ease;
+}
+
+.imp-resetbtn:hover {
+    border-color: #d64545;
+    color: #d64545;
+    background: #fdf2f2;
+}
+
+.imp-resetbtn:focus-visible {
+    outline: 2px solid #d64545;
+    outline-offset: 1px;
+}
+
 .imp-openhead {
     display: flex;
     justify-content: space-between;
