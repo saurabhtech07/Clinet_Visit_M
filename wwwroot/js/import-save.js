@@ -129,7 +129,9 @@
         row.setAttribute('role', 'button');
 
         var icon = document.createElement('span');
-        icon.className = 'imp-fileicon';
+        var ext = String(f.fileName || '').split('.').pop().toLowerCase();
+        if (['csv', 'xlsx', 'xls'].indexOf(ext) === -1) ext = 'xlsx';
+        icon.className = 'imp-fileicon is-' + ext;
         icon.textContent = extIcon(f.fileName);
         row.appendChild(icon);
 
@@ -151,6 +153,12 @@
         sub.textContent = bits.join('   \u00b7   ');
         meta.appendChild(sub);
         row.appendChild(meta);
+
+        var openBadge = document.createElement('span');
+        openBadge.className = 'imp-openbadge';
+        openBadge.textContent = 'Open';
+        openBadge.setAttribute('aria-hidden', 'true');
+        row.appendChild(openBadge);
 
         if (this.opts.allowDelete) {
             var del = document.createElement('button');
@@ -237,6 +245,7 @@
                 self.opts.savedGrid.clearAll();
             }
             setStatus('savedStatus', (d.message || 'Deleted.') + ' Click a file to open it.', 'ok');
+            if (global.ImportToast) global.ImportToast('"' + f.fileName + '" deleted.', 'ok');
             self.refresh();
         }).catch(function (err) {
             setStatus('savedStatus', err.message, 'err');
@@ -277,11 +286,13 @@
                 if (btn) { btn.disabled = false; btn.innerHTML = label; }
                 setStatus('currentStatus', (d.message || 'Saved.') +
                     ' It is now listed under "' + opts.tabSavedLabel + '".', 'ok');
+                if (global.ImportToast) global.ImportToast(d.message || 'Saved to database.', 'ok');
                 global.ImportSave.refreshSaved();
             })
             .catch(function (err) {
                 if (btn) { btn.disabled = false; btn.innerHTML = label; }
                 setStatus('currentStatus', err.message, 'err');
+                if (global.ImportToast) global.ImportToast(err.message, 'err');
             });
     }
 

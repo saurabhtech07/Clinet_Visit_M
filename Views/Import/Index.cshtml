@@ -117,7 +117,12 @@
                     <div class="imp-drop-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
                     <div class="imp-drop-title">Drop Excel/CSV or <span class="imp-browse">Click to Upload</span></div>
                     <div class="imp-drop-hint">First sheet is used. Nothing leaves your browser until you press Save.</div>
-                    <div class="imp-drop-badge">@acceptExt.ToUpperInvariant().Replace(",", " &nbsp;")</div>
+                    <div class="imp-drop-badges">
+                        @foreach (var e in (acceptExt ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                        {
+                            <button type="button" class="imp-drop-badge imp-chip" data-ext="@e.Trim().TrimStart('.').ToLowerInvariant()">@e.Trim().ToUpperInvariant()</button>
+                        }
+                    </div>
                 </div>
                 <input type="file" id="excelFile" accept="@string.Join(",", acceptExt.Split(',').Select(e => "." + e.Trim().TrimStart('.')))" class="d-none" />
             </div>
@@ -144,6 +149,15 @@
                                 <option value="@s" selected="@(s == defaultSize)">@s</option>
                             }
                         </select>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-2">
+                        <label class="form-label imp-label" for="btnColumns">COLUMNS</label>
+                        <div class="imp-colwrap">
+                            <button type="button" id="btnColumns" class="btn btn-light border imp-search-box w-100 d-none">
+                                <i class="bi bi-eye me-1"></i>Show / Hide
+                            </button>
+                            <div id="colPanel" class="imp-colpanel"></div>
+                        </div>
                     </div>
                 </div>
                 <div id="currentStatus" class="imp-status"></div>
@@ -174,6 +188,8 @@
     </div>
 </div>
 
+<div class="imp-toast-wrap" id="toastWrap"></div>
+
 <script>
     (function () {
         /* Static <script src="~/..."> tags break when this page is injected by the
@@ -199,6 +215,66 @@
         }
 
         function boot() {
+            /* Toast helper - also exposed for import-save.js to call. */
+            function showToast(msg, kind) {
+                var wrap = document.getElementById('toastWrap');
+                if (!wrap || !msg) return;
+                var el = document.createElement('div');
+                el.className = 'imp-toast' + (kind === 'ok' ? ' is-ok' : kind === 'err' ? ' is-err' : '');
+                var ic = document.createElement('i');
+                ic.className = 'bi ' + (kind === 'ok' ? 'bi-check-circle-fill'
+                    : kind === 'err' ? 'bi-x-circle-fill' : 'bi-info-circle-fill');
+                var sp = document.createElement('span');
+                sp.textContent = msg;
+                el.appendChild(ic);
+                el.appendChild(sp);
+                wrap.appendChild(el);
+                setTimeout(function () {
+                    el.classList.add('fade-out');
+                    setTimeout(function () { el.remove(); }, 320);
+                }, 3200);
+            }
+            window.ImportToast = showToast;
+
+            /* Column show/hide panel, fed from the live grid's headers. */
+            function renderColPanel() {
+                var panel = document.getElementById('colPanel');
+                if (!panel) return;
+                panel.innerHTML = '';
+                var headers = currentGrid.getHeaders();
+                headers.forEach(function (name, i) {
+                    var label = document.createElement('label');
+                    label.className = 'imp-colitem';
+                    var cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = !currentGrid.isColumnHidden(i);
+                    cb.addEventListener('change', function () { currentGrid.toggleColumn(i); });
+                    var txt = document.createElement('span');
+                    txt.className = 'imp-coltext';
+                    txt.textContent = name;
+                    label.appendChild(cb);
+                    label.appendChild(txt);
+                    panel.appendChild(label);
+                });
+            }
+
+            var colBtn = document.getElementById('btnColumns');
+            var colPanel = document.getElementById('colPanel');
+            if (colBtn && colPanel) {
+                colBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var show = !colPanel.classList.contains('show');
+                    if (show) renderColPanel();
+                    colPanel.classList.toggle('show', show);
+                });
+                document.addEventListener('click', function (e) {
+                    if (colPanel.classList.contains('show') &&
+                        !colPanel.contains(e.target) && e.target !== colBtn) {
+                        colPanel.classList.remove('show');
+                    }
+                });
+            }
+
             /* Two grids on one page: the live file (tab 2) and the saved-file
                view (tab 1), which pages on the server. init() returns the
                instance, so each is driven separately. clearId/exportId are null
@@ -215,7 +291,13 @@
                 exportId: 'gridExport',
                 pageSize: @defaultSize,
                 largeFileRows: @largeFileWarnRows,
-                maxFileBytes: @maxFileBytes
+                maxFileBytes: @maxFileBytes,
+                onRender: function (info) {
+                    var cb = document.getElementById('btnColumns');
+                    if (cb) cb.classList.toggle('d-none', info.columns === 0);
+                    if (info.columns && currentGrid) renderColPanel();
+                    if (!info.columns && colPanel) colPanel.classList.remove('show');
+                }
             });
 
             var savedGrid = ExcelCsvToGrid.init({

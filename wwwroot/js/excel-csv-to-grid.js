@@ -80,6 +80,26 @@
         return true;
     }
 
+    /* The real header row is the one with the most non-empty cells among the
+       first rows. Files often open with a title line ("Daily Support Report")
+       or an export/filter stamp above the actual column names; those rows are
+       only one or two cells wide, while the true header row spans every
+       column. Returns the matrix index of the best row, or -1 when the file
+       has nothing to use as headers. */
+    function detectHeaderRow(matrix) {
+        var best = -1, bestCount = -1;
+        for (var i = 0; i < matrix.length && i < 10; i++) {
+            if (isBlankRow(matrix[i])) continue;
+            var count = 0;
+            for (var c = 0; c < matrix[i].length; c++) {
+                var v = matrix[i][c];
+                if (v !== null && v !== undefined && String(v).trim() !== '') count++;
+            }
+            if (count > bestCount) { bestCount = count; best = i; }
+        }
+        return (bestCount === 0) ? -1 : best;
+    }
+
     /* Unique, non-empty column names: "Amount", "Amount (2)". */
     function normalizeHeaders(cells) {
         var seen = {}, out = [];
@@ -106,6 +126,7 @@
         this.headers = [];
         this.allRecords = [];   /* every data row from the file */
         this.filtered = [];     /* rows left after the search box */
+        this.hiddenCols = {};   /* column index -> true, hidden from view */
         this.sortCol = -1;
         this.sortAsc = true;
         this.page = 1;
@@ -123,6 +144,9 @@
         /* A grid that only shows saved data has no drop zone, so each part is
            optional: search, page size and buttons must still be wired up. */
         if (input && zone) {
+            var dropTitle = zone.querySelector('.imp-drop-title');
+            var dropTitleHTML = dropTitle ? dropTitle.innerHTML : '';
+
             zone.addEventListener('click', function () { input.click(); });
             zone.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
@@ -136,6 +160,7 @@
                 zone.addEventListener(evt, function (e) {
                     e.preventDefault(); e.stopPropagation();
                     zone.classList.add('is-dragover');
+                    if (dropTitle) dropTitle.textContent = 'Release to upload';
                 });
             });
             ['dragleave', 'drop'].forEach(function (evt) {
@@ -143,6 +168,7 @@
                     e.preventDefault(); e.stopPropagation();
                     if (evt === 'dragleave' && zone.contains(e.relatedTarget)) return;
                     zone.classList.remove('is-dragover');
+                    if (dropTitle) dropTitle.innerHTML = dropTitleHTML;
                 });
             });
 
@@ -193,17 +219,22 @@
 
         this.fileName = file.name;
         this.status('Reading ' + file.name + ' (' + formatBytes(file.size) + ')…');
+        this.showSkeleton();
 
         if (ext === 'csv') {
             var reader = new FileReader();
             reader.onload = function () { self.ingest(parseCsv(String(reader.result))); };
-            reader.onerror = function () { self.warn('Could not read the file.'); };
+            reader.onerror = function () {
+                self.warn('Could not read the file.');
+                self.showEmpty('Could not read that file. Try again.');
+            };
             reader.readAsText(file);
             return;
         }
 
         if (typeof global.XLSX === 'undefined') {
             this.warn('Excel engine not loaded (xlsx.full.min.js).');
+            this.showEmpty('Excel engine not loaded (xlsx.full.min.js).');
             return;
         }
 
@@ -212,22 +243,58 @@
             try {
                 var wb = global.XLSX.read(new Uint8Array(r2.result), { type: 'array' });
                 var sheet = wb.Sheets[wb.SheetNames[0]];
-                if (!sheet) { self.warn('That workbook has no readable sheet.'); return; }
+                if (!sheet) {
+                    self.warn('That workbook has no readable sheet.');
+                    self.showEmpty('That workbook has no readable sheet.');
+                    return;
+                }
                 self.ingest(global.XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' }));
             } catch (err) {
                 self.warn('Could not parse the workbook: ' + err.message);
+                self.showEmpty('Could not parse that workbook.');
             }
         };
-        r2.onerror = function () { self.warn('Could not read the file.'); };
+        r2.onerror = function () {
+            self.warn('Could not read the file.');
+            self.showEmpty('Could not read that file. Try again.');
+        };
         r2.readAsArrayBuffer(file);
+    };
+
+    /* Shimmer placeholder rows while a file is being parsed. */
+    Grid.prototype.showSkeleton = function () {
+        var host = this.byId(this.cfg.gridId);
+        if (!host) return;
+        var wrap = document.createElement('div');
+        wrap.className = 'imp-skeleton-loading';
+        for (var r = 0; r < 8; r++) {
+            var row = document.createElement('div');
+            row.className = 'imp-skeleton-row';
+            var idx = document.createElement('div');
+            idx.className = 'imp-skeleton-cell idx';
+            row.appendChild(idx);
+            for (var c = 0; c < 5; c++) {
+                var cell = document.createElement('div');
+                cell.className = 'imp-skeleton-cell';
+                cell.style.flex = '1';
+                cell.style.maxWidth = (32 + ((c * 17) % 44)) + '%';
+                row.appendChild(cell);
+            }
+            wrap.appendChild(row);
+        }
+        host.innerHTML = '';
+        host.appendChild(wrap);
     };
 
     Grid.prototype.ingest = function (matrix) {
         if (!matrix || !matrix.length) { this.warn('That file is empty.'); return; }
 
-        var headerIdx = 0;
-        while (headerIdx < matrix.length && isBlankRow(matrix[headerIdx])) headerIdx++;
-        if (headerIdx >= matrix.length) { this.warn('That file has no header row.'); return; }
+        /* Header = the row with the most non-empty cells in the first rows.
+           This handles files that open with a title or filter line above the
+           real column names (for example this site's Daily Support export).
+           Rows above the header are metadata, not data, so they are skipped. */
+        var headerIdx = detectHeaderRow(matrix);
+        if (headerIdx < 0) { this.warn('That file has no header row.'); return; }
 
         this.headers = normalizeHeaders(matrix[headerIdx]);
 
@@ -334,6 +401,7 @@
         htr.appendChild(cell('th', '#', 'imp-idx'));
 
         for (var i = 0; i < this.headers.length; i++) {
+            if (this.hiddenCols[i]) continue;
             var th = document.createElement('th');
             th.appendChild(document.createTextNode(this.headers[i]));
 
@@ -355,10 +423,11 @@
 
         /* body */
         var tbody = document.createElement('tbody');
+        var visCols = this.visibleColumnCount();
         if (!pageRows.length) {
             var er = document.createElement('tr');
             var etd = document.createElement('td');
-            etd.colSpan = this.headers.length + 1;
+            etd.colSpan = visCols + 1;
             etd.className = 'imp-empty';
             etd.textContent = this.cfg.emptyText;
             er.appendChild(etd);
@@ -369,6 +438,7 @@
                 var tr = document.createElement('tr');
                 tr.appendChild(cell('td', String(start + ri + 1), 'imp-idx'));
                 for (var c = 0; c < this.headers.length; c++) {
+                    if (this.hiddenCols[c]) continue;
                     tr.appendChild(cell('td', r[c] === null || r[c] === undefined ? '' : String(r[c]), ''));
                 }
                 frag.appendChild(tr);
@@ -500,6 +570,21 @@
         this.render();
     };
 
+    /* Shows or hides one column (by its real index) and redraws. */
+    Grid.prototype.toggleColumn = function (col) {
+        if (this.hiddenCols[col]) delete this.hiddenCols[col];
+        else this.hiddenCols[col] = true;
+        this.render();
+    };
+
+    Grid.prototype.isColumnHidden = function (col) {
+        return !!this.hiddenCols[col];
+    };
+
+    Grid.prototype.visibleColumnCount = function () {
+        return this.headers.length - Object.keys(this.hiddenCols).length;
+    };
+
     /* Writes whatever the search currently matches back out as an .xlsx file. */
     Grid.prototype.exportXlsx = function () {
         if (!global.XLSX) { this.warn('Excel engine is still loading. Try again in a moment.'); return; }
@@ -530,6 +615,7 @@
         this.headers = [];
         this.allRecords = [];
         this.filtered = [];
+        this.hiddenCols = {};
         this.sortCol = -1;
         this.sortAsc = true;
         this.page = 1;

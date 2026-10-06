@@ -217,7 +217,8 @@
     overflow: hidden;
 }
 
-#gridContainer {
+#gridContainer,
+#savedGrid {
     overflow: auto;
     max-height: 60vh;
 }
@@ -565,16 +566,290 @@
 
 /* ---------------- scrollbar ---------------- */
 
-#gridContainer::-webkit-scrollbar {
+#gridContainer::-webkit-scrollbar,
+#savedGrid::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-#gridContainer::-webkit-scrollbar-thumb {
+#gridContainer::-webkit-scrollbar-thumb,
+#savedGrid::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
 }
 
-#gridContainer::-webkit-scrollbar-track {
+#gridContainer::-webkit-scrollbar-track,
+#savedGrid::-webkit-scrollbar-track {
     background: #f8fafc;
+}
+
+/* =========================================================
+   ATTRACTIVE UPGRADES - drop zone, toasts, etc.
+   ========================================================= */
+
+/* ---------------- drop zone ---------------- */
+
+.imp-dropzone {
+    background: linear-gradient(180deg, #f7faff 0%, #eef4fc 100%);
+}
+
+.imp-dropzone:hover,
+.imp-dropzone:focus {
+    background: linear-gradient(180deg, #f2f7ff, #e9f1fb);
+}
+
+.imp-dropzone.is-dragover {
+    border-color: #1f4a94;
+    background: linear-gradient(180deg, #e6edf8, #dce8f7);
+    box-shadow: 0 0 0 4px rgba(31, 74, 148, .12);
+}
+
+.imp-drop-icon {
+    transition: transform .18s ease;
+}
+
+.imp-dropzone:hover .imp-drop-icon {
+    transform: scale(1.08);
+}
+
+.imp-dropzone.is-dragover .imp-drop-icon {
+    transform: scale(1.18);
+    animation: imp-bounce .5s ease;
+}
+
+@keyframes imp-bounce {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.25); }
+    100% { transform: scale(1.18); }
+}
+
+.imp-drop-badges {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.imp-chip {
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: .3px;
+    transition: all .15s ease;
+    margin-top: 0;
+}
+
+.imp-chip:hover {
+    border-color: #1f4a94;
+    color: #1f4a94;
+    background: #f4f8ff;
+}
+
+.imp-chip:active {
+    transform: scale(.96);
+}
+
+/* ---------------- skeleton loading ---------------- */
+
+.imp-skeleton-loading {
+    padding: 4px 8px;
+}
+
+.imp-skeleton-row {
+    display: flex;
+    gap: 10px;
+    padding: 13px 8px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.imp-skeleton-cell {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #eef1f6 25%, #e2e8f0 50%, #eef1f6 75%);
+    background-size: 200% 100%;
+    animation: imp-shimmer 1.2s infinite linear;
+}
+
+.imp-skeleton-cell.idx {
+    width: 40px;
+    flex-shrink: 0;
+}
+
+@keyframes imp-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ---------------- column toggle ---------------- */
+
+.imp-colwrap {
+    position: relative;
+}
+
+.imp-colpanel {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: calc(100% + 6px);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .14);
+    padding: 8px;
+    min-width: 240px;
+    max-width: 280px;
+    max-height: 320px;
+    overflow: auto;
+    z-index: 60;
+}
+
+.imp-colpanel.show {
+    display: block;
+}
+
+.imp-colitem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #334155;
+    cursor: pointer;
+}
+
+.imp-colitem:hover {
+    background: #f1f5f9;
+}
+
+.imp-colitem input {
+    accent-color: #1f4a94;
+    flex-shrink: 0;
+}
+
+.imp-coltext {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---------------- zebra rows ---------------- */
+
+.imp-table tbody tr:nth-child(even) td {
+    background: #fcfdff;
+}
+
+.imp-table tbody tr:nth-child(even) td.imp-idx {
+    background: #f9fbfe;
+}
+
+.imp-table tbody tr:hover td {
+    background: #f8fafc;
+}
+
+/* ---------------- toasts ---------------- */
+
+.imp-toast-wrap {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 380px;
+}
+
+.imp-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #1f4a94;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #16336b;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, .14);
+    animation: imp-toast-in .25s ease;
+}
+
+.imp-toast.is-ok {
+    border-left-color: #198754;
+    color: #14532d;
+}
+
+.imp-toast.is-err {
+    border-left-color: #dc3545;
+    color: #7f1d1d;
+}
+
+.imp-toast .bi {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.imp-toast.fade-out {
+    animation: imp-toast-out .3s ease forwards;
+}
+
+@keyframes imp-toast-in {
+    from { transform: translateY(12px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes imp-toast-out {
+    to   { transform: translateY(10px); opacity: 0; }
+}
+
+/* ---------------- saved list polish ---------------- */
+
+.imp-fileicon.is-csv {
+    background: #e7f1fa;
+    color: #1d6fb8;
+}
+
+.imp-fileicon.is-xlsx {
+    background: #eaf7f1;
+    color: #0f8a5f;
+}
+
+.imp-fileicon.is-xls {
+    background: #fdf3e7;
+    color: #b45309;
+}
+
+.imp-fileitem {
+    position: relative;
+}
+
+.imp-filedel {
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.imp-fileitem:hover .imp-filedel,
+.imp-fileitem:focus .imp-filedel,
+.imp-fileitem.is-open .imp-filedel {
+    opacity: 1;
+}
+
+.imp-fileitem .imp-openbadge {
+    opacity: 0;
+    flex: 0 0 auto;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #1f4a94;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: opacity .15s ease;
+}
+
+.imp-fileitem:hover .imp-openbadge {
+    opacity: 1;
 }
