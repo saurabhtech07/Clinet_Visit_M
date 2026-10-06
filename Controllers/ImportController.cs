@@ -100,13 +100,13 @@ public class ImportController : Controller
     // ------------------------------------------------------------------- files
 
     [HttpGet]
-    public IActionResult Files(string? search, int page = 1, int pageSize = 0)
+    public IActionResult Files(string? search, int page = 1, int pageSize = 0, string? sortBy = null, string? period = null)
     {
         try
         {
             var cfg = Config();
             if (pageSize <= 0) pageSize = _repo.ConfigInt(cfg, "DefaultPageSize", 50);
-            return Json(_repo.GetFiles(cfg, page, pageSize, search));
+            return Json(_repo.GetFiles(cfg, page, pageSize, search, sortBy, period));
         }
         catch (Exception ex)
         {

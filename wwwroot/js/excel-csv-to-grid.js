@@ -126,7 +126,6 @@
         this.headers = [];
         this.allRecords = [];   /* every data row from the file */
         this.filtered = [];     /* rows left after the search box */
-        this.hiddenCols = {};   /* column index -> true, hidden from view */
         this.sortCol = -1;
         this.sortAsc = true;
         this.page = 1;
@@ -401,7 +400,6 @@
         htr.appendChild(cell('th', '#', 'imp-idx'));
 
         for (var i = 0; i < this.headers.length; i++) {
-            if (this.hiddenCols[i]) continue;
             var th = document.createElement('th');
             th.appendChild(document.createTextNode(this.headers[i]));
 
@@ -423,11 +421,10 @@
 
         /* body */
         var tbody = document.createElement('tbody');
-        var visCols = this.visibleColumnCount();
         if (!pageRows.length) {
             var er = document.createElement('tr');
             var etd = document.createElement('td');
-            etd.colSpan = visCols + 1;
+            etd.colSpan = this.headers.length + 1;
             etd.className = 'imp-empty';
             etd.textContent = this.cfg.emptyText;
             er.appendChild(etd);
@@ -438,7 +435,6 @@
                 var tr = document.createElement('tr');
                 tr.appendChild(cell('td', String(start + ri + 1), 'imp-idx'));
                 for (var c = 0; c < this.headers.length; c++) {
-                    if (this.hiddenCols[c]) continue;
                     tr.appendChild(cell('td', r[c] === null || r[c] === undefined ? '' : String(r[c]), ''));
                 }
                 frag.appendChild(tr);
@@ -570,21 +566,6 @@
         this.render();
     };
 
-    /* Shows or hides one column (by its real index) and redraws. */
-    Grid.prototype.toggleColumn = function (col) {
-        if (this.hiddenCols[col]) delete this.hiddenCols[col];
-        else this.hiddenCols[col] = true;
-        this.render();
-    };
-
-    Grid.prototype.isColumnHidden = function (col) {
-        return !!this.hiddenCols[col];
-    };
-
-    Grid.prototype.visibleColumnCount = function () {
-        return this.headers.length - Object.keys(this.hiddenCols).length;
-    };
-
     /* Writes whatever the search currently matches back out as an .xlsx file. */
     Grid.prototype.exportXlsx = function () {
         if (!global.XLSX) { this.warn('Excel engine is still loading. Try again in a moment.'); return; }
@@ -615,7 +596,6 @@
         this.headers = [];
         this.allRecords = [];
         this.filtered = [];
-        this.hiddenCols = {};
         this.sortCol = -1;
         this.sortAsc = true;
         this.page = 1;

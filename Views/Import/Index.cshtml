@@ -53,57 +53,69 @@
     @* ==================== TAB 2 : SAVED FILES ==================== *@
     <div class="tab-pane fade" id="tabSaved" role="tabpanel" aria-labelledby="tabBtnSaved">
 
-        <div class="card imp-filter-card mb-3">
-            <div class="card-body p-3">
-                <div class="row g-2 align-items-end">
-                    <div class="col-12 col-md">
-                        <label class="form-label imp-label" for="savedSearch">SEARCH SAVED FILES</label>
-                        <div class="input-group">
+        <div class="row g-3">
+
+            @* ---------- LEFT PANE : file list ---------- *@
+            <div class="col-12 col-lg-4 col-xl-3">
+                <div class="card imp-filter-card mb-3">
+                    <div class="card-body p-3">
+                        <label class="form-label imp-label" for="savedSearch">SEARCH FILES</label>
+                        <div class="input-group mb-2">
                             <span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;">
                                 <i class="bi bi-search"></i>
                             </span>
                             <input type="text" id="savedSearch" class="form-control border-start-0 imp-search-box"
                                    placeholder="Type a file name..." autocomplete="off" />
                         </div>
+                        <label class="form-label imp-label mb-1" for="savedSort">SORT BY</label>
+                        <select id="savedSort" class="form-select imp-search-box mb-2">
+                            <option value="recent">Most Recent</option>
+                            <option value="name">Name (A&ndash;Z)</option>
+                            <option value="name_desc">Name (Z&ndash;A)</option>
+                            <option value="rows">Most Rows</option>
+                        </select>
+                        <div class="imp-chiprow" id="savedPeriod" role="group" aria-label="Filter by date">
+                            <button type="button" class="imp-filterchip active" data-period="all">All</button>
+                            <button type="button" class="imp-filterchip" data-period="today">Today</button>
+                            <button type="button" class="imp-filterchip" data-period="week">Week</button>
+                            <button type="button" class="imp-filterchip" data-period="month">Month</button>
+                        </div>
+                        <div id="savedStatus" class="imp-status"></div>
                     </div>
                 </div>
-                <div id="savedStatus" class="imp-status"></div>
+                <div class="imp-filelist mb-2" id="savedList"></div>
+                <div class="imp-listpager mb-3" id="savedListPager"></div>
             </div>
-        </div>
 
-        <div class="imp-filelist mb-3" id="savedList"></div>
-        <div class="imp-listpager mb-3" id="savedListPager"></div>
-
-        <div class="card imp-filter-card mb-3">
-            <div class="card-body p-3">
-                <div class="row g-2 align-items-end">
-                    <div class="col-12 col-md">
-                        <label class="form-label imp-label" for="savedGridSearch">SEARCH INSIDE THE OPEN FILE</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" id="savedGridSearch" class="form-control border-start-0 imp-search-box"
-                                   placeholder="Type to filter any column of the open file..." autocomplete="off" />
+            @* ---------- RIGHT PANE : opened file data ---------- *@
+            <div class="col-12 col-lg-8 col-xl-9">
+                <div class="card imp-table-card">
+                    <div class="imp-openhead">
+                        <div class="imp-openhead-name" id="savedOpenTitle">Pick a file from the list to view it here.</div>
+                        <div class="imp-openhead-meta" id="savedOpenMeta"></div>
+                    </div>
+                    <div class="imp-opensearch d-flex flex-wrap align-items-end gap-2 px-3 pt-3">
+                        <div class="flex-grow-1 min-w-0">
+                            <label class="form-label imp-label" for="savedGridSearch">SEARCH INSIDE THIS FILE</label>
+                            <input type="text" id="savedGridSearch" class="form-control imp-search-box"
+                                   placeholder="Type to filter any column..." autocomplete="off" />
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label imp-label" for="savedGridSize">ROWS PER PAGE</label>
+                            <select id="savedGridSize" class="form-select imp-search-box">
+                                @foreach (var s in pageSizes)
+                                {
+                                    <option value="@s" selected="@(s == defaultSize)">@s</option>
+                                }
+                            </select>
                         </div>
                     </div>
-                    <div class="col-12 col-md-3 col-lg-2">
-                        <label class="form-label imp-label" for="savedGridSize">ROWS PER PAGE</label>
-                        <select id="savedGridSize" class="form-select imp-search-box">
-                            @foreach (var s in pageSizes)
-                            {
-                                <option value="@s" selected="@(s == defaultSize)">@s</option>
-                            }
-                        </select>
-                    </div>
+                    <div id="savedGrid"></div>
+                    <div id="savedPager" class="imp-pager"></div>
+                    <div id="savedGridInfo" class="imp-info px-3 pb-3"></div>
                 </div>
-                <div id="savedGridInfo" class="imp-info"></div>
             </div>
-        </div>
 
-        <div class="card imp-table-card">
-            <div id="savedGrid"></div>
-            <div id="savedPager" class="imp-pager"></div>
         </div>
     </div>
 
@@ -149,15 +161,6 @@
                                 <option value="@s" selected="@(s == defaultSize)">@s</option>
                             }
                         </select>
-                    </div>
-                    <div class="col-12 col-md-3 col-lg-2">
-                        <label class="form-label imp-label" for="btnColumns">COLUMNS</label>
-                        <div class="imp-colwrap">
-                            <button type="button" id="btnColumns" class="btn btn-light border imp-search-box w-100 d-none">
-                                <i class="bi bi-eye me-1"></i>Show / Hide
-                            </button>
-                            <div id="colPanel" class="imp-colpanel"></div>
-                        </div>
                     </div>
                 </div>
                 <div id="currentStatus" class="imp-status"></div>
@@ -236,45 +239,6 @@
             }
             window.ImportToast = showToast;
 
-            /* Column show/hide panel, fed from the live grid's headers. */
-            function renderColPanel() {
-                var panel = document.getElementById('colPanel');
-                if (!panel) return;
-                panel.innerHTML = '';
-                var headers = currentGrid.getHeaders();
-                headers.forEach(function (name, i) {
-                    var label = document.createElement('label');
-                    label.className = 'imp-colitem';
-                    var cb = document.createElement('input');
-                    cb.type = 'checkbox';
-                    cb.checked = !currentGrid.isColumnHidden(i);
-                    cb.addEventListener('change', function () { currentGrid.toggleColumn(i); });
-                    var txt = document.createElement('span');
-                    txt.className = 'imp-coltext';
-                    txt.textContent = name;
-                    label.appendChild(cb);
-                    label.appendChild(txt);
-                    panel.appendChild(label);
-                });
-            }
-
-            var colBtn = document.getElementById('btnColumns');
-            var colPanel = document.getElementById('colPanel');
-            if (colBtn && colPanel) {
-                colBtn.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    var show = !colPanel.classList.contains('show');
-                    if (show) renderColPanel();
-                    colPanel.classList.toggle('show', show);
-                });
-                document.addEventListener('click', function (e) {
-                    if (colPanel.classList.contains('show') &&
-                        !colPanel.contains(e.target) && e.target !== colBtn) {
-                        colPanel.classList.remove('show');
-                    }
-                });
-            }
-
             /* Two grids on one page: the live file (tab 2) and the saved-file
                view (tab 1), which pages on the server. init() returns the
                instance, so each is driven separately. clearId/exportId are null
@@ -291,13 +255,7 @@
                 exportId: 'gridExport',
                 pageSize: @defaultSize,
                 largeFileRows: @largeFileWarnRows,
-                maxFileBytes: @maxFileBytes,
-                onRender: function (info) {
-                    var cb = document.getElementById('btnColumns');
-                    if (cb) cb.classList.toggle('d-none', info.columns === 0);
-                    if (info.columns && currentGrid) renderColPanel();
-                    if (!info.columns && colPanel) colPanel.classList.remove('show');
-                }
+                maxFileBytes: @maxFileBytes
             });
 
             var savedGrid = ExcelCsvToGrid.init({

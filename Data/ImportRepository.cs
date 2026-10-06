@@ -316,14 +316,32 @@ CREATE TABLE [{FileTable}](
 
     // ------------------------------------------------------------------- files
 
-    public FileListDto GetFiles(Dictionary<string, string> cfg, int page, int pageSize, string? search)
+    public FileListDto GetFiles(Dictionary<string, string> cfg, int page, int pageSize, string? search,
+                                string? sortBy = null, string? period = null)
     {
         EnsureReady();
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, Math.Max(1, ConfigInt(cfg, "MaxFilesInList", 50)));
         var dateFormat = ConfigValue(cfg, "DateFormat", "dd MMM yyyy hh:mm tt");
 
-        var where = string.IsNullOrWhiteSpace(search) ? "" : " WHERE FileName LIKE @Search";
+        var orderBy = (sortBy ?? "recent").ToLowerInvariant() switch
+        {
+            "name"      => "FileName ASC, SavedOn DESC",
+            "name_desc" => "FileName DESC, SavedOn DESC",
+            "rows"      => "RowTotal DESC, SavedOn DESC",
+            _           => "SavedOn DESC, FileId DESC"
+        };
+
+        var wheres = new List<string>();
+        if (!string.IsNullOrWhiteSpace(search)) wheres.Add("FileName LIKE @Search");
+        switch ((period ?? "all").ToLowerInvariant())
+        {
+            case "today": wheres.Add("SavedOn >= CAST(GETDATE() AS DATE)"); break;
+            case "week":  wheres.Add("SavedOn >= DATEADD(DAY, -6, CAST(GETDATE() AS DATE))"); break;
+            case "month": wheres.Add("SavedOn >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)"); break;
+        }
+        var where = wheres.Count > 0 ? " WHERE " + string.Join(" AND ", wheres) : "";
+
         var dto = new FileListDto { Page = page, PageSize = pageSize };
 
         using var con = Open();
@@ -339,7 +357,7 @@ CREATE TABLE [{FileTable}](
             "SELECT FileId, FileName, RowTotal AS [RowCount], ColumnCount, SavedByName," +
             " CONVERT(VARCHAR(64), SavedOn, 100) AS SavedOnRaw" +
             " FROM [" + FileTable + "]" + where +
-            " ORDER BY SavedOn DESC, FileId DESC" +
+            " ORDER BY " + orderBy +
             " OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY;", con);
         if (!string.IsNullOrWhiteSpace(search)) cmd.Parameters.AddWithValue("@Search", "%" + search.Trim() + "%");
         cmd.Parameters.AddWithValue("@Skip", (page - 1) * pageSize);

@@ -81,6 +81,8 @@
         this.page = 1;
         this.pageSize = opts.pageSize;
         this.search = '';
+        this.sortBy = 'recent';
+        this.period = 'all';
         this.openId = 0;
     }
 
@@ -90,7 +92,9 @@
         if (list) { list.textContent = ''; list.appendChild(mkEmpty('Loading saved files...')); }
 
         var path = 'Import/Files?page=' + this.page + '&pageSize=' + this.pageSize +
-                   (this.search ? '&search=' + encodeURIComponent(this.search) : '');
+                   (this.search ? '&search=' + encodeURIComponent(this.search) : '') +
+                   '&sortBy=' + encodeURIComponent(this.sortBy) +
+                   '&period=' + encodeURIComponent(this.period);
 
         return get(path).then(function (d) { self.render(d); })
             .catch(function (err) {
@@ -218,6 +222,20 @@
         this.openId = f.fileId;
         setStatus('savedStatus', 'Loading ' + f.fileName + '...', null);
 
+        var t = byId('savedOpenTitle');
+        var m = byId('savedOpenMeta');
+        if (t) {
+            t.textContent = '';
+            var ext = String(f.fileName || '').split('.').pop().toLowerCase();
+            var iconCls = ext === 'csv' ? 'bi-filetype-csv' : ext === 'xls' ? 'bi-filetype-xls' : 'bi-filetype-xlsx';
+            var ic = document.createElement('i');
+            ic.className = 'bi ' + iconCls;
+            t.appendChild(ic);
+            t.appendChild(document.createTextNode(' ' + f.fileName));
+        }
+        if (m) m.textContent = fmt(f.rowCount) + ' rows \u00b7 ' + fmt(f.columnCount) + ' cols' +
+            (f.savedOnDisplay ? ' \u00b7 ' + f.savedOnDisplay : '');
+
         /* One saved file is one row in the database, so it comes back whole and
            the grid pages and searches it locally - the same path a dropped file
            takes. No paging parameters to keep in step with the server. */
@@ -243,6 +261,10 @@
                    It empties the grid's own status box, so it has to run
                    before the confirmation below or it wipes the message. */
                 self.opts.savedGrid.clearAll();
+                var t = byId('savedOpenTitle');
+                var m = byId('savedOpenMeta');
+                if (t) t.textContent = 'Pick a file from the list to view it here.';
+                if (m) m.textContent = '';
             }
             setStatus('savedStatus', (d.message || 'Deleted.') + ' Click a file to open it.', 'ok');
             if (global.ImportToast) global.ImportToast('"' + f.fileName + '" deleted.', 'ok');
@@ -316,6 +338,30 @@
                         self.saved.page = 1;
                         self.saved.refresh();
                     }, 250);
+                });
+            }
+
+            var sortSel = byId('savedSort');
+            if (sortSel) {
+                sortSel.addEventListener('change', function () {
+                    self.saved.sortBy = sortSel.value;
+                    self.saved.page = 1;
+                    self.saved.refresh();
+                });
+            }
+
+            var periodRow = byId('savedPeriod');
+            if (periodRow) {
+                periodRow.addEventListener('click', function (e) {
+                    var b = e.target && e.target.closest ? e.target.closest('.imp-filterchip') : null;
+                    if (!b) return;
+                    periodRow.querySelectorAll('.imp-filterchip').forEach(function (x) {
+                        x.classList.remove('active');
+                    });
+                    b.classList.add('active');
+                    self.saved.period = b.getAttribute('data-period') || 'all';
+                    self.saved.page = 1;
+                    self.saved.refresh();
                 });
             }
 
