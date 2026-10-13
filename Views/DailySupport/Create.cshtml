@@ -76,7 +76,7 @@
         <div class="col-md-3" style="position:relative;">
             <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SEARCH MOBILE NO</label>
             <div class="input-group">
-                <input type="text" id="searchMobileInput" placeholder="Mobile type karo..." class="form-control" style="border-radius:8px 0 0 8px;height:38px;font-size:13px;" autocomplete="off" />
+                <input type="text" id="searchMobileInput" placeholder="Enter mobile number..." class="form-control" style="border-radius:8px 0 0 8px;height:38px;font-size:13px;" autocomplete="off" />
                 <button class="btn btn-dark" type="button" id="searchBtn" style="border-radius:0 8px 8px 0;height:38px;"><i class="bi bi-search"></i></button>
             </div>
             <div id="mobileSuggestionBox" class="suggestion-box"></div>
@@ -153,7 +153,7 @@
 
     <div class="mb-3">
         <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">DESCRIPTION</label>
-        <textarea name="Description" rows="3" placeholder="Client ne kya bola..." class="form-control" style="border-radius:8px;font-size:13px;"></textarea>
+        <textarea name="Description" rows="3" placeholder="Describe the reported issue..." class="form-control" style="border-radius:8px;font-size:13px;"></textarea>
     </div>
 
 <div class="text-end d-flex justify-content-end gap-2">
@@ -316,7 +316,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
 <div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CALL DATE</label><input type="text" value="@DateTime.Now.ToString("dd-MM-yyyy")" readonly class="form-control" style="border-radius:8px;height:38px;font-size:13px;" /><input type="hidden" name="SupportDate" value="@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" /></div>
 </div><hr style="opacity:0.1;" /><p class="mb-3" style="font-size:11px;font-weight:700;color:#2563eb;letter-spacing:0.5px;">CUSTOMER DETAILS - CLIENT TABLE</p>
 <div class="row g-3 mb-3">
-<div class="col-md-3" style="position:relative;"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SEARCH MOBILE NO</label><div class="input-group"><input type="text" id="searchMobileInput" placeholder="Mobile type karo..." class="form-control" style="border-radius:8px 0 0 8px;height:38px;font-size:13px;" autocomplete="off" /><button class="btn btn-dark" type="button" id="searchBtn" style="border-radius:0 8px 8px 0;height:38px;"><i class="bi bi-search"></i></button></div><div id="mobileSuggestionBox" class="suggestion-box"></div></div>
+<div class="col-md-3" style="position:relative;"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SEARCH MOBILE NO</label><div class="input-group"><input type="text" id="searchMobileInput" placeholder="Enter mobile number..." class="form-control" style="border-radius:8px 0 0 8px;height:38px;font-size:13px;" autocomplete="off" /><button class="btn btn-dark" type="button" id="searchBtn" style="border-radius:0 8px 8px 0;height:38px;"><i class="bi bi-search"></i></button></div><div id="mobileSuggestionBox" class="suggestion-box"></div></div>
 <div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SELECT CLIENT *</label><div class="client-select-wrapper"><input type="text" id="clientSearchInput" placeholder="-- Select Client -- Type to search..." class="form-control" style="border-radius:8px;height:38px;font-size:13px;" autocomplete="off" /><div id="clientDropdown" class="select-dropdown"></div><select id="customerSelect" style="display:none;"><option value="">-- Select Client --</option>@foreach(var c in customers){var id=c.ContainsKey("ClientId")?c["ClientId"]:c.ContainsKey("CustomerID")?c["CustomerID"]:"";var name=c.ContainsKey("ClientName")?c["ClientName"]:c.ContainsKey("CompanyName")?c["CompanyName"]:"";var mobile=c.ContainsKey("MobileNo")?c["MobileNo"]:c.ContainsKey("Mobile1")?c["Mobile1"]:c.ContainsKey("PhoneNo")?c["PhoneNo"]:"";<option value="@id" data-name="@name" data-mobile="@mobile">@name - @mobile</option>}</select></div></div>
 <div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">MOBILE</label><input type="text" id="mobileDisplay" name="Mobile" placeholder="Auto" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" /></div>
 <div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CALLER NAME *</label><input type="text" id="callerNameInput" name="CallerName" placeholder="New customer name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" /></div>
@@ -328,7 +328,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
 <div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">ASSIGN TO (USERS)</label><select name="AssignedTo" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option value="">-- Select User --</option>@foreach(var u in engineers){var uid=u.ContainsKey("UserId")?u["UserId"]:u.ContainsKey("EngineerID")?u["EngineerID"]:"";var uname=u.ContainsKey("FullName")?u["FullName"]:u.ContainsKey("EngineerName")?u["EngineerName"]:u.ContainsKey("UserName")?u["UserName"]:"";<option value="@uid">@uname</option>}</select></div>
 <div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">ISSUE</label><input type="text" name="Issue" placeholder="Printer Not Printing" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" /></div>
 </div>
-<div class="mb-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">DESCRIPTION</label><textarea name="Description" rows="3" placeholder="Client ne kya bola..." class="form-control" style="border-radius:8px;font-size:13px;"></textarea></div>
+<div class="mb-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">DESCRIPTION</label><textarea name="Description" rows="3" placeholder="Describe the reported issue..." class="form-control" style="border-radius:8px;font-size:13px;"></textarea></div>
 @if(extra.Any()){
 @* <hr style="opacity:0.1;" /><p class="mb-3" style="font-size:11px;font-weight:700;color:#8b5cf6;">DYNAMIC FIELDS - DB SE AUTO</p> *@
 <div class="row g-3 mb-3">@foreach(var f in extra){<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">@f.Name.ToUpper()</label>@if(f.DataType.Contains("date")){<input type="date" name="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}else if(f.DataType.Contains("int")||f.DataType.Contains("decimal")||f.DataType.Contains("numeric")){<input type="number" name="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}else{<input type="text" name="@f.Name" placeholder="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}</div>}</div>

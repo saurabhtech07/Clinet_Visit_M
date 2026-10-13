@@ -208,11 +208,13 @@ public class ClientVisitController : Controller
 {
     private readonly DynamicRepository _dynamicRepo;
     private readonly ClientRepository _clientRepo;
+    private readonly FollowUpRepository _followUpRepo;
 
-    public ClientVisitController(DynamicRepository dynamicRepo, ClientRepository clientRepo)
+    public ClientVisitController(DynamicRepository dynamicRepo, ClientRepository clientRepo, FollowUpRepository followUpRepo)
     {
         _dynamicRepo = dynamicRepo;
         _clientRepo = clientRepo;
+        _followUpRepo = followUpRepo;
     }
 
     // INDEX - 100% DYNAMIC JAISA USER HAI
@@ -280,6 +282,8 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     data.SortDirection = direction;
     ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
     ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
+    // Visit Type ka naam dikhane ke liye lookup (Id -> Name)
+    ViewBag.VisitTypeMap = GetVisitTypeMap();
 
     if(Request.Headers["X-Requested-With"]=="XMLHttpRequest")
     {
@@ -301,6 +305,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         var dt = _dynamicRepo.GetServerDateTime();
         ViewBag.CurrentDate = dt.CurrentDate;
         ViewBag.CurrentTime = dt.CurrentTime;
+        ViewBag.VisitTypes = _dynamicRepo.GetTable("VisitTypeMaster");
         return View(cols);
     }
 
@@ -310,7 +315,8 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         values.Remove("__RequestVerificationToken");
         try
         {
-            _dynamicRepo.Insert("ClientVisit", values);
+            var newId = _dynamicRepo.Insert("ClientVisit", values);
+            SyncFollowUp(newId, values);
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return Json(new { success = true, message = "Visit saved successfully." });
             return RedirectToAction(nameof(Index));
@@ -318,7 +324,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
     }
@@ -346,6 +352,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
             ViewBag.Client = _clientRepo.GetById(Convert.ToInt32(row["ClientId"]));
         ViewBag.Clients = _clientRepo.GetAll();
         var cols = _dynamicRepo.GetColumns("ClientVisit").Where(c=>c.Name!="VisitId" && c.Name!="UserId").ToList();
+        ViewBag.VisitTypes = _dynamicRepo.GetTable("VisitTypeMaster");
         return View(cols);
     }
 
@@ -359,6 +366,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         try
         {
             _dynamicRepo.Update("ClientVisit", "VisitId", id, values);
+            SyncFollowUp(id, values);
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return Json(new { success = true, id = id, message = "Visit updated successfully." });
             return RedirectToAction(nameof(Index));
@@ -366,7 +374,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
     }
@@ -385,9 +393,47 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
+    }
+
+    // Visit save/edit hote hi FollowUp row auto-sync (kabhi visit ko block nahi karta)
+    private void SyncFollowUp(int visitId, Dictionary<string, string> values)
+    {
+        try
+        {
+            int clientId = values.TryGetValue("ClientId", out var cid) && int.TryParse(cid, out var cc) ? cc : 0;
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            DateTime? nextDate = null;
+            if (values.TryGetValue("NextFollowUpDate", out var nd) && DateTime.TryParse(nd, out var dt))
+                nextDate = dt;
+            values.TryGetValue("FollowUpStatus", out var status);
+            values.TryGetValue("Remarks", out var remarks);
+            _followUpRepo.SyncFromVisit(visitId, clientId, userId, nextDate, status, remarks);
+        }
+        catch
+        {
+            // Follow-up ek side-effect hai - visit save kabhi fail nahi hoga iski wajah se
+        }
+    }
+
+    /// <summary>VisitTypeMaster se Id -> Name ka map (VisitTypeId ko naam dikhane ke liye).</summary>
+    private Dictionary<string, string> GetVisitTypeMap()
+    {
+        var map = new Dictionary<string, string>();
+        try
+        {
+            var vt = _dynamicRepo.GetTable("VisitTypeMaster", 1, 100, null, null, "ASC");
+            foreach (var r in vt.Rows)
+            {
+                var id = r.ContainsKey("Id") ? r["Id"]?.ToString() : null;
+                var nm = r.ContainsKey("Name") ? r["Name"]?.ToString() : null;
+                if (!string.IsNullOrEmpty(id)) map[id!] = nm ?? "";
+            }
+        }
+        catch { /* lookup fail ho to raw value hi dikhega */ }
+        return map;
     }
 
     // EXPORT EXCEL - DATABASE JAISA VAISA
@@ -395,15 +441,18 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     public IActionResult ExportExcel(string? search)
     {
         var data = _dynamicRepo.GetClientVisitTable(1, 10000, search, null, "DESC");
+        var vtMap = GetVisitTypeMap();
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("ClientVisit");
         int colIdx = 1;
-        foreach(var col in data.Columns){ ws.Cell(1,colIdx).Value = col; colIdx++; }
+        foreach(var col in data.Columns){ ws.Cell(1,colIdx).Value = (col == "VisitTypeId" ? "Visit Type" : col); colIdx++; }
         int rowIdx = 2;
         foreach(var r in data.Rows){
             colIdx = 1;
             foreach(var col in data.Columns){
-                ws.Cell(rowIdx,colIdx).Value = r.ContainsKey(col)? r[col]?.ToString() : "";
+                var cv = r.ContainsKey(col)? r[col]?.ToString() : "";
+                if (col == "VisitTypeId" && cv != null && vtMap.TryGetValue(cv, out var vtn)) cv = vtn;
+                ws.Cell(rowIdx,colIdx).Value = cv;
                 colIdx++;
             }
             rowIdx++;
@@ -418,10 +467,15 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     public IActionResult ExportCsv(string? search)
     {
         var data = _dynamicRepo.GetClientVisitTable(1, 10000, search, null, "DESC");
+        var vtMap = GetVisitTypeMap();
         var sb = new StringBuilder();
-        sb.AppendLine(string.Join(",", data.Columns));
+        sb.AppendLine(string.Join(",", data.Columns.Select(c => c == "VisitTypeId" ? "Visit Type" : c)));
         foreach(var r in data.Rows){
-            var line = string.Join(",", data.Columns.Select(c => $"\"{(r.ContainsKey(c)? r[c]?.ToString()?.Replace("\"","\"\"") : "")}\""));
+            var line = string.Join(",", data.Columns.Select(c => {
+                var val = r.ContainsKey(c)? r[c]?.ToString() : "";
+                if (c == "VisitTypeId" && val != null && vtMap.TryGetValue(val, out var vtn)) val = vtn;
+                return $"\"{val?.Replace("\"","\"\"")}\"";
+            }));
             sb.AppendLine(line);
         }
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "ClientVisitList.csv");

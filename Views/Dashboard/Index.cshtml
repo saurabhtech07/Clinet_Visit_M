@@ -1,0 +1,596 @@
+@model DashboardViewModel
+@{
+    // AJAX navigation (sidebar se) ke liye layout hatao
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+}
+
+@functions {
+    readonly string[] Palette = { "#4f6ef2", "#2ec5ce", "#8b5cf6", "#f59e0b", "#ef4444", "#10b981", "#f9a8d4", "#6366f1" };
+
+    string DonutStyle(IReadOnlyList<NameValue> items, int total)
+    {
+        if (items == null || items.Count == 0 || total <= 0) return "background:#eef2f7;";
+        var sb = new System.Text.StringBuilder();
+        sb.Append("background:conic-gradient(");
+        double cum = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            double pct = items[i].Value / (double)total * 100.0;
+            double from = cum; cum += pct;
+            sb.Append(Palette[i % Palette.Length]).Append(' ').Append(from.ToString("F1")).Append("% ");
+            sb.Append(cum.ToString("F1")).Append("%");
+            if (i < items.Count - 1) sb.Append(',');
+        }
+        sb.Append(");");
+        return sb.ToString();
+    }
+
+    int BarHeight(int val, int max) => max > 0 ? (int)Math.Round(val / (double)max * 100) : 0;
+    int HBarWidth(int val, int max) => max > 0 ? (int)Math.Round(val / (double)max * 100) : 0;
+    string Color(int i) => Palette[i % Palette.Length];
+    int MaxValue(IReadOnlyList<NameValue> items) => items == null || items.Count == 0 ? 0 : items.Max(x => x.Value);
+    int Sum(IReadOnlyList<NameValue> items) => items == null || items.Count == 0 ? 0 : items.Sum(x => x.Value);
+
+    // Donut ke segments ko JSON me do - JS hover pe kaunsa segment hai wo nikalta hai
+    string SegmentsJson(IReadOnlyList<NameValue> items, int total)
+    {
+        if (items == null || items.Count == 0 || total <= 0) return "[]";
+        var list = items.Select(x => new
+        {
+            name = x.Name,
+            value = x.Value,
+            pct = Math.Round(x.Value / (double)total * 100.0, 2)
+        }).ToList();
+        return System.Text.Json.JsonSerializer.Serialize(list);
+    }
+
+    // Legend / hover ke liye ek line ka text
+    string LegendTip(string name, int value, int total)
+        => total > 0 ? $"{name} — {value} ({(value * 100.0 / total):F1}%)" : $"{name} — {value}";
+}
+
+<style>
+    .dash-kpi{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,.04);min-height:86px}
+    .dash-kpi-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+    .dash-kpi-value{font-size:24px;font-weight:800;color:#0f172a;line-height:1}
+    .dash-kpi-sub{font-size:10px;color:#94a3b8;margin-top:3px}
+    .dash-kpi-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
+
+    .dash-card{background:#fff;border-radius:14px;border:1px solid #eef2f7;height:100%;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .dash-card-head{padding:13px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:700;color:#1e293b}
+    .dash-card-body{padding:16px;flex:1}
+
+    .dash-bars{display:flex;align-items:flex-end;gap:8px;height:180px}
+    .dash-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+    .dash-bar-val{font-size:10px;font-weight:700;color:#334155;margin-bottom:3px}
+    .dash-bar-fill{width:100%;max-width:42px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#4f6ef2,#2a48c8);transition:height .4s;min-height:2px}
+    .dash-bar-lbl{font-size:10px;color:#64748b;margin-top:6px;white-space:nowrap}
+
+    .dash-donut{width:150px;height:150px;border-radius:50%;margin:0 auto;position:relative}
+    .dash-donut-center{position:absolute;inset:12px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .dash-donut-num{font-size:27px;font-weight:800;color:#0f172a;line-height:1}
+    .dash-donut-lbl{font-size:9px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-top:2px}
+    .dash-legend{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+    .dash-legend li{display:flex;align-items:center;gap:8px;font-size:12px;color:#334155}
+    .dash-legend .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+    .dash-legend .ln{flex:1}
+    .dash-legend .cnt{font-weight:700}
+
+    .dash-hrow{margin-bottom:12px}
+    .dash-hrow-top{display:flex;justify-content:space-between;font-size:12px;color:#334155;margin-bottom:5px;gap:10px}
+    .dash-hrow-top .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dash-hrow-track{height:22px;background:#eef2f7;border-radius:6px;overflow:hidden}
+    .dash-hrow-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 8px;color:#fff;font-weight:700;font-size:11px;white-space:nowrap;transition:width .4s}
+
+    .dash-empty{color:#94a3b8;font-size:12px;text-align:center;padding:22px 10px}
+
+    .dash-recent{font-size:12px}
+    .dash-recent th{font-size:10px;text-transform:uppercase;color:#64748b;border-bottom:1px solid #e2e8f0;padding:7px 10px;white-space:nowrap}
+    .dash-recent td{font-size:12px;padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#334155}
+
+    .dash-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700}
+
+    .dash-link{display:block;text-decoration:none;color:inherit}
+    .dash-link:hover .dash-kpi{border-color:#c7d2fe;box-shadow:0 2px 6px rgba(79,110,242,.15)}
+    .dash-chip{background:#eef2f7;border:1px solid #e2e8f0;color:#475569;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px}
+
+    /* ---- Hover tooltip ---- */
+    .dash-tip{position:fixed;z-index:2100;pointer-events:none;left:0;top:0;background:#0f172a;color:#fff;font-size:11.5px;line-height:1.35;padding:6px 10px;border-radius:8px;box-shadow:0 6px 18px rgba(15,23,42,.28);opacity:0;transform:translateY(3px);transition:opacity .12s ease,transform .12s ease;white-space:nowrap;max-width:260px}
+    .dash-tip.show{opacity:1;transform:translateY(0)}
+    .dash-tip .t-mut{color:#94a3b8}
+
+    /* hover cues */
+    .dash-bar{cursor:default;border-radius:6px}
+    .dash-bar:hover .dash-bar-fill{filter:brightness(1.1);box-shadow:0 0 0 2px rgba(79,110,242,.18)}
+    .dash-hrow:hover .dash-hrow-track{background:#e6ebf3}
+    .dash-hrow:hover .dash-hrow-fill{filter:brightness(1.05)}
+    .dash-donut{cursor:default}
+    .dash-donut:hover{filter:brightness(1.02)}
+    .dash-legend li{padding:2px 4px;border-radius:7px;transition:background .12s}
+    .dash-legend li:hover{background:#f1f5f9}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h4 class="fw-bold mb-0">CRM Dashboard</h4>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="dash-chip"><i class="bi bi-people me-1"></i>@Model.ActiveUsers/@Model.TotalUsers users</span>
+        <span class="text-muted" style="font-size:12px;"><i class="bi bi-clock me-1"></i>Updated: @Model.GeneratedOn.ToString("dd MMM yyyy, hh:mm tt")</span>
+        <a href="/Dashboard" class="btn btn-light border" style="font-size:13px;border-radius:10px;"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</a>
+    </div>
+</div>
+
+<!-- ================= KPI: CLIENT & VISITS ================= -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Total Clients</div>
+                <div class="dash-kpi-value">@Model.TotalClients</div>
+                <div class="dash-kpi-sub">+@Model.NewClientsThisMonth this month</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#f59e0b;"><i class="bi bi-building"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Active Clients</div>
+                <div class="dash-kpi-value">@Model.ActiveClients</div>
+                <div class="dash-kpi-sub">visited at least once</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#ef4444;"><i class="bi bi-person-check"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Total Visits</div>
+                <div class="dash-kpi-value">@Model.TotalVisits</div>
+                <div class="dash-kpi-sub">@Model.VisitsThisMonth this month</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-signpost-split"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Today's Visits</div>
+                <div class="dash-kpi-value">@Model.VisitsToday</div>
+                <div class="dash-kpi-sub">as of now</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#10b981;"><i class="bi bi-calendar-check"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= KPI: FOLLOW-UP ================= -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <a class="dash-link" href="/FollowUp?section=pending">
+            <div class="dash-kpi">
+                <div>
+                    <div class="dash-kpi-label">Pending Follow-ups</div>
+                    <div class="dash-kpi-value" style="color:#f59e0b;">@Model.PendingFollowUps</div>
+                    <div class="dash-kpi-sub">actions needed</div>
+                </div>
+                <div class="dash-kpi-icon" style="background:#f59e0b;"><i class="bi bi-hourglass-split"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a class="dash-link" href="/FollowUp?section=today">
+            <div class="dash-kpi">
+                <div>
+                    <div class="dash-kpi-label">Due Today</div>
+                    <div class="dash-kpi-value" style="color:#0d6efd;">@Model.DueTodayFollowUps</div>
+                    <div class="dash-kpi-sub">aaj ke follow-ups</div>
+                </div>
+                <div class="dash-kpi-icon" style="background:#0d6efd;"><i class="bi bi-calendar-event"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a class="dash-link" href="/FollowUp?section=overdue">
+            <div class="dash-kpi">
+                <div>
+                    <div class="dash-kpi-label">Overdue Follow-ups</div>
+                    <div class="dash-kpi-value" style="color:#ef4444;">@Model.OverdueFollowUps</div>
+                    <div class="dash-kpi-sub">date passed</div>
+                </div>
+                <div class="dash-kpi-icon" style="background:#ef4444;"><i class="bi bi-exclamation-octagon"></i></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a class="dash-link" href="/FollowUp?section=done">
+            <div class="dash-kpi">
+                <div>
+                    <div class="dash-kpi-label">Follow-ups Done</div>
+                    <div class="dash-kpi-value" style="color:#10b981;">@Model.FollowUpsDone</div>
+                    <div class="dash-kpi-sub">completed</div>
+                </div>
+                <div class="dash-kpi-icon" style="background:#10b981;"><i class="bi bi-check2-circle"></i></div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ================= KPI: DAILY SUPPORT ================= -->
+<h6 class="fw-bold mb-2" style="color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">
+    <i class="bi bi-headset me-1"></i>Daily Support System
+</h6>
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Today's Calls</div>
+                <div class="dash-kpi-value">@Model.SupportTodayCalls</div>
+                <div class="dash-kpi-sub">Total @Model.SupportTotalCalls</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#f59e0b;"><i class="bi bi-telephone"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Open Tickets</div>
+                <div class="dash-kpi-value" style="color:#dc3545;">@Model.SupportOpenCalls</div>
+                <div class="dash-kpi-sub">need action</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#ef4444;"><i class="bi bi-exclamation-circle"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">Closed Today</div>
+                <div class="dash-kpi-value" style="color:#198754;">@Model.SupportClosedToday</div>
+                <div class="dash-kpi-sub">resolved today</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#10b981;"><i class="bi bi-check-circle"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="dash-kpi">
+            <div>
+                <div class="dash-kpi-label">In Progress / Pending</div>
+                <div class="dash-kpi-value" style="color:#6f42c1;">@Model.SupportPending</div>
+                <div class="dash-kpi-sub">working on</div>
+            </div>
+            <div class="dash-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-hourglass-split"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= CHARTS ROW 1 ================= -->
+<div class="row g-3 mb-3">
+    @* Monthly visits bar *@
+    <div class="col-lg-4 col-md-6">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-bar-chart-fill me-2" style="color:#4f6ef2;"></i>Visits - Last 6 Months</div>
+            <div class="dash-card-body">
+                @if (Model.MonthlyVisits.Count > 0)
+                {
+                    var max = MaxValue(Model.MonthlyVisits);
+                    <div class="dash-bars">
+                        @foreach (var item in Model.MonthlyVisits)
+                        {
+                            <div class="dash-bar" data-tip="@item.Name — @item.Value visits">
+                                <span class="dash-bar-val">@item.Value</span>
+                                <div class="dash-bar-fill" style="height:@(BarHeight(item.Value, max))%;"></div>
+                                <span class="dash-bar-lbl">@item.Name</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty">No visit data yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Follow-up status donut *@
+    <div class="col-lg-4 col-md-6">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-diagram-3-fill me-2" style="color:#8b5cf6;"></i>Follow-up Status</div>
+            <div class="dash-card-body">
+                @if (Model.FollowUpStatuses.Count > 0)
+                {
+                    var tot = Sum(Model.FollowUpStatuses);
+                    <div class="dash-donut" data-segments="@SegmentsJson(Model.FollowUpStatuses, tot)" style="@DonutStyle(Model.FollowUpStatuses, tot)">
+                        <div class="dash-donut-center">
+                            <span class="dash-donut-num">@tot</span>
+                            <span class="dash-donut-lbl">Total</span>
+                        </div>
+                    </div>
+                    <ul class="dash-legend">
+                        @for (int i = 0; i < Model.FollowUpStatuses.Count; i++)
+                        {
+                            <li data-tip="@LegendTip(Model.FollowUpStatuses[i].Name, Model.FollowUpStatuses[i].Value, tot)">
+                                <span class="dot" style="background:@Color(i);"></span>
+                                <span class="ln">@Model.FollowUpStatuses[i].Name</span>
+                                <span class="cnt">@Model.FollowUpStatuses[i].Value</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="dash-empty">Follow-up status column not available yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Support status donut *@
+    <div class="col-lg-4 col-md-12">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-ticket-perforated-fill me-2" style="color:#2ec5ce;"></i>Tickets by Status</div>
+            <div class="dash-card-body">
+                @if (Model.SupportStatuses.Count > 0)
+                {
+                    var tot = Sum(Model.SupportStatuses);
+                    <div class="dash-donut" data-segments="@SegmentsJson(Model.SupportStatuses, tot)" style="@DonutStyle(Model.SupportStatuses, tot)">
+                        <div class="dash-donut-center">
+                            <span class="dash-donut-num">@tot</span>
+                            <span class="dash-donut-lbl">Tickets</span>
+                        </div>
+                    </div>
+                    <ul class="dash-legend">
+                        @for (int i = 0; i < Model.SupportStatuses.Count; i++)
+                        {
+                            <li data-tip="@LegendTip(Model.SupportStatuses[i].Name, Model.SupportStatuses[i].Value, tot)">
+                                <span class="dot" style="background:@Color(i);"></span>
+                                <span class="ln">@Model.SupportStatuses[i].Name</span>
+                                <span class="cnt">@Model.SupportStatuses[i].Value</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="dash-empty">Daily Support data not available yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= CHARTS ROW 2 ================= -->
+<div class="row g-3 mb-3">
+    @* Top clients hbar *@
+    <div class="col-lg-6 col-md-12">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-trophy-fill me-2" style="color:#f59e0b;"></i>Top 5 Clients by Visits</div>
+            <div class="dash-card-body">
+                @if (Model.TopClients.Count > 0)
+                {
+                    var max = MaxValue(Model.TopClients);
+                    @for (int i = 0; i < Model.TopClients.Count; i++)
+                    {
+                        <div class="dash-hrow" data-tip="@Model.TopClients[i].Name — @Model.TopClients[i].Value visits">
+                            <div class="dash-hrow-top">
+                                <span class="nm">@(i + 1). @Model.TopClients[i].Name</span>
+                                <span><b>@Model.TopClients[i].Value</b> visits</span>
+                            </div>
+                            <div class="dash-hrow-track">
+                                <div class="dash-hrow-fill" style="width:@(HBarWidth(Model.TopClients[i].Value, max))%;background:@Color(i);">
+                                    @if (HBarWidth(Model.TopClients[i].Value, max) > 15) { @Model.TopClients[i].Value }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="dash-empty">No visits recorded yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Support priority hbar *@
+    <div class="col-lg-6 col-md-12">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-flag-fill me-2" style="color:#ef4444;"></i>Tickets by Priority</div>
+            <div class="dash-card-body">
+                @if (Model.SupportPriorities.Count > 0)
+                {
+                    var max = MaxValue(Model.SupportPriorities);
+                    @for (int i = 0; i < Model.SupportPriorities.Count; i++)
+                    {
+                        <div class="dash-hrow" data-tip="@Model.SupportPriorities[i].Name — @Model.SupportPriorities[i].Value tickets">
+                            <div class="dash-hrow-top">
+                                <span class="nm">@Model.SupportPriorities[i].Name</span>
+                                <span><b>@Model.SupportPriorities[i].Value</b> tickets</span>
+                            </div>
+                            <div class="dash-hrow-track">
+                                <div class="dash-hrow-fill" style="width:@(HBarWidth(Model.SupportPriorities[i].Value, max))%;background:@Color(i);">
+                                    @if (HBarWidth(Model.SupportPriorities[i].Value, max) > 15) { @Model.SupportPriorities[i].Value }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="dash-empty">Daily Support data not available yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= RECENT ================= -->
+<div class="row g-3">
+    <div class="col-lg-6 col-md-12">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-signpost-2-fill me-2" style="color:#4f6ef2;"></i>Recent Visits</div>
+            <div class="dash-card-body" style="padding:6px 16px;">
+                @if (Model.RecentVisits.Count > 0)
+                {
+                    <table class="table table-hover dash-recent mb-0">
+                        <thead><tr><th>Client</th><th>Person</th><th>Date</th></tr></thead>
+                        <tbody>
+                            @foreach (var v in Model.RecentVisits)
+                            {
+                                <tr>
+                                    <td>@v.ClientName</td>
+                                    <td>@(v.PersonName ?? "—")<br /><span style="color:#94a3b8;">@v.PersonMet</span></td>
+                                    <td>@v.VisitDate</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="dash-empty">No visits yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 col-md-12">
+        <div class="dash-card">
+            <div class="dash-card-head"><i class="bi bi-headset me-2" style="color:#2ec5ce;"></i>Recent Support Tickets</div>
+            <div class="dash-card-body" style="padding:6px 16px;">
+                @if (Model.RecentTickets.Count > 0)
+                {
+                    <table class="table table-hover dash-recent mb-0">
+                        <thead><tr><th>Ticket</th><th>Client</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.RecentTickets)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@t.TicketNo</td>
+                                    <td>@t.ClientName</td>
+                                    <td>
+                                        @if (string.Equals(t.Status, "Closed", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="dash-badge" style="background:#dcfce7;color:#166534;">@t.Status</span>
+                                        }
+                                        else if (string.Equals(t.Status, "Open", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="dash-badge" style="background:#fee2e2;color:#b91c1c;">@t.Status</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="dash-badge" style="background:#e0e7ff;color:#3730a3;">@t.Status</span>
+                                        }
+                                    </td>
+                                    <td>@t.SupportDate</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="dash-empty">No tickets yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= HOVER TOOLTIP ================= -->
+<div id="dashTip" class="dash-tip" role="tooltip" aria-hidden="true"></div>
+
+<script>
+    /* Dashboard charts: hover pe data tooltip.
+       Document-level listeners sirf ek baar bind hote hain (AJAX navigation
+       pe scripts dobara chalte hain, is liye guard lagaya hai). */
+    (function () {
+        if (window.__dashTipsBound) return;
+        window.__dashTipsBound = true;
+
+        function tipEl() { return document.getElementById("dashTip"); }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+            });
+        }
+
+        function place(t, x, y) {
+            var pad = 14, w = t.offsetWidth, h = t.offsetHeight;
+            var left = x + pad, top = y - h - pad;
+            if (left + w > window.innerWidth - 8) left = x - w - pad;
+            if (left < 8) left = 8;
+            if (top < 8) top = y + pad;
+            t.style.left = left + "px";
+            t.style.top = top + "px";
+        }
+
+        function show(t, html, x, y) {
+            if (t.__last !== html) { t.innerHTML = html; t.__last = html; }
+            if (!t.classList.contains("show")) t.classList.add("show");
+            place(t, x, y);
+        }
+
+        function hide(t) {
+            if (!t) return;
+            t.__last = null;
+            t.classList.remove("show");
+        }
+
+        /* Donut: cursor ke angle se kaunsa segment hai, wo nikalta hai. */
+        function donutHit(donut, ev) {
+            var segs = [];
+            try { segs = JSON.parse(donut.getAttribute("data-segments") || "[]"); } catch (e) { return null; }
+            if (!segs.length) return null;
+
+            var rect = donut.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+            var dx = ev.clientX - cx, dy = ev.clientY - cy;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var outer = rect.width / 2;
+            if (dist > outer || dist < outer * 0.82) return null;   /* sirf ring */
+
+            var ang = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;  /* 0 = top, clockwise */
+            var cum = 0;
+            for (var i = 0; i < segs.length; i++) {
+                var start = cum;
+                cum += segs[i].pct;
+                if (ang >= start && ang < cum) return segs[i];
+            }
+            return null;
+        }
+
+        document.addEventListener("mousemove", function (ev) {
+            var t = tipEl();
+            if (!t || !ev.target || !ev.target.closest) return;
+
+            /* 1) donut segments */
+            var donut = ev.target.closest(".dash-donut[data-segments]");
+            if (donut) {
+                var seg = donutHit(donut, ev);
+                if (seg) {
+                    show(t, "<b>" + esc(seg.name) + "</b> &nbsp; " + esc(seg.value) +
+                            " <span class=\"t-mut\">(" + seg.pct.toFixed(1) + "%)</span>",
+                         ev.clientX, ev.clientY);
+                    return;
+                }
+            }
+
+            /* 2) koi bhi element jis pe data-tip ho */
+            var el = ev.target.closest("[data-tip]");
+            if (el) {
+                show(t, esc(el.getAttribute("data-tip")), ev.clientX, ev.clientY);
+                return;
+            }
+
+            hide(t);
+        }, { passive: true });
+
+        /* Mouse window se bahar ya page chhodne pe tip chhupa do */
+        document.addEventListener("mouseleave", function () { hide(tipEl()); });
+        window.addEventListener("blur", function () { hide(tipEl()); });
+    })();
+</script>

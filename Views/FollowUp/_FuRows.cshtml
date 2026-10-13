@@ -1,0 +1,74 @@
+@model List<FollowUpRow>
+@{
+    int sr = ViewBag.StartSr is int s ? s : 1;
+}
+@functions {
+    string BadgeClass(FollowUpRow r)
+    {
+        if (r.FollowUpStatus == "Done") return "fu-badge fu-badge-done";
+        if (r.NextFollowUpDate.HasValue && r.NextFollowUpDate.Value.Date < DateTime.Today) return "fu-badge fu-badge-overdue";
+        if (r.NextFollowUpDate.HasValue && r.NextFollowUpDate.Value.Date == DateTime.Today) return "fu-badge fu-badge-today";
+        if (r.NextFollowUpDate.HasValue) return "fu-badge fu-badge-upcoming";
+        return "fu-badge fu-badge-none";
+    }
+    string BadgeText(FollowUpRow r)
+    {
+        if (r.FollowUpStatus == "Done") return "Done";
+        if (r.NextFollowUpDate.HasValue && r.NextFollowUpDate.Value.Date < DateTime.Today) return "Overdue";
+        if (r.NextFollowUpDate.HasValue && r.NextFollowUpDate.Value.Date == DateTime.Today) return "Due Today";
+        if (r.NextFollowUpDate.HasValue) return "Upcoming";
+        return "Pending";
+    }
+}
+@foreach (var r in Model)
+{
+    <tr>
+        <td><span class="badge bg-dark" style="border-radius:6px;">@sr</span></td>
+        <td>
+            <span class="fw-bold">@r.ClientName</span>
+            <span class="d-block fu-code">@r.ClientCode@if (!string.IsNullOrEmpty(r.City)) { <text> · @r.City</text> }</span>
+        </td>
+        <td>
+            @if (!string.IsNullOrEmpty(r.Description)) { @r.Description }
+            @if (!string.IsNullOrEmpty(r.Remarks)) { <span class="d-block fu-remarks"><i class="bi bi-chat-left-text me-1"></i>@r.Remarks</span> }
+            @if (string.IsNullOrEmpty(r.Description) && string.IsNullOrEmpty(r.Remarks)) { <span class="text-muted">—</span> }
+        </td>
+        <td>
+            @if (!string.IsNullOrEmpty(r.AssignedTo)) { @r.AssignedTo } else { <span class="text-muted">—</span> }
+        </td>
+        <td class="fw-bold">@(r.NextFollowUpDate?.ToString("dd MMM yyyy") ?? "—")</td>
+        <td><span class="@BadgeClass(r)">@BadgeText(r)</span></td>
+        <td class="fu-actions">
+            @if (r.FollowUpStatus == "Done")
+            {
+                <span class="text-muted fu-code" title="Done on">@(r.DoneOn?.ToString("dd MMM yyyy") ?? "")</span>
+            }
+            else
+            {
+                <form method="post" action="/FollowUp/MarkDone" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@r.FollowUpId" />
+                    <button class="btn btn-sm btn-success fu-act" title="Mark Done"><i class="bi bi-check-lg"></i></button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-secondary fu-act" title="Postpone"
+                        data-bs-toggle="modal" data-bs-target="#postponeModal"
+                        data-id="@r.FollowUpId" data-date="@(r.NextFollowUpDate?.ToString("yyyy-MM-dd"))">
+                    <i class="bi bi-calendar-plus"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary fu-act" title="Edit"
+                        data-bs-toggle="modal" data-bs-target="#editModal"
+                        data-id="@r.FollowUpId" data-client="@r.ClientName"
+                        data-date="@(r.NextFollowUpDate?.ToString("yyyy-MM-dd"))"
+                        data-desc="@r.Description" data-remarks="@r.Remarks">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <form method="post" action="/FollowUp/Delete" class="d-inline"
+                      onsubmit="return confirm('Delete this follow-up?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@r.FollowUpId" />
+                    <button class="btn btn-sm btn-outline-danger fu-act" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
+            }
+        </td>
+    </tr>
+}

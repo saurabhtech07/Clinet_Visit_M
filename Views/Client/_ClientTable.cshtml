@@ -107,6 +107,7 @@
                 <th>Pincode</th>
                 <th>Mobile</th>
                 <th>Email</th>
+                <th>Assigned To</th>
                 <th style="width:80px;">Actions</th>
             </tr>
         </thead>
@@ -124,6 +125,7 @@
                         <td>@(row.ContainsKey("Pincode") ? row["Pincode"] : "")</td>
                         <td class="fw-medium">@(row.ContainsKey("MobileNo") ? row["MobileNo"] : "")</td>
                         <td style="color:#64748b;">@(row.ContainsKey("Email") ? row["Email"] : "")</td>
+                        <td>@(row.ContainsKey("AssignedToName") && row["AssignedToName"] != null ? row["AssignedToName"] : "—")</td>
                         <td>
                             @if (row.ContainsKey("ClientId"))
                             {
@@ -136,7 +138,7 @@
             }
             else
             {
-                <tr><td colspan="9" class="text-center text-muted py-5">No clients found</td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-5">No clients found</td></tr>
             }
         </tbody>
     </table>

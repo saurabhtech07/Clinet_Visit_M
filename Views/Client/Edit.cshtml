@@ -4,14 +4,15 @@
     var row = (Dictionary<string, object?>)ViewBag.RowData;
     var states = ((DynamicTableViewModel)ViewBag.States).Rows;
     var companyTypes = ((DynamicTableViewModel)ViewBag.CompanyTypes).Rows;
+    var users = ViewBag.Users as List<User> ?? new List<User>();
 
     var companyFields = new[] { "ClientName", "Address1", "Address2", "City", "StateId", "Pincode" };
     var contactFields = new[] { "LandlineNo", "MobileNo", "Email" };
-    var businessFields = new[] { "CompanyTypeId" };
+    var businessFields = new[] { "CompanyTypeId", "AssignedTo" };
 
     IHtmlContent RenderField(DynamicField f)
     {
-        var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name;
+        var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name == "AssignedTo" ? "Assigned To" : f.Name;
         var label = $"<label class=\"form-label mt-2 mb-1 small fw-bold\">{displayName}{(f.IsNullable ? "" : " *")}</label>";
         string input;
 
@@ -34,6 +35,16 @@
                 return $"<option value=\"{id}\"{selected}>{name}</option>";
             }));
             input = $@"<select class=""form-select form-select-sm"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
+        }
+        else if (f.Name == "AssignedTo")
+        {
+            var currentUserId = row.ContainsKey("AssignedTo") ? row["AssignedTo"]?.ToString() : "";
+            var opts = string.Join("", users.Select(u => {
+                var nm = System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName);
+                var selected = u.UserId.ToString() == currentUserId ? " selected" : "";
+                return $"<option value=\"{u.UserId}\"{selected}>{nm}</option>";
+            }));
+            input = $@"<select class=""form-select form-select-sm"" name=""AssignedTo""><option value="""">Unassigned</option>{opts}</select>";
         }
         else
         {

@@ -95,7 +95,7 @@ public class AccountController : Controller
         // Agar already login hai to direct redirect
         if (User.Identity!= null && User.Identity.IsAuthenticated)
         {
-            return RedirectToAction("Index", "Client");
+            return RedirectToAction("Index", "Dashboard");
         }
         return View();
     }
@@ -147,7 +147,7 @@ public class AccountController : Controller
             new ClaimsPrincipal(claimsIdentity),
             authProperties);
 
-        return RedirectToAction("Index", "Client");
+        return RedirectToAction("Index", "Dashboard");
     }
 
     public async Task<IActionResult> Logout()

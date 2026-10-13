@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,13 +16,29 @@
     <div class="sidebar">
         <!-- SIDEBAR HEADER -->
         <div class="sidebar-header">
-            <button type="button" id="sidebarToggle" class="sidebar-toggle" title="Toggle Menu">
-                <i class="bi bi-list"></i>
-            </button>
-            <div class="sidebar-title">
-                <span>Client Visit Management</span>
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" id="sidebarToggle" role="button" tabindex="0" title="Collapse / Expand Menu">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="sidebar-brand-name">CRM</span>
+                    <span class="sidebar-brand-sub">Customer Relationship Management</span>
+                </div>
             </div>
         </div>
+
+        <!-- =================================================
+             OVERVIEW
+             ================================================= -->
+        <div class="sidebar-section-title">
+            <span>OVERVIEW</span>
+        </div>
+
+        <!-- CRM DASHBOARD -->
+        <a class="nav-link" href="/Dashboard">
+            <i class="bi bi-speedometer2 ic-dash"></i>
+            <span>Dashboard</span>
+        </a>
 
         <!-- =================================================
              MASTER MODULES
@@ -69,6 +82,12 @@
         <a class="nav-link" href="/DailySupport">
             <i class="bi bi-headset ic-support"></i>
             <span>Daily Support System</span>
+        </a>
+
+        <!-- FOLLOW-UP CENTER -->
+        <a class="nav-link" href="/FollowUp">
+            <i class="bi bi-alarm ic-followup"></i>
+            <span>Follow-ups</span>
         </a>
 
         <!-- =================================================
@@ -146,11 +165,11 @@
         const sidebarToggle = document.getElementById("sidebarToggle");
         sidebarToggle.addEventListener("click", function () {
             document.body.classList.toggle("sidebar-collapsed");
-            const icon = this.querySelector("i");
-            if (document.body.classList.contains("sidebar-collapsed")) {
-                icon.className = "bi bi-layout-sidebar-inset";
-            } else {
-                icon.className = "bi bi-list";
+        });
+        sidebarToggle.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                document.body.classList.toggle("sidebar-collapsed");
             }
         });
     </script>
@@ -160,7 +179,7 @@
          ===================================================== -->
     <script>
         (function () {
-            var masterPaths = ["/Client", "/User", "/StateMaster", "/ClientVisit", "/DailySupport", "/ClientVisit/ClientVisitReport", "/DailySupport/DSSReports", "/Import"];
+            var masterPaths = ["/Dashboard", "/Client", "/User", "/StateMaster", "/ClientVisit", "/DailySupport", "/FollowUp", "/ClientVisit/ClientVisitReport", "/DailySupport/DSSReports", "/Import"];
 
             function reExecuteScripts(container) {
                 container.querySelectorAll("script").forEach(function (oldScript) {

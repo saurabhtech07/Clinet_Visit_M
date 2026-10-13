@@ -80,7 +80,7 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
 
@@ -120,7 +120,7 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
 
@@ -138,7 +138,7 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
         if (state == null)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = "State not found." }, StatusCode(StatusCodes.Status404NotFound));
+                return StatusCode(StatusCodes.Status404NotFound, new { success = false, message = "State not found." });
             return NotFound();
         }
 
@@ -149,7 +149,7 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
 

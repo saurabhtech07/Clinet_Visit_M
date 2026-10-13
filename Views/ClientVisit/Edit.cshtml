@@ -1,5 +1,9 @@
 @model List<ClientVisitManagement.Models.DynamicField>
 @{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
     var client = (ClientVisitManagement.Models.Client)ViewBag.Client;
     var row = (Dictionary<string, object?>)ViewBag.RowData;
 }
@@ -28,8 +32,8 @@
                     <div class="row g-2">
                     @foreach (var f in Model.Where(f => f.Name!= "DiscussionRequirement" && f.Name!= "Remarks" && f.Name!= "UserId"))
                     {
-                        <div class="@(f.Name == "VisitDate" || f.Name == "VisitTime" || f.Name == "NextFollowUpDate" || f.Name == "FollowUpStatus"? "col-6" : "col-12")">
-                            <label class="form-label mt-2 mb-1 small fw-bold">@f.Name @(f.IsNullable? "" : " *")</label>
+                        <div class="@(f.Name == "VisitDate" || f.Name == "VisitTime" || f.Name == "NextFollowUpDate" || f.Name == "FollowUpStatus" || f.Name == "VisitTypeId"? "col-6" : "col-12")">
+                            <label class="form-label mt-2 mb-1 small fw-bold">@(f.Name == "VisitTypeId" ? "Visit Type" : f.Name) @(f.IsNullable? "" : " *")</label>
                             @if (f.Name == "PersonMet")
                             {
                                 <select class="form-select form-select-sm" name="PersonMet" required>
@@ -46,6 +50,17 @@
                                     @foreach (var opt in new[] { "Pending", "Done", "Overdue" })
                                     {
                                         <option value="@opt" selected="@(row.ContainsKey("FollowUpStatus") && row["FollowUpStatus"]?.ToString() == opt? "selected": null)">@opt</option>
+                                    }
+                                </select>
+                            }
+                            else if (f.Name == "VisitTypeId")
+                            {
+                                var curType = row.ContainsKey("VisitTypeId") && row["VisitTypeId"] != null ? row["VisitTypeId"].ToString() : "";
+                                <select class="form-select form-select-sm" name="VisitTypeId">
+                                    <option value="">Select visit type</option>
+                                    @foreach (var vt in ((DynamicTableViewModel)ViewBag.VisitTypes).Rows)
+                                    {
+                                        <option value="@vt["Id"]" selected="@(curType == vt["Id"]?.ToString()? "selected": null)">@vt["Name"]</option>
                                     }
                                 </select>
                             }
@@ -93,7 +108,6 @@
     </div>
 </form>
 
-@section Scripts {
 <script>
     (function(){
         var form = document.getElementById("visitForm");
@@ -120,4 +134,3 @@
         } else { rec.stop(); listening=false; btn.innerText="🎤 Speak"; }
     }
 </script>
-}

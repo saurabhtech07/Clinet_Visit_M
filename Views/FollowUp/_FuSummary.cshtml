@@ -1,0 +1,10 @@
+@model FollowUpViewModel
+@{
+    var totalPending = Model.Overdue.Count + Model.DueToday.Count + Model.Upcoming.Count + Model.NoSchedule.Count;
+}
+<div class="text-muted" style="font-size:12px;">
+    <span class="badge rounded-pill me-1" style="background:#e2e8f0;color:#334155;">@Model.TotalRecords total</span>
+    <span class="badge rounded-pill me-1" style="background:#fee2e2;color:#b91c1c;">@Model.Overdue.Count overdue</span>
+    <span class="badge rounded-pill me-1" style="background:#fef3c7;color:#b45309;">@Model.DueToday.Count due today</span>
+    <span class="badge rounded-pill" style="background:#dbeafe;color:#1d4ed8;">@totalPending pending</span>
+</div>

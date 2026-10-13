@@ -42,25 +42,6 @@ body {
     border-bottom: 1px solid rgba(255,255,255,.15);
 }
 
-.sidebar-toggle {
-    width: 34px;
-    height: 34px;
-    border: 0;
-    background: transparent;
-    color: #fff;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 5px;
-    flex-shrink: 0;
-}
-
-.sidebar-toggle:hover {
-    background: rgba(255,255,255,.10);
-}
-
 .sidebar-title {
     margin: 0;
     padding: 0;
@@ -68,6 +49,65 @@ body {
     font-size: 16px;
     font-weight: 700;
     line-height: 1.25;
+}
+
+/* ================= SIDEBAR BRAND (LOGO + NAME) ================= */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.sidebar-logo {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4f6ef2 0%, #2ec5ce 55%, #8b5cf6 100%);
+    color: #fff;
+    font-size: 18px;
+    box-shadow: 0 3px 8px rgba(31, 74, 148, .35);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform .15s ease, filter .15s ease;
+}
+
+.sidebar-logo:hover {
+    transform: scale(1.06);
+    filter: brightness(1.1);
+}
+
+.sidebar-logo:active {
+    transform: scale(.96);
+}
+
+.sidebar-brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.sidebar-brand-name {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    white-space: nowrap;
+}
+
+.sidebar-brand-sub {
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .62);
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 
@@ -114,11 +154,13 @@ body {
 
 /* ================= COLOURFUL MODULE ICONS ================= */
 
+.sidebar .nav-link .ic-dash     { background: rgba(52,211,153,.18);  color: #6ee7b7; }
 .sidebar .nav-link .ic-client   { background: rgba(96,165,250,.18);  color: #93c5fd; }
 .sidebar .nav-link .ic-user     { background: rgba(74,222,128,.18);  color: #86efac; }
 .sidebar .nav-link .ic-state    { background: rgba(251,191,36,.18);  color: #fcd34d; }
 .sidebar .nav-link .ic-visit    { background: rgba(34,211,238,.18);  color: #67e8f9; }
 .sidebar .nav-link .ic-support  { background: rgba(251,146,60,.18);  color: #fdba74; }
+.sidebar .nav-link .ic-followup{ background: rgba(34,211,238,.18);   color: #67e8f9; }
 .sidebar .nav-link .ic-vreport  { background: rgba(192,132,252,.18); color: #d8b4fe; }
 .sidebar .nav-link .ic-dss      { background: rgba(244,114,182,.18); color: #f9a8d4; }
 .sidebar .nav-link .ic-import   { background: rgba(45,212,191,.18);  color: #5eead4; }
@@ -158,7 +200,8 @@ body.sidebar-collapsed .sidebar-header {
     padding: 0;
 }
 
-body.sidebar-collapsed .sidebar-title {
+body.sidebar-collapsed .sidebar-title,
+body.sidebar-collapsed .sidebar-brand-text {
     display: none;
 }
 
@@ -187,8 +230,9 @@ body.sidebar-collapsed .sidebar .nav-link i {
 }
 
 
-/* HEADER ICON */
-body.sidebar-collapsed .sidebar-toggle {
+/* HEADER ICON (logo center in collapsed) */
+body.sidebar-collapsed .sidebar-brand {
+    justify-content: center;
     margin: 0 auto;
 }
 
@@ -217,6 +261,47 @@ body.sidebar-collapsed .sidebar .nav-link:hover {
     gap: 8px;
     font-size: 14px;
     z-index: 10;
+}
+
+/* =========================================================
+   FOLLOW-UP BADGE (topbar)
+   ========================================================= */
+
+.topbar .followup-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    text-decoration: none;
+    margin-right: 6px;
+    transition: background .2s ease;
+}
+
+.topbar .followup-badge:hover {
+    background: rgba(255,255,255,.22);
+}
+
+.badge-bubble {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 0 0 2px #16336b;
 }
 
 
@@ -723,51 +808,6 @@ table.table td {
 .pagination-area .btn-primary {
     background: #16336b;
     border-color: #16336b;
-}
-
-
-/* =========================================================
-   COLLAPSED SIDEBAR
-   ========================================================= */
-
-body.sidebar-collapsed .sidebar {
-    width: 70px;
-}
-
-body.sidebar-collapsed .main-content {
-    margin-left: 70px;
-}
-
-body.sidebar-collapsed .topbar {
-    left: 70px;
-}
-
-body.sidebar-collapsed .sidebar-header {
-    justify-content: center;
-    padding: 0;
-}
-
-body.sidebar-collapsed .sidebar-title {
-    display: none;
-}
-
-body.sidebar-collapsed .sidebar .nav-link > span,
-body.sidebar-collapsed .master-dropdown summary span > span,
-body.sidebar-collapsed .master-arrow {
-    display: none;
-}
-
-body.sidebar-collapsed .sidebar .nav-link {
-    text-align: center;
-    padding: 12px 0;
-}
-
-body.sidebar-collapsed .master-dropdown .submenu {
-    display: none;
-}
-
-body.sidebar-collapsed .master-dropdown summary {
-    justify-content: center;
 }
 
 

@@ -1,0 +1,355 @@
+@model FollowUpViewModel
+@{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+    ViewBag.Users = Model.Users;
+    var currentUserName = Model.FilterUserId.HasValue
+        ? (Model.Users.FirstOrDefault(u => u.UserId == Model.FilterUserId)?.Username ?? "All Users")
+        : "All Users";
+}
+
+<style>
+    .fu-tabs { flex-wrap: wrap; }
+    .fu-tabs .nav-link { font-size:12.5px; font-weight:600; border-radius:10px; margin-right:6px; color:#475569; }
+    .fu-tabs .nav-link.active { background:#eef2f7; color:#0f172a; }
+    .fu-count { display:inline-block; min-width:18px; text-align:center; background:#e2e8f0; border-radius:9px; font-size:10.5px; font-weight:700; padding:1px 6px; margin-left:4px; }
+    .fu-tabs .nav-link.active .fu-count { background:#0d6efd; color:#fff; }
+
+    .fu-card { border-radius:14px; }
+    .fu-table th { font-size:10px; text-transform:uppercase; color:#64748b; letter-spacing:.3px; border-bottom:1px solid #e2e8f0; padding:10px 14px; white-space:nowrap; background:#f8fafc; }
+    .fu-table td { font-size:12.5px; padding:10px 14px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    .fu-table tr:last-child td { border-bottom:none; }
+
+    .fu-code   { font-size:10px; color:#94a3b8; font-weight:400; }
+    .fu-remarks{ font-size:11px; color:#64748b; max-width:250px; }
+    .fu-actions { white-space:nowrap; text-align:right; }
+    .fu-act { padding:2px 8px; border-radius:8px; }
+    .fu-assign { min-width:120px; }
+
+    .fu-badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:10.5px; font-weight:700; white-space:nowrap; }
+    .fu-badge-overdue  { background:#fee2e2; color:#b91c1c; }
+    .fu-badge-today    { background:#fef3c7; color:#b45309; }
+    .fu-badge-upcoming { background:#dbeafe; color:#1d4ed8; }
+    .fu-badge-none     { background:#e2e8f0; color:#334155; }
+    .fu-badge-done     { background:#dcfce7; color:#166534; }
+
+    .fu-empty { text-align:center; color:#94a3b8; padding:38px 12px; font-size:13px; }
+    .fu-empty i { font-size:26px; display:block; margin-bottom:8px; color:#cbd5e1; }
+
+    /* Searchable user dropdown */
+    .fu-userbtn { background:#fff; font-size:12.5px; text-align:left; }
+    .fu-usermenu { max-height:300px; overflow:auto; }
+    .fu-userlist .dropdown-item { font-size:12.5px; border-radius:6px; }
+    .fu-userlist .dropdown-item:active { background:#eef2f7; color:#0f172a; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1">Follow-up Center</h4>
+        <div id="fuSummary">@await Html.PartialAsync("_FuSummary", Model)</div>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal" style="border-radius:10px;">
+        <i class="bi bi-plus-lg me-1"></i>Add Follow-up
+    </button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success py-2" style="font-size:13px;"><i class="bi bi-check-circle me-1"></i>@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger py-2" style="font-size:13px;"><i class="bi bi-exclamation-triangle me-1"></i>@TempData["Error"]</div>
+}
+
+<!-- FILTERS (AJAX) -->
+<div class="row g-2 mb-3" id="fuFilterBar">
+    <div class="col-md-4">
+        <input type="text" id="fuSearch" class="form-control form-control-sm"
+               placeholder="Search client, description, user..." value="@Model.Search" autocomplete="off" />
+    </div>
+    <div class="col-md-3">
+        <div class="dropdown w-100">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 fu-userbtn" type="button"
+                    id="fuUserBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                <span id="fuUserLabel">@currentUserName</span>
+            </button>
+            <div class="dropdown-menu w-100 p-2 shadow fu-usermenu">
+                <input type="text" id="fuUserSearch" class="form-control form-control-sm mb-2"
+                       placeholder="Search user..." autocomplete="off" />
+                <div id="fuUserList" class="fu-userlist">
+                    <button type="button" class="dropdown-item fu-user-opt" data-id="" data-name="All Users">All Users</button>
+                    @foreach (var u in Model.Users)
+                    {
+                        <button type="button" class="dropdown-item fu-user-opt" data-id="@u.UserId" data-name="@u.Username">@u.Username</button>
+                    }
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="fuUserId" value="@(Model.FilterUserId?.ToString() ?? "")" />
+    </div>
+    <div class="col-md-3">
+        <select id="fuStatus" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            <option value="pending"  selected="@(Model.StatusFilter == "pending"  ? "selected" : null)">Pending</option>
+            <option value="overdue"  selected="@(Model.StatusFilter == "overdue"  ? "selected" : null)">Overdue</option>
+            <option value="upcoming" selected="@(Model.StatusFilter == "upcoming" ? "selected" : null)">Upcoming</option>
+            <option value="nodate"   selected="@(Model.StatusFilter == "nodate"   ? "selected" : null)">No Date</option>
+            <option value="done"     selected="@(Model.StatusFilter == "done"     ? "selected" : null)">Done</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="button" id="fuReset" class="btn btn-sm btn-outline-secondary w-100">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+        </button>
+    </div>
+</div>
+
+<!-- FOLLOW-UP LIST -->
+<div id="fuList">@await Html.PartialAsync("_FuList", Model)</div>
+
+<!-- ============ ADD MODAL ============ -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <form method="post" action="/FollowUp/Save">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Add Follow-up</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Client *</label>
+                        <select class="form-select form-select-sm" name="clientId" required>
+                            <option value="">-- Select Client --</option>
+                            @foreach (var c in Model.Clients)
+                            {
+                                <option value="@c.ClientId">@c.ClientName@if (!string.IsNullOrEmpty(c.City)) { <text> - @c.City</text> }</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Next Follow-up Date</label>
+                        <input type="date" class="form-control form-control-sm" name="nextDate" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="2" placeholder="Enter follow-up details..."></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Remarks</label>
+                        <textarea class="form-control form-control-sm" name="remarks" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============ EDIT MODAL ============ -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;">
+            <form method="post" action="/FollowUp/Update">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="editId" />
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Follow-up</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Client</label>
+                        <input type="text" class="form-control form-control-sm" id="editClient" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Next Follow-up Date</label>
+                        <input type="date" class="form-control form-control-sm" name="nextDate" id="editDate" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea class="form-control form-control-sm" name="description" id="editDesc" rows="2"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Remarks</label>
+                        <textarea class="form-control form-control-sm" name="remarks" id="editRemarks" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============ POSTPONE MODAL ============ -->
+<div class="modal fade" id="postponeModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="border-radius:14px;">
+            <form method="post" action="/FollowUp/Postpone">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="postponeId" />
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-calendar-plus me-2"></i>Postpone</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-bold">New Follow-up Date</label>
+                    <input type="date" class="form-control" name="nextDate" id="postponeDate" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary">Postpone</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        // ---------- Postpone modal prefill ----------
+        var pm = document.getElementById("postponeModal");
+        if (pm) pm.addEventListener("show.bs.modal", function (e) {
+            var btn = e.relatedTarget;
+            document.getElementById("postponeId").value = btn.getAttribute("data-id");
+            document.getElementById("postponeDate").value = btn.getAttribute("data-date") || "";
+        });
+
+        // ---------- Edit modal prefill ----------
+        var em = document.getElementById("editModal");
+        if (em) em.addEventListener("show.bs.modal", function (e) {
+            var btn = e.relatedTarget;
+            var set = function (id, val) { var el = document.getElementById(id); if (el) el.value = val || ""; };
+            document.getElementById("editId").value = btn.getAttribute("data-id");
+            document.getElementById("editClient").value = btn.getAttribute("data-client");
+            set("editDate", btn.getAttribute("data-date"));
+            set("editDesc", btn.getAttribute("data-desc"));
+            set("editRemarks", btn.getAttribute("data-remarks"));
+        });
+
+        // ---------- Searchable user dropdown ----------
+        var userBtn   = document.getElementById("fuUserBtn");
+        var userLabel = document.getElementById("fuUserLabel");
+        var userInput = document.getElementById("fuUserId");
+        var userSearch= document.getElementById("fuUserSearch");
+        var userList  = document.getElementById("fuUserList");
+        var searchEl  = document.getElementById("fuSearch");
+        var statusEl  = document.getElementById("fuStatus");
+        var timer     = null;
+
+        function selectUser(id, name) {
+            if (userInput) userInput.value = id || "";
+            if (userLabel) userLabel.textContent = name || "All Users";
+            if (userBtn) {
+                var dd = bootstrap.Dropdown.getInstance(userBtn);
+                if (dd) dd.hide();
+            }
+        }
+
+        if (userSearch && userList) {
+            userSearch.addEventListener("input", function () {
+                var q = this.value.toLowerCase();
+                userList.querySelectorAll(".fu-user-opt").forEach(function (o) {
+                    var t = (o.getAttribute("data-name") || o.textContent || "").toLowerCase();
+                    o.style.display = t.indexOf(q) !== -1 ? "" : "none";
+                });
+            });
+        }
+        if (userList) {
+            userList.addEventListener("click", function (e) {
+                var opt = e.target.closest(".fu-user-opt");
+                if (!opt) return;
+                selectUser(opt.getAttribute("data-id"), opt.getAttribute("data-name"));
+                fuLoad();
+            });
+        }
+
+        // ---------- AJAX filter / grid paging ----------
+        var fuSort = "@(Model.SortColumn ?? "")";
+        var fuDir  = "@(Model.SortDirection ?? "DESC")";
+
+        function currentQuery(page) {
+            var p = new URLSearchParams();
+            if (searchEl && searchEl.value.trim()) p.set("search", searchEl.value.trim());
+            if (userInput && userInput.value) p.set("userId", userInput.value);
+            if (statusEl && statusEl.value) p.set("status", statusEl.value);
+            var sizeEl = document.getElementById("fuPageSize");
+            p.set("pageSize", sizeEl ? sizeEl.value : "10");
+            if (fuSort) { p.set("sort", fuSort); p.set("direction", fuDir); }
+            p.set("page", page || 1);
+            return p.toString();
+        }
+
+        function fuLoad(page) {
+            var qs = currentQuery(page);
+            Ajax.get("/FollowUp/Filter" + (qs ? "?" + qs : ""))
+                .then(function (html) {
+                    var tmp = document.createElement("div");
+                    tmp.innerHTML = html;
+                    var s = tmp.querySelector("#fuSummary");
+                    var l = tmp.querySelector("#fuList");
+                    if (s) document.getElementById("fuSummary").innerHTML = s.innerHTML;
+                    if (l) document.getElementById("fuList").innerHTML = l.innerHTML;
+                    window.history.replaceState({}, "", "/FollowUp" + (qs ? "?" + qs : ""));
+                })
+                .catch(function () { Ajax.toast("Could not load follow-ups.", "error"); });
+        }
+        window.fuLoad = fuLoad;
+
+        // Pagination + column sort (delegated, AJAX swap ke baad bhi kaam kare)
+        document.addEventListener("click", function (e) {
+            var sortLink = e.target.closest(".fu-sort-link");
+            if (sortLink) {
+                e.preventDefault();
+                var col = sortLink.getAttribute("data-sort");
+                if (fuSort === col) { fuDir = (fuDir === "ASC") ? "DESC" : "ASC"; }
+                else { fuSort = col; fuDir = "ASC"; }
+                fuLoad(1);
+                return;
+            }
+            var pageLink = e.target.closest(".ajax-fu-link");
+            if (pageLink) {
+                e.preventDefault();
+                var pg = "1";
+                try {
+                    var u = new URL(pageLink.getAttribute("href"), window.location.origin);
+                    pg = u.searchParams.get("page") || "1";
+                } catch (err) { }
+                fuLoad(pg);
+            }
+        });
+
+        document.addEventListener("change", function (e) {
+            if (e.target && e.target.id === "fuPageSize") fuLoad(1);
+        });
+
+        if (searchEl) searchEl.addEventListener("input", function () {
+            clearTimeout(timer); timer = setTimeout(function () { fuLoad(1); }, 350);
+        });
+        if (statusEl) statusEl.addEventListener("change", function () { fuLoad(1); });
+
+        // ---------- Reset ----------
+        var resetBtn = document.getElementById("fuReset");
+        if (resetBtn) resetBtn.addEventListener("click", function () {
+            if (searchEl) searchEl.value = "";
+            if (statusEl) statusEl.value = "";
+            fuSort = ""; fuDir = "DESC";
+            selectUser("", "All Users");
+            if (userSearch) {
+                userSearch.value = "";
+                if (userList) userList.querySelectorAll(".fu-user-opt").forEach(function (o) { o.style.display = ""; });
+            }
+            fuLoad(1);
+        });
+    })();
+</script>

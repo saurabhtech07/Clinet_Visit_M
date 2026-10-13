@@ -10,11 +10,13 @@ public class ClientController : Controller
 {
     private readonly DynamicRepository _dynamicRepo;
     private readonly ClientRepository _repo;
+    private readonly UserRepository _userRepo;
 
-    public ClientController(DynamicRepository dynamicRepo, ClientRepository repo)
+    public ClientController(DynamicRepository dynamicRepo, ClientRepository repo, UserRepository userRepo)
     {
         _dynamicRepo = dynamicRepo;
         _repo = repo;
+        _userRepo = userRepo;
     }
 
     [HttpGet]
@@ -55,6 +57,7 @@ public class ClientController : Controller
         statesTable.Rows = statesTable.Rows.Where(r => r.ContainsKey("IsActive") && r["IsActive"] != null && Convert.ToBoolean(r["IsActive"])).ToList();
         ViewBag.States = statesTable;
         ViewBag.CompanyTypes = _dynamicRepo.GetTable("CompanyType");
+        ViewBag.Users = _userRepo.GetAll();
         return View(fields);
     }
 
@@ -76,7 +79,7 @@ public class ClientController : Controller
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
     }
@@ -98,6 +101,7 @@ public class ClientController : Controller
         statesTable.Rows = statesTable.Rows.Where(r => r.ContainsKey("IsActive") && r["IsActive"] != null && Convert.ToBoolean(r["IsActive"])).ToList();
         ViewBag.States = statesTable;
         ViewBag.CompanyTypes = _dynamicRepo.GetTable("CompanyType");
+        ViewBag.Users = _userRepo.GetAll();
         return View(fields);
     }
 
@@ -119,7 +123,7 @@ public class ClientController : Controller
         catch (Exception ex)
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                return Json(new { success = false, message = ex.Message }, StatusCode(StatusCodes.Status400BadRequest));
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
         }
     }

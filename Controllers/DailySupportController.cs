@@ -86,7 +86,7 @@ public class DailySupportController : Controller
         try{ _dynamicRepo.Insert("DailySupport",values);
             if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,message="Call entry saved successfully."});
             return RedirectToAction(nameof(Index));
-        }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=false,message=ex.Message},StatusCode(StatusCodes.Status400BadRequest)); throw; }
+        }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return StatusCode(StatusCodes.Status400BadRequest, new{success=false,message=ex.Message}); throw; }
     }
     [HttpGet] public IActionResult Edit(int id){
         var cols=_dynamicRepo.GetColumns("DailySupport");
@@ -100,7 +100,7 @@ public class DailySupportController : Controller
         try{ _dynamicRepo.Update("DailySupport","SupportId",id,values);
             if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,id=id,message="Call entry updated successfully."});
             return RedirectToAction(nameof(Index));
-        }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=false,message=ex.Message},StatusCode(StatusCodes.Status400BadRequest)); throw; }
+        }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return StatusCode(StatusCodes.Status400BadRequest, new{success=false,message=ex.Message}); throw; }
     }
     [HttpGet] public IActionResult GetDetails(int id){
         using var con=_db.GetConnection(); con.Open(); Dictionary<string,object?>? ticket=null; Dictionary<string,object?>? customer=null; List<Dictionary<string,object?>> history=new();

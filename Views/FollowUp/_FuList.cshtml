@@ -1,0 +1,132 @@
+@model FollowUpViewModel
+@{
+    var rows = Model.All;
+    int pageSize = Model.PageSize <= 0 ? 10 : Model.PageSize;
+    int startNo = Model.TotalRecords == 0 ? 0 : ((Model.CurrentPage - 1) * pageSize) + 1;
+    int endNo = rows.Any() ? startNo + rows.Count - 1 : 0;
+
+    string sort = Model.SortColumn ?? "";
+    string dir  = Model.SortDirection ?? "DESC";
+    string Arrow(string col) => sort == col ? (dir == "ASC" ? "bi-arrow-up" : "bi-arrow-down") : "bi-arrow-down-up sort-neutral";
+
+    var q = new System.Collections.Generic.List<string>();
+    if (!string.IsNullOrEmpty(Model.Search)) q.Add("search=" + Uri.EscapeDataString(Model.Search));
+    if (Model.FilterUserId.HasValue) q.Add("userId=" + Model.FilterUserId.Value);
+    if (!string.IsNullOrWhiteSpace(Model.StatusFilter)) q.Add("status=" + Uri.EscapeDataString(Model.StatusFilter!));
+    q.Add("pageSize=" + pageSize);
+    if (!string.IsNullOrEmpty(sort)) q.Add("sort=" + sort);
+    q.Add("direction=" + dir);
+    string baseQs = string.Join("&", q);
+
+    ViewBag.StartSr = startNo;
+}
+
+<style>
+    .fu-gtable-wrap { max-height: 62vh; overflow: auto; }
+    .fu-gtable thead th {
+        position: sticky; top: 0; z-index: 10;
+        font-size: 10.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+        color: #64748b; background: #f8fafc !important; border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px; white-space: nowrap; box-shadow: 0 1px 0 #e2e8f0;
+    }
+    .fu-gtable tbody td { font-size: 12.5px; padding: 11px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .fu-gtable tbody tr:hover { background: #f8fafc; }
+    .fu-gtable .sort-link { color: #64748b !important; }
+    .fu-gtable .sort-link:hover { color: #0f172a !important; }
+    .fu-gtable .sort-neutral { opacity: .35; }
+</style>
+
+<div class="card border-0 shadow-sm fu-card">
+    <div class="fu-gtable-wrap">
+        <table class="table table-hover mb-0 fu-gtable">
+            <thead>
+                <tr>
+                    <th style="width:60px;">Sr.No</th>
+                    <th>
+                        <a href="javascript:void(0)" class="sort-link fu-sort-link text-decoration-none d-flex align-items-center gap-1" data-sort="ClientName">
+                            Client <i class="bi @Arrow("ClientName")"></i>
+                        </a>
+                    </th>
+                    <th>Description / Remarks</th>
+                    <th>Assigned To</th>
+                    <th>
+                        <a href="javascript:void(0)" class="sort-link fu-sort-link text-decoration-none d-flex align-items-center gap-1" data-sort="NextFollowUpDate">
+                            Next Date <i class="bi @Arrow("NextFollowUpDate")"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="javascript:void(0)" class="sort-link fu-sort-link text-decoration-none d-flex align-items-center gap-1" data-sort="FollowUpStatus">
+                            Status <i class="bi @Arrow("FollowUpStatus")"></i>
+                        </a>
+                    </th>
+                    <th class="text-end" style="width:150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (rows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7">
+                            <div class="fu-empty"><i class="bi bi-inbox"></i>No follow-ups found.</div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @await Html.PartialAsync("_FuRows", rows)
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FOOTER / PAGINATION -->
+    <div class="d-flex justify-content-between align-items-center p-3 border-top bg-white flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-size:12px; color:#64748b;">Show</span>
+            <select id="fuPageSize" class="form-select form-select-sm" style="width:75px; height:32px; border-radius:8px; background:#f8fafc;">
+                <option value="10" selected="@(pageSize == 10)">10</option>
+                <option value="20" selected="@(pageSize == 20)">20</option>
+                <option value="50" selected="@(pageSize == 50)">50</option>
+                <option value="100" selected="@(pageSize == 100)">100</option>
+            </select>
+            <span style="font-size:12px; color:#64748b;">Total: @Model.TotalRecords</span>
+        </div>
+
+        <div style="font-size:12px; color:#64748b;">
+            Showing @startNo to @endNo of @Model.TotalRecords entries
+        </div>
+
+        <div class="d-flex align-items-center gap-1">
+            @{
+                int cur = Model.CurrentPage;
+                int last = Model.TotalPages;
+                int prevPage = cur - 1;
+                int nextPage = cur + 1;
+            }
+            @if (cur > 1)
+            {
+                <a class="btn btn-sm btn-light border ajax-fu-link" href="/FollowUp?@baseQs&page=@prevPage" style="border-radius:8px;">Previous</a>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-light border" disabled style="border-radius:8px;">Previous</button>
+            }
+
+            @for (int i = Math.Max(1, cur - 2); i <= Math.Min(last, cur + 2); i++)
+            {
+                <a href="/FollowUp?@baseQs&page=@i"
+                   class="btn btn-sm ajax-fu-link @(i == cur ? "btn-dark" : "btn-light border")"
+                   style="border-radius:8px; min-width:32px;">@i</a>
+            }
+
+            @if (cur < last)
+            {
+                <a class="btn btn-sm btn-light border ajax-fu-link" href="/FollowUp?@baseQs&page=@nextPage" style="border-radius:8px;">Next</a>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-light border" disabled style="border-radius:8px;">Next</button>
+            }
+        </div>
+    </div>
+</div>

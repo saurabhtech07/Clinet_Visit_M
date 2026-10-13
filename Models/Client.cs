@@ -17,5 +17,9 @@ namespace ClientVisitManagement.Models
         // NAYA - Sirf 3 types
         public int? CompanyTypeId { get; set; }
         public string? CompanyTypeName { get; set; }
+
+        // Client ka assigned user (Follow-up "Assigned To" isi se aayega)
+        public int? AssignedTo { get; set; }
+        public string? AssignedToName { get; set; }
     }
 }

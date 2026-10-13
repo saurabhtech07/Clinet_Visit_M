@@ -91,6 +91,8 @@ builder.Services.AddScoped<ClientRepository>();
 builder.Services.AddScoped<ClientVisitRepository>();
 builder.Services.AddScoped<DynamicRepository>();
 builder.Services.AddScoped<UserRepository>();
+builder.Services.AddScoped<DashboardRepository>();
+builder.Services.AddScoped<FollowUpRepository>();
 
 builder.Services.AddDistributedMemoryCache();
 
@@ -162,10 +164,10 @@ app.MapControllerRoute(
     defaults: new { controller = "Client" }
 );
 
-// DEFAULT ROUTE - Wapas Client/Index kiya, Account/Login automatic kaam karega
+// DEFAULT ROUTE - Login ke baad Dashboard
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Client}/{action=Index}/{id?}"
+    pattern: "{controller=Dashboard}/{action=Index}/{id?}"
 );
 
 app.Run();
