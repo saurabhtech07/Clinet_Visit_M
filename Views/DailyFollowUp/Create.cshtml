@@ -1,0 +1,184 @@
+@using Microsoft.AspNetCore.Html
+@model List<DynamicField>
+@{
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var leads = ViewBag.Leads as List<Dictionary<string, object?>> ?? new List<Dictionary<string, object?>>();
+    var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    var priorityOptions = ViewBag.PriorityOptions as string[] ?? new string[0];
+    string defaultDate = ViewBag.FollowUpDateDefault as string ?? DateTime.Now.ToString("yyyy-MM-dd");
+
+    var known = new[] { "LeadId", "ContactPerson", "Company", "Mobile", "City",
+                        "FollowUpDate", "NextFollowUpDate", "Status", "Priority", "AssignedTo", "Remarks" };
+    var otherFields = Model.Where(f => !known.Contains(f.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+
+    string Label(string name) => name switch
+    {
+        "LeadId" => "Lead",
+        "FollowUpDate" => "Follow Up Date",
+        "NextFollowUpDate" => "Next Follow Up Date",
+        "ContactPerson" => "Contact Person",
+        "AssignedTo" => "Assigned To",
+        _ => System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    string Options(IEnumerable<(string Value, string Text)> items, string? selected)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<option value=\"\">-- Select --</option>");
+        foreach (var (value, text) in items)
+        {
+            var sel = string.Equals(value, selected, StringComparison.OrdinalIgnoreCase) ? " selected" : "";
+            sb.Append($"<option value=\"{value}\"{sel}>{System.Net.WebUtility.HtmlEncode(text)}</option>");
+        }
+        return sb.ToString();
+    }
+
+    IHtmlContent RenderField(DynamicField f, string colClass, object? value = null)
+    {
+        var v = value switch
+        {
+            DateTime dt => dt.ToString("yyyy-MM-dd"),
+            null => "",
+            _ => value.ToString() ?? ""
+        };
+        var star = f.IsNullable ? "" : " <span class=\"text-danger\">*</span>";
+        var label = $"<label class=\"form-label mb-1\">{Label(f.Name)}{star}</label>";
+        string input;
+
+        if (f.Name == "LeadId")
+        {
+            var items = leads.Select(l => (
+                Value: l.ContainsKey("LeadId") ? l["LeadId"]?.ToString() ?? "" : "",
+                Text: BuildLeadText(l)));
+            input = $"<select class=\"form-select\" name=\"LeadId\" id=\"dfuLead\" onchange=\"dfuFillFromLead(this.value)\">{Options(items, v)}</select>";
+        }
+        else if (f.Name == "Status")
+        {
+            input = $"<select class=\"form-select\" name=\"Status\">{Options(statusOptions.Select(s => (s, s)), string.IsNullOrWhiteSpace(v) ? "Pending" : v)}</select>";
+        }
+        else if (f.Name == "Priority")
+        {
+            input = $"<select class=\"form-select\" name=\"Priority\">{Options(priorityOptions.Select(s => (s, s)), v)}</select>";
+        }
+        else if (f.Name == "AssignedTo")
+        {
+            var items = users.Select(u => (
+                Value: u.UserId.ToString(),
+                Text: string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName));
+            input = $"<select class=\"form-select\" name=\"AssignedTo\">{Options(items, v)}</select>";
+        }
+        else if (f.Name == "Remarks")
+        {
+            input = $"<textarea class=\"form-control\" name=\"Remarks\" rows=\"3\" placeholder=\"Remarks / notes...\">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
+        }
+        else
+        {
+            var isDate = f.DataType.Contains("date", StringComparison.OrdinalIgnoreCase);
+            var type = isDate ? "date" : "text";
+            var defValue = f.Name == "FollowUpDate" && string.IsNullOrWhiteSpace(v) ? defaultDate : v;
+            input = $"<input class=\"form-control\" name=\"{f.Name}\" type=\"{type}\" value=\"{System.Net.WebUtility.HtmlEncode(defValue)}\" placeholder=\"Enter {Label(f.Name)}\" />";
+        }
+        return new HtmlString($"<div class=\"{colClass}\">{label}{input}</div>");
+    }
+
+    string BuildLeadText(Dictionary<string, object?> l)
+    {
+        var person = l.ContainsKey("LeadPerson") ? l["LeadPerson"]?.ToString() : null;
+        var company = l.ContainsKey("Company") ? l["Company"]?.ToString() : null;
+        if (string.IsNullOrWhiteSpace(person)) return company ?? "";
+        return string.IsNullOrWhiteSpace(company) ? person! : person + " - " + company;
+    }
+}
+
+<style>
+    #dfuForm .dfu-title{font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #eef2f7;padding-bottom:8px;display:flex;align-items:center;gap:8px}
+    #dfuForm .dfu-title i{color:#2563eb}
+    #dfuForm .form-label{font-size:12px;font-weight:700;color:#334155}
+    #dfuForm .form-control,#dfuForm .form-select{height:40px;font-size:13.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+    #dfuForm textarea.form-control{height:auto}
+    #dfuForm .form-control:focus,#dfuForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Add Daily Follow Up</h4>
+    <a href="/DailyFollowUp" class="btn btn-light border"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<form method="post" id="dfuForm">
+    @Html.AntiForgeryToken()
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+
+            <div class="dfu-title"><i class="bi bi-person-lines-fill"></i> Lead &amp; Contact</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => new[] { "LeadId", "ContactPerson", "Company", "Mobile", "City" }.Contains(f.Name)))
+                {
+                    @RenderField(f, "col-md-6")
+                }
+            </div>
+
+            <div class="dfu-title mt-4"><i class="bi bi-calendar2-check"></i> Schedule &amp; Assignment</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => new[] { "FollowUpDate", "NextFollowUpDate", "Status", "Priority", "AssignedTo" }.Contains(f.Name)))
+                {
+                    @RenderField(f, "col-md-4")
+                }
+            </div>
+
+            <div class="dfu-title mt-4"><i class="bi bi-chat-left-text"></i> Notes</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => f.Name == "Remarks"))
+                {
+                    @RenderField(f, "col-md-12")
+                }
+            </div>
+
+            @if (otherFields.Any())
+            {
+                <div class="dfu-title mt-4"><i class="bi bi-plus-square"></i> Additional Information</div>
+                <div class="row g-3 mt-1">
+                    @foreach (var f in otherFields) { @RenderField(f, "col-md-6") }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a href="/DailyFollowUp" class="btn btn-light border px-4">Cancel</a>
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Save Follow Up</button>
+    </div>
+</form>
+
+<script>
+    window.dfuFillFromLead = window.dfuFillFromLead || function (leadId) {
+        if (!leadId) return;
+        fetch("/DailyFollowUp/GetLead?id=" + encodeURIComponent(leadId), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d) return;
+                function set(name, value) {
+                    var el = document.querySelector('#dfuForm [name="' + name + '"]');
+                    if (el && value != null) el.value = value;
+                }
+                set("ContactPerson", d.contactPerson);
+                set("Company", d.company);
+                set("Mobile", d.mobile);
+                set("City", d.city);
+            })
+            .catch(function () { });
+    };
+
+    (function () {
+        var form = document.getElementById("dfuForm");
+        if (!form) return;
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            Ajax.submit({
+                url: "/DailyFollowUp/Create",
+                form: form,
+                successMessage: "Follow-up saved successfully.",
+                onSuccess: function () { window.loadPage("/DailyFollowUp"); }
+            });
+        });
+    })();
+</script>

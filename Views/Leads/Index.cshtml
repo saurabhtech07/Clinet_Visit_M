@@ -1,0 +1,260 @@
+@model ClientVisitManagement.Models.DynamicTableViewModel
+@{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+
+    var states = ((DynamicTableViewModel)ViewBag.States).Rows;
+    var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+
+    var fStatus = ViewBag.FilterStatus as string;
+    var fStateId = ViewBag.FilterStateId as int?;
+    var fFrom = ViewBag.FilterFrom as string;
+    var fTo = ViewBag.FilterTo as string;
+
+    decimal dealValue = ViewBag.DealValue != null ? (decimal)ViewBag.DealValue : 0m;
+}
+
+<style>
+    .dss-kpi-card{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:12px 14px;height:76px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+    .dss-kpi-label{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:2px;letter-spacing:0.5px}
+    .dss-kpi-value{font-size:22px;font-weight:800;color:#0f172a;line-height:1}
+    .dss-kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
+    .dss-toolbar{background:#fff;border-radius:14px;border:1px solid #eef2f7;padding:14px 18px}
+    .dss-toolbar-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px}
+    .dss-search-input{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;padding:9px 14px}
+    .dss-table-card{background:#fff;border-radius:14px;border:1px solid #eef2f7;overflow:hidden}
+    .btn-dss-dark{background:#0f172a;color:#fff;border-radius:10px;font-size:13px;padding:9px 16px}
+    .leads-search{position:relative}
+    .leads-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px}
+    .leads-input{height:36px;font-size:13px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+    .leads-input:focus{background:#fff;border-color:#cbd5e1;box-shadow:none}
+    .leads-search input{padding-left:34px}
+    .lead-date{display:flex;align-items:center;gap:5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:0 9px;height:36px}
+    .lead-date span{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase}
+    .lead-date input{border:0;background:transparent;font-size:12.5px;color:#0f172a;outline:none;width:106px}
+    @@media print{
+      body *{visibility:hidden}
+      .dss-table-card, .dss-table-card *{visibility:visible}
+      .dss-table-card{position:absolute;left:0;top:0;width:100%;border:none;overflow:visible!important}
+      .table-scroll-container{max-height:none!important;overflow:visible!important;height:auto!important}
+      .dss-table thead th{position:static!important}
+      .dss-kpi-card,.dss-toolbar,.leads-search,.lead-date{display:none!important}
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Leads</h4>
+    <a href="/Leads/Create" class="btn btn-dss-dark"><i class="bi bi-plus-circle me-1"></i> Add Lead</a>
+</div>
+@Html.AntiForgeryToken()
+
+<!-- 4 CARDS -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total Leads</div>
+                <div class="dss-kpi-value">@ViewBag.TotalLeads</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#2563eb;"><i class="bi bi-person-lines-fill"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Open Leads</div>
+                <div class="dss-kpi-value">@ViewBag.OpenLeads</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#f59e0b;"><i class="bi bi-hourglass-split"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Converted</div>
+                <div class="dss-kpi-value">@ViewBag.ConvertedLeads</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#10b981;"><i class="bi bi-check2-circle"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total Deal Value</div>
+                <div class="dss-kpi-value" style="font-size:19px;">₹ @dealValue.ToString("N0")</div>
+            </div>
+            <div class="dss-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-cash-coin"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER TOOLBAR -->
+<div class="dss-toolbar mb-3">
+    <!-- ROW 1 : 3 boxes (Search / Status / State) -->
+    <div class="row g-2">
+        <div class="col-md-6">
+            <div class="leads-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="leadSearch" value="@Model.SearchTerm" class="form-control leads-input" placeholder="Search lead / company / mobile / email..." autocomplete="off" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="leadStatus" class="form-select leads-input" title="Status">
+                <option value="">All Status</option>
+                @foreach (var s in statusOptions)
+                {
+                    <option value="@s" selected="@(fStatus == s)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="leadState" class="form-select leads-input" title="State">
+                <option value="">All States</option>
+                @foreach (var s in states)
+                {
+                    var sid = s["StateId"]?.ToString();
+                    <option value="@sid" selected="@(fStateId.HasValue && fStateId.Value.ToString() == sid)">@s["StateName"]</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- ROW 2 : From / To / Clear / Export -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+        <div class="lead-date" title="Created On — From">
+            <span>From</span>
+            <input type="date" id="leadFrom" value="@fFrom" />
+        </div>
+        <div class="lead-date" title="Created On — To">
+            <span>To</span>
+            <input type="date" id="leadTo" value="@fTo" />
+        </div>
+
+        <button id="clearLeadFilter" class="btn btn-light border" style="border-radius:9px; font-size:13px; height:36px;">
+            <i class="bi bi-x-circle me-1"></i>Clear
+        </button>
+
+        <div class="ms-auto">
+            <div class="dropdown">
+                <button class="btn btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                        style="border-radius:9px; font-size:13px; height:36px;">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><a id="leadExportExcel" class="dropdown-item" href="/Leads/ExportExcel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel</a></li>
+                    <li><a id="leadExportCsv" class="dropdown-item" href="/Leads/ExportCsv"><i class="bi bi-filetype-csv me-2 text-primary"></i>CSV</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.print();"><i class="bi bi-printer me-2"></i>Print</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="dss-table-card">
+    <div id="leadTable">
+        @await Html.PartialAsync("_LeadTable", Model)
+    </div>
+</div>
+
+<script>
+    (function () {
+        function el(id) { return document.getElementById(id); }
+
+        function buildLeadUrl(page) {
+            var p = new URLSearchParams();
+            p.append("page", page);
+            p.append("pageSize", (el("leadPageSize") && el("leadPageSize").value) || 10);
+            var s = el("leadSearch"); if (s && s.value.trim()) p.append("search", s.value.trim());
+            var st = el("leadStatus"); if (st && st.value) p.append("status", st.value);
+            var sd = el("leadState"); if (sd && sd.value) p.append("stateId", sd.value);
+            var fd = el("leadFrom"); if (fd && fd.value) p.append("fromDate", fd.value);
+            var td = el("leadTo"); if (td && td.value) p.append("toDate", td.value);
+            return "/Leads?" + p.toString();
+        }
+
+        function updateExport() {
+            var ex = el("leadExportExcel"), cs = el("leadExportCsv");
+            if (ex) ex.href = "/Leads/ExportExcel" + buildLeadUrl(1).substring("/Leads".length);
+            if (cs) cs.href = "/Leads/ExportCsv" + buildLeadUrl(1).substring("/Leads".length);
+        }
+
+        function loadLeadTable(url) {
+            fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+                .then(function (r) { if (!r.ok) throw new Error("Failed to load leads."); return r.text(); })
+                .then(function (html) {
+                    var t = el("leadTable");
+                    if (t) t.innerHTML = html;
+                    updateExport();
+                })
+                .catch(function (e) { console.error("Lead table error:", e); });
+        }
+
+        // Expose for the shared delete handler + convert
+        window.refreshCurrentTable = function () { loadLeadTable(buildLeadUrl(1)); };
+        window.convertLead = function (id, btn) {
+            if (!confirm("Is lead ko Client me convert karna hai?")) return;
+            if (btn) btn.disabled = true;
+            Ajax.post("/Leads/Convert/" + id, new FormData())
+                .then(function (d) {
+                    Ajax.toast(d.message || "Converted to Client.", "success");
+                    loadLeadTable(buildLeadUrl(1));
+                })
+                .catch(function (e) {
+                    if (btn) btn.disabled = false;
+                    Ajax.toast(e.message, "error");
+                });
+        };
+
+        // Register delegated handlers only once (AJAX-nav safe)
+        window.__leadNav = window.__leadNav || {};
+        if (!window.__leadNav.delegates) {
+            window.__leadNav.delegates = true;
+
+            document.addEventListener("click", function (e) {
+                var link = e.target.closest(".ajax-lead-link");
+                if (!link) return;
+                e.preventDefault();
+                loadLeadTable(link.getAttribute("href"));
+            });
+
+            document.addEventListener("change", function (e) {
+                if (e.target.id !== "leadPageSize") return;
+                loadLeadTable(buildLeadUrl(1));
+            });
+        }
+
+        // Search (debounced)
+        var timer = null;
+        var search = el("leadSearch");
+        if (search) {
+            search.addEventListener("input", function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () { loadLeadTable(buildLeadUrl(1)); }, 300);
+            });
+        }
+
+        // Filters
+        ["leadStatus", "leadState", "leadFrom", "leadTo"].forEach(function (id) {
+            var node = el(id);
+            if (node) node.addEventListener("change", function () { loadLeadTable(buildLeadUrl(1)); });
+        });
+
+        // Clear
+        var clear = el("clearLeadFilter");
+        if (clear) {
+            clear.addEventListener("click", function () {
+                ["leadSearch", "leadStatus", "leadState", "leadFrom", "leadTo"].forEach(function (id) {
+                    var node = el(id);
+                    if (node) node.value = "";
+                });
+                loadLeadTable(buildLeadUrl(1));
+            });
+        }
+
+        updateExport();
+    })();
+</script>

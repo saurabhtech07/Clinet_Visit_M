@@ -166,58 +166,6 @@
     </div>
 </div>
 
-<!-- ================= KPI: FOLLOW-UP ================= -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3 col-sm-6">
-        <a class="dash-link" href="/FollowUp?section=pending">
-            <div class="dash-kpi">
-                <div>
-                    <div class="dash-kpi-label">Pending Follow-ups</div>
-                    <div class="dash-kpi-value" style="color:#f59e0b;">@Model.PendingFollowUps</div>
-                    <div class="dash-kpi-sub">actions needed</div>
-                </div>
-                <div class="dash-kpi-icon" style="background:#f59e0b;"><i class="bi bi-hourglass-split"></i></div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <a class="dash-link" href="/FollowUp?section=today">
-            <div class="dash-kpi">
-                <div>
-                    <div class="dash-kpi-label">Due Today</div>
-                    <div class="dash-kpi-value" style="color:#0d6efd;">@Model.DueTodayFollowUps</div>
-                    <div class="dash-kpi-sub">aaj ke follow-ups</div>
-                </div>
-                <div class="dash-kpi-icon" style="background:#0d6efd;"><i class="bi bi-calendar-event"></i></div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <a class="dash-link" href="/FollowUp?section=overdue">
-            <div class="dash-kpi">
-                <div>
-                    <div class="dash-kpi-label">Overdue Follow-ups</div>
-                    <div class="dash-kpi-value" style="color:#ef4444;">@Model.OverdueFollowUps</div>
-                    <div class="dash-kpi-sub">date passed</div>
-                </div>
-                <div class="dash-kpi-icon" style="background:#ef4444;"><i class="bi bi-exclamation-octagon"></i></div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <a class="dash-link" href="/FollowUp?section=done">
-            <div class="dash-kpi">
-                <div>
-                    <div class="dash-kpi-label">Follow-ups Done</div>
-                    <div class="dash-kpi-value" style="color:#10b981;">@Model.FollowUpsDone</div>
-                    <div class="dash-kpi-sub">completed</div>
-                </div>
-                <div class="dash-kpi-icon" style="background:#10b981;"><i class="bi bi-check2-circle"></i></div>
-            </div>
-        </a>
-    </div>
-</div>
-
 <!-- ================= KPI: DAILY SUPPORT ================= -->
 <h6 class="fw-bold mb-2" style="color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">
     <i class="bi bi-headset me-1"></i>Daily Support System
@@ -268,7 +216,7 @@
 <!-- ================= CHARTS ROW 1 ================= -->
 <div class="row g-3 mb-3">
     @* Monthly visits bar *@
-    <div class="col-lg-4 col-md-6">
+    <div class="col-lg-6 col-md-6">
         <div class="dash-card">
             <div class="dash-card-head"><i class="bi bi-bar-chart-fill me-2" style="color:#4f6ef2;"></i>Visits - Last 6 Months</div>
             <div class="dash-card-body">
@@ -294,41 +242,8 @@
         </div>
     </div>
 
-    @* Follow-up status donut *@
-    <div class="col-lg-4 col-md-6">
-        <div class="dash-card">
-            <div class="dash-card-head"><i class="bi bi-diagram-3-fill me-2" style="color:#8b5cf6;"></i>Follow-up Status</div>
-            <div class="dash-card-body">
-                @if (Model.FollowUpStatuses.Count > 0)
-                {
-                    var tot = Sum(Model.FollowUpStatuses);
-                    <div class="dash-donut" data-segments="@SegmentsJson(Model.FollowUpStatuses, tot)" style="@DonutStyle(Model.FollowUpStatuses, tot)">
-                        <div class="dash-donut-center">
-                            <span class="dash-donut-num">@tot</span>
-                            <span class="dash-donut-lbl">Total</span>
-                        </div>
-                    </div>
-                    <ul class="dash-legend">
-                        @for (int i = 0; i < Model.FollowUpStatuses.Count; i++)
-                        {
-                            <li data-tip="@LegendTip(Model.FollowUpStatuses[i].Name, Model.FollowUpStatuses[i].Value, tot)">
-                                <span class="dot" style="background:@Color(i);"></span>
-                                <span class="ln">@Model.FollowUpStatuses[i].Name</span>
-                                <span class="cnt">@Model.FollowUpStatuses[i].Value</span>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="dash-empty">Follow-up status column not available yet.</div>
-                }
-            </div>
-        </div>
-    </div>
-
     @* Support status donut *@
-    <div class="col-lg-4 col-md-12">
+    <div class="col-lg-6 col-md-12">
         <div class="dash-card">
             <div class="dash-card-head"><i class="bi bi-ticket-perforated-fill me-2" style="color:#2ec5ce;"></i>Tickets by Status</div>
             <div class="dash-card-body">
@@ -420,79 +335,6 @@
                 else
                 {
                     <div class="dash-empty">Daily Support data not available yet.</div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ================= RECENT ================= -->
-<div class="row g-3">
-    <div class="col-lg-6 col-md-12">
-        <div class="dash-card">
-            <div class="dash-card-head"><i class="bi bi-signpost-2-fill me-2" style="color:#4f6ef2;"></i>Recent Visits</div>
-            <div class="dash-card-body" style="padding:6px 16px;">
-                @if (Model.RecentVisits.Count > 0)
-                {
-                    <table class="table table-hover dash-recent mb-0">
-                        <thead><tr><th>Client</th><th>Person</th><th>Date</th></tr></thead>
-                        <tbody>
-                            @foreach (var v in Model.RecentVisits)
-                            {
-                                <tr>
-                                    <td>@v.ClientName</td>
-                                    <td>@(v.PersonName ?? "—")<br /><span style="color:#94a3b8;">@v.PersonMet</span></td>
-                                    <td>@v.VisitDate</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <div class="dash-empty">No visits yet.</div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6 col-md-12">
-        <div class="dash-card">
-            <div class="dash-card-head"><i class="bi bi-headset me-2" style="color:#2ec5ce;"></i>Recent Support Tickets</div>
-            <div class="dash-card-body" style="padding:6px 16px;">
-                @if (Model.RecentTickets.Count > 0)
-                {
-                    <table class="table table-hover dash-recent mb-0">
-                        <thead><tr><th>Ticket</th><th>Client</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody>
-                            @foreach (var t in Model.RecentTickets)
-                            {
-                                <tr>
-                                    <td class="fw-bold">@t.TicketNo</td>
-                                    <td>@t.ClientName</td>
-                                    <td>
-                                        @if (string.Equals(t.Status, "Closed", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            <span class="dash-badge" style="background:#dcfce7;color:#166534;">@t.Status</span>
-                                        }
-                                        else if (string.Equals(t.Status, "Open", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            <span class="dash-badge" style="background:#fee2e2;color:#b91c1c;">@t.Status</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="dash-badge" style="background:#e0e7ff;color:#3730a3;">@t.Status</span>
-                                        }
-                                    </td>
-                                    <td>@t.SupportDate</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <div class="dash-empty">No tickets yet.</div>
                 }
             </div>
         </div>

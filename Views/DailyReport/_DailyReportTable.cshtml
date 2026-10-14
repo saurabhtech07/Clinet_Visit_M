@@ -1,0 +1,217 @@
+@model ClientVisitManagement.Models.DailyReportViewModel
+@{
+    var grid = Model.Grid;
+    int start = grid.TotalRecords == 0 ? 0 : ((grid.CurrentPage - 1) * grid.PageSize) + 1;
+    int end = Math.Min(grid.CurrentPage * grid.PageSize, grid.TotalRecords);
+
+    string BuildUrl(int page, int pageSize, string? sort, string? dir)
+    {
+        var q = new List<string> { "page=" + page, "pageSize=" + pageSize };
+        if (!string.IsNullOrWhiteSpace(grid.SearchTerm)) q.Add("search=" + Uri.EscapeDataString(grid.SearchTerm));
+        if (!string.IsNullOrWhiteSpace(Model.FilterStatus)) q.Add("status=" + Uri.EscapeDataString(Model.FilterStatus));
+        if (Model.FilterAssignedTo.HasValue) q.Add("assignedTo=" + Model.FilterAssignedTo.Value);
+        if (Model.FilterFrom.HasValue) q.Add("fromDate=" + Model.FilterFrom.Value.ToString("yyyy-MM-dd"));
+        if (Model.FilterTo.HasValue) q.Add("toDate=" + Model.FilterTo.Value.ToString("yyyy-MM-dd"));
+        if (!string.IsNullOrWhiteSpace(sort)) q.Add("sort=" + Uri.EscapeDataString(sort));
+        if (!string.IsNullOrWhiteSpace(dir)) q.Add("direction=" + dir);
+        return "/DailyReport?" + string.Join("&", q);
+    }
+
+    string DisplayName(string col) => col switch
+    {
+        "DailyReportId" => "Id",
+        "ReportDate" => "Date",
+        "AssignedName" => "Assigned To",
+        "AssignedTo" => "Assigned To",
+        "NewLeads" => "New Leads",
+        "EntryTime" => "Entry Time",
+        "CreatedBy" => "Created By",
+        _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    string Fmt(object? val)
+    {
+        if (val == null) return "";
+        if (val is DateTime dt) return dt.ToString("dd-MM-yyyy hh:mm tt");
+        if (val is decimal dc) return dc.ToString("N2");
+        if (val is bool b) return b ? "Yes" : "No";
+        return val.ToString() ?? "";
+    }
+
+    string StatusStyle(string s) => s switch
+    {
+        "Done" => "background:#dcfce7;color:#15803d;",
+        "Pending" => "background:#fef3c7;color:#b45309;",
+        _ => "background:#f1f5f9;color:#475569;"
+    };
+
+    bool IsNumCol(string col) => col is "Calls" or "Visit" or "NewLeads";
+}
+
+<style>
+    .table-scroll-container { max-height: 440px; overflow-y: auto; overflow-x: auto; position: relative; }
+    .drp-table thead th {
+        position: sticky; top: 0; z-index: 10;
+        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        color: #64748b; text-transform: uppercase;
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px; white-space: nowrap;
+        box-shadow: 0 1px 0 #e2e8f0;
+    }
+    .drp-table tbody td { font-size: 13px; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; }
+    .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
+    .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
+    .drp-id-pill { background: #1e293b; color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .table-sort-link { color: #475569 !important; text-decoration: none; }
+    .table-sort-link:hover { color: #0f172a !important; }
+    .drp-grid-table { border-collapse: separate; border-spacing: 0; }
+    .cell-clip { display: inline-block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    .num-pill { display:inline-block; min-width:34px; text-align:center; padding:3px 10px; border-radius:7px; font-size:12px; font-weight:700; }
+    .act-btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; }
+    .drp-table tbody td.actions-cell { white-space: nowrap; }
+</style>
+
+<div class="table-scroll-container">
+    <table class="table mb-0 drp-table table-hover drp-grid-table">
+        <thead>
+            <tr>
+                <th style="width:65px;">Sr.No</th>
+                @foreach (var col in grid.Columns)
+                {
+                    var nextDir = (grid.SortColumn == col && grid.SortDirection == "ASC") ? "DESC" : "ASC";
+                    <th>
+                        <a class="table-sort-link ajax-dr-link" href="@BuildUrl(1, grid.PageSize, col, nextDir)">
+                            @DisplayName(col)
+                            @if (grid.SortColumn == col)
+                            {
+                                <i class="bi @(grid.SortDirection == "ASC" ? "bi-arrow-up" : "bi-arrow-down") ms-1"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-arrow-down-up ms-1" style="opacity:0.3; font-size:11px;"></i>
+                            }
+                        </a>
+                    </th>
+                }
+                <th style="width:130px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (grid.Rows.Any())
+            {
+                foreach (var row in grid.Rows)
+                {
+                    var id = row.ContainsKey("DailyReportId") ? row["DailyReportId"]?.ToString() : "";
+                    var status = row.ContainsKey("Status") ? row["Status"]?.ToString() ?? "" : "";
+                    bool isDone = status.Equals("Done", StringComparison.OrdinalIgnoreCase);
+
+                    <tr>
+                        <td style="color:#64748b;">@start</td>
+                        @foreach (var col in grid.Columns)
+                        {
+                            object? val = row.ContainsKey(col) ? row[col] : null;
+                            if (col == "DailyReportId")
+                            {
+                                <td><span class="drp-id-pill">@val</span></td>
+                            }
+                            else if (col == "Status")
+                            {
+                                var st = val?.ToString() ?? "";
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(st))
+                                    {
+                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @StatusStyle(st)">@st</span>
+                                    }
+                                </td>
+                            }
+                            else if (IsNumCol(col))
+                            {
+                                var n = val == null ? "0" : val.ToString();
+                                var bg = col == "NewLeads" ? "background:#eef2ff;color:#4338ca;" : "background:#f1f5f9;color:#0f172a;";
+                                <td><span class="num-pill" style="@bg">@n</span></td>
+                            }
+                            else if (col == "AssignedName")
+                            {
+                                var t = Fmt(val);
+                                <td class="fw-semibold" style="color:#0f172a;"><span class="cell-clip" title="@t">@t</span></td>
+                            }
+                            else
+                            {
+                                var t = Fmt(val);
+                                <td><span class="cell-clip" title="@t">@t</span></td>
+                            }
+                        }
+                        <td class="actions-cell">
+                            @if (!isDone)
+                            {
+                                <button type="button" class="btn btn-success act-btn" onclick="drMarkDone(@id, this)" title="Mark as Done">
+                                    <i class="bi bi-check2"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <span style="padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; background:#dcfce7; color:#15803d;" title="Done">
+                                    <i class="bi bi-check2-circle"></i> Done
+                                </span>
+                            }
+                            <a href="/DailyReport/Edit/@id" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="/DailyReport/Delete/@id" onsubmit="return confirm('Is daily report ko delete karna hai?');" style="display:inline" class="ms-1">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    start++;
+                }
+            }
+            else
+            {
+                <tr><td colspan="@(grid.Columns.Count + 2)" class="text-center text-muted py-5">Koi daily report nahi mili</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+    <div class="d-flex align-items-center gap-2">
+        <select id="drPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
+            <option value="10" selected="@(grid.PageSize == 10)">10</option>
+            <option value="20" selected="@(grid.PageSize == 20)">20</option>
+            <option value="50" selected="@(grid.PageSize == 50)">50</option>
+            <option value="100" selected="@(grid.PageSize == 100)">100</option>
+        </select>
+        <span style="font-size:12px; color:#64748b;">records per page</span>
+    </div>
+    <div style="font-size:12px; color:#64748b;">Showing @start to @end of @grid.TotalRecords entries</div>
+    <div class="d-flex gap-1">
+        @if (grid.CurrentPage > 1)
+        {
+            <a class="btn btn-sm btn-light border ajax-dr-link" href="@BuildUrl(grid.CurrentPage - 1, grid.PageSize, grid.SortColumn, grid.SortDirection)">Previous</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-light border" disabled>Previous</button>
+        }
+        @for (int p = 1; p <= grid.TotalPages; p++)
+        {
+            if (p == grid.CurrentPage)
+            {
+                <span class="btn btn-sm" style="background:#0f172a; color:#fff;">@p</span>
+            }
+            else
+            {
+                <a class="btn btn-sm btn-light border ajax-dr-link" href="@BuildUrl(p, grid.PageSize, grid.SortColumn, grid.SortDirection)">@p</a>
+            }
+        }
+        @if (grid.CurrentPage < grid.TotalPages)
+        {
+            <a class="btn btn-sm btn-light border ajax-dr-link" href="@BuildUrl(grid.CurrentPage + 1, grid.PageSize, grid.SortColumn, grid.SortDirection)">Next</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-light border" disabled>Next</button>
+        }
+    </div>
+</div>

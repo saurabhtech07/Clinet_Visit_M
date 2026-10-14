@@ -3,6 +3,9 @@
 [Oo]bj/
 publish/
 
+## Emitted compiler-generated sources
+gen/
+
 ## Publish profiles - machine specific, contain credentials
 *.pubxml
 *.publishsettings

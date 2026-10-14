@@ -43,84 +43,123 @@
         <!-- =================================================
              MASTER MODULES
              ================================================= -->
-        <div class="sidebar-section-title">
-            <span>MASTER MODULES</span>
+        <div class="nav-group" data-nav-group>
+            <button type="button" class="sidebar-section-title nav-group-toggle" aria-expanded="true">
+                <span>MASTER MODULES</span>
+                <i class="bi bi-chevron-down nav-group-caret"></i>
+            </button>
+            <div class="nav-group-items">
+                <!-- CLIENT MASTER -->
+                <a class="nav-link" href="/Client">
+                    <i class="bi bi-building ic-client"></i>
+                    <span>Client Master</span>
+                </a>
+
+                <!-- USER MASTER -->
+                <a class="nav-link" href="/User">
+                    <i class="bi bi-people-fill ic-user"></i>
+                    <span>User Master</span>
+                </a>
+
+                <!-- STATE MASTER -->
+                <a class="nav-link" href="/StateMaster">
+                    <i class="bi bi-geo-alt-fill ic-state"></i>
+                    <span>State Master</span>
+                </a>
+            </div>
         </div>
 
-        <!-- CLIENT MASTER -->
-        <a class="nav-link" href="/Client">
-            <i class="bi bi-building ic-client"></i>
-            <span>Client Master</span>
-        </a>
+        <!-- =================================================
+             CRM
+             ================================================= -->
+        <div class="nav-group" data-nav-group>
+            <button type="button" class="sidebar-section-title nav-group-toggle" aria-expanded="true">
+                <span>CRM</span>
+                <i class="bi bi-chevron-down nav-group-caret"></i>
+            </button>
+            <div class="nav-group-items">
+                <!-- LEADS -->
+                <a class="nav-link" href="/Leads">
+                    <i class="bi bi-person-lines-fill ic-vreport"></i>
+                    <span>Leads</span>
+                </a>
 
-        <!-- USER MASTER -->
-        <a class="nav-link" href="/User">
-            <i class="bi bi-people-fill ic-user"></i>
-            <span>User Master</span>
-        </a>
+                <!-- DAILY FOLLOW UP -->
+                <a class="nav-link" href="/DailyFollowUp">
+                    <i class="bi bi-calendar2-check-fill ic-followup"></i>
+                    <span>Daily Follow Up</span>
+                </a>
 
-        <!-- STATE MASTER -->
-        <a class="nav-link" href="/StateMaster">
-            <i class="bi bi-geo-alt-fill ic-state"></i>
-            <span>State Master</span>
-        </a>
+                <!-- DAILY REPORT -->
+                <a class="nav-link" href="/DailyReport">
+                    <i class="bi bi-clipboard-data-fill ic-dss"></i>
+                    <span>Daily Report</span>
+                </a>
+            </div>
+        </div>
 
         <!-- =================================================
              TRANSACTION MODULES
              ================================================= -->
-        <div class="sidebar-section-title">
-            <span>TRANSACTION MODULES</span>
+        <div class="nav-group" data-nav-group>
+            <button type="button" class="sidebar-section-title nav-group-toggle" aria-expanded="true">
+                <span>TRANSACTION MODULES</span>
+                <i class="bi bi-chevron-down nav-group-caret"></i>
+            </button>
+            <div class="nav-group-items">
+                <!-- CLIENT VISIT DETAILS - YE AAPKA DASHBOARD HAI -->
+                <a class="nav-link" href="/ClientVisit">
+                    <i class="bi bi-signpost-split-fill ic-visit"></i>
+                    <span>Client Visit Details</span>
+                </a>
+
+                <!-- DAILY SUPPORT SYSTEM - FIX KIYA -->
+                <a class="nav-link" href="/DailySupport">
+                    <i class="bi bi-headset ic-support"></i>
+                    <span>Daily Support System</span>
+                </a>
+            </div>
         </div>
-
-        <!-- CLIENT VISIT DETAILS - YE AAPKA DASHBOARD HAI -->
-        <a class="nav-link" href="/ClientVisit">
-            <i class="bi bi-signpost-split-fill ic-visit"></i>
-            <span>Client Visit Details</span>
-        </a>
-
-        <!-- DAILY SUPPORT SYSTEM - FIX KIYA -->
-        <a class="nav-link" href="/DailySupport">
-            <i class="bi bi-headset ic-support"></i>
-            <span>Daily Support System</span>
-        </a>
-
-        <!-- FOLLOW-UP CENTER -->
-        <a class="nav-link" href="/FollowUp">
-            <i class="bi bi-alarm ic-followup"></i>
-            <span>Follow-ups</span>
-        </a>
 
         <!-- =================================================
              ANALYTICS & REPORTS
              ================================================= -->
-        <div class="sidebar-section-title">
-            <span>ANALYTICS &amp; REPORTS</span>
+        <div class="nav-group" data-nav-group>
+            <button type="button" class="sidebar-section-title nav-group-toggle" aria-expanded="true">
+                <span>ANALYTICS &amp; REPORTS</span>
+                <i class="bi bi-chevron-down nav-group-caret"></i>
+            </button>
+            <div class="nav-group-items">
+                <!-- CLIENT VISIT REPORT - YE FULL REPORT HAI -->
+                <a class="nav-link" href="/ClientVisit/ClientVisitReport">
+                    <i class="bi bi-file-earmark-bar-graph-fill ic-vreport"></i>
+                    <span>Client Visit Report</span>
+                </a>
+
+                <!-- MIS REPORTS - DSS Reports bhi DailySupport se -->
+                <a class="nav-link" href="/DailySupport/DSSReports">
+                    <i class="bi bi-bar-chart-line-fill ic-dss"></i>
+                    <span>DSS Reports</span>
+                </a>
+            </div>
         </div>
-
-        <!-- CLIENT VISIT REPORT - YE FULL REPORT HAI -->
-        <a class="nav-link" href="/ClientVisit/ClientVisitReport">
-            <i class="bi bi-file-earmark-bar-graph-fill ic-vreport"></i>
-            <span>Client Visit Report</span>
-        </a>
-
-        <!-- MIS REPORTS - DSS Reports bhi DailySupport se -->
-        <a class="nav-link" href="/DailySupport/DSSReports">
-            <i class="bi bi-bar-chart-line-fill ic-dss"></i>
-            <span>DSS Reports</span>
-        </a>
 
         <!-- =================================================
              TOOLS
              ================================================= -->
-        <div class="sidebar-section-title">
-            <span>TOOLS</span>
+        <div class="nav-group" data-nav-group>
+            <button type="button" class="sidebar-section-title nav-group-toggle" aria-expanded="true">
+                <span>TOOLS</span>
+                <i class="bi bi-chevron-down nav-group-caret"></i>
+            </button>
+            <div class="nav-group-items">
+                <!-- IMPORT EXCEL / CSV -->
+                <a class="nav-link" href="/Import">
+                    <i class="bi bi-file-earmark-spreadsheet-fill ic-import"></i>
+                    <span>Import</span>
+                </a>
+            </div>
         </div>
-
-        <!-- IMPORT EXCEL / CSV -->
-        <a class="nav-link" href="/Import">
-            <i class="bi bi-file-earmark-spreadsheet-fill ic-import"></i>
-            <span>Import</span>
-        </a>
     </div>
 
     <!-- =====================================================
@@ -179,7 +218,7 @@
          ===================================================== -->
     <script>
         (function () {
-            var masterPaths = ["/Dashboard", "/Client", "/User", "/StateMaster", "/ClientVisit", "/DailySupport", "/FollowUp", "/ClientVisit/ClientVisitReport", "/DailySupport/DSSReports", "/Import"];
+            var masterPaths = ["/Dashboard", "/Client", "/User", "/StateMaster", "/Leads", "/DailyFollowUp", "/DailyReport", "/ClientVisit", "/DailySupport", "/FollowUp", "/ClientVisit/ClientVisitReport", "/DailySupport/DSSReports", "/Import"];
 
             function reExecuteScripts(container) {
                 container.querySelectorAll("script").forEach(function (oldScript) {
@@ -244,5 +283,34 @@
             window.loadPage = loadPage;
         })();
     </script>
+
+    <!-- =====================================================
+         SIDEBAR DROPDOWN GROUPS (collapsible)
+         ===================================================== -->
+    <script>
+        (function () {
+            var groups = Array.prototype.slice.call(document.querySelectorAll("[data-nav-group]"));
+            if (!groups.length) return;
+
+            function setOpen(group, open) {
+                group.classList.toggle("collapsed", !open);
+                var btn = group.querySelector(".nav-group-toggle");
+                if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+            }
+
+            // Default: saare groups closed rakho
+            groups.forEach(function (group) {
+                setOpen(group, false);
+                var btn = group.querySelector(".nav-group-toggle");
+                if (!btn) return;
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpen(group, group.classList.contains("collapsed"));
+                });
+            });
+        })();
+    </script>
+
 </body>
 </html>

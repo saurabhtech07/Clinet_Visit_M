@@ -1317,3 +1317,50 @@ table.table td {
 }
 
 
+/* =========================================================
+   SIDEBAR COLLAPSIBLE GROUPS (dropdown)
+   ========================================================= */
+
+.nav-group-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+}
+
+.nav-group-toggle:hover {
+    color: #e6ecf7;
+}
+
+.nav-group-caret {
+    font-size: 11px;
+    opacity: .8;
+    flex-shrink: 0;
+    transition: transform .2s ease;
+}
+
+.nav-group.collapsed .nav-group-caret {
+    transform: rotate(-90deg);
+}
+
+.nav-group-items {
+    overflow: hidden;
+}
+
+.nav-group.collapsed .nav-group-items {
+    display: none;
+}
+
+/* Jab sidebar chhota (icons-only) ho to saare items dikhein */
+body.sidebar-collapsed .nav-group.collapsed .nav-group-items {
+    display: block;
+}
+
+
+

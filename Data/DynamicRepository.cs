@@ -19,7 +19,8 @@ public class DynamicRepository
     private static readonly string[] AllowedTables =
     {
         "Client", "StateMaster", "ClientVisit", "Users", "Roles", "CompanyType", "VisitTypeMaster",
-        "DailySupport", "AppMasters", "CustomerMaster", "EngineerMaster", "CategoryMaster", "CallLog"
+        "DailySupport", "AppMasters", "CustomerMaster", "EngineerMaster", "CategoryMaster", "CallLog",
+        "Leads", "DailyFollowUp", "DailyReport"
     };
 
     public DynamicRepository(DBHelper db) => _db = db;
@@ -351,6 +352,9 @@ private static DynamicTableViewModel ReadTable(SqlCommand cmd, int page = 1, int
     {
         "Client" => "ClientId",
         "ClientVisit" => "VisitId",
+        "Leads" => "LeadId",
+        "DailyFollowUp" => "DailyFollowUpId",
+        "DailyReport" => "DailyReportId",
         "StateMaster" => "StateId",
         "Users" => "UserId",
         "Roles" => "RoleId",

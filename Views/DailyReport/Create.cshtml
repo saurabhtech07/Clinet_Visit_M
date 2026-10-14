@@ -1,0 +1,147 @@
+@using Microsoft.AspNetCore.Html
+@model List<DynamicField>
+@{
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    string defaultDate = ViewBag.ReportDateDefault as string ?? DateTime.Now.ToString("yyyy-MM-dd");
+
+    var known = new[] { "ReportDate", "AssignedTo", "Calls", "Visit", "NewLeads", "Summary", "Remark", "Status" };
+    var otherFields = Model.Where(f => !known.Contains(f.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+
+    string Label(string name) => name switch
+    {
+        "ReportDate" => "Date",
+        "AssignedTo" => "Assigned To",
+        "NewLeads" => "New Leads",
+        _ => System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    string Options(IEnumerable<(string Value, string Text)> items, string? selected)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<option value=\"\">-- Select --</option>");
+        foreach (var (value, text) in items)
+        {
+            var sel = string.Equals(value, selected, StringComparison.OrdinalIgnoreCase) ? " selected" : "";
+            sb.Append($"<option value=\"{value}\"{sel}>{System.Net.WebUtility.HtmlEncode(text)}</option>");
+        }
+        return sb.ToString();
+    }
+
+    IHtmlContent RenderField(DynamicField f, string colClass, object? value = null)
+    {
+        var v = value switch
+        {
+            DateTime dt => dt.ToString("yyyy-MM-dd"),
+            null => "",
+            _ => value.ToString() ?? ""
+        };
+        var star = f.IsNullable ? "" : " <span class=\"text-danger\">*</span>";
+        var label = $"<label class=\"form-label mb-1\">{Label(f.Name)}{star}</label>";
+        string input;
+
+        if (f.Name == "AssignedTo")
+        {
+            var items = users.Select(u => (
+                Value: u.UserId.ToString(),
+                Text: string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName));
+            input = $"<select class=\"form-select\" name=\"AssignedTo\">{Options(items, v)}</select>";
+        }
+        else if (f.Name == "Status")
+        {
+            input = $"<select class=\"form-select\" name=\"Status\">{Options(statusOptions.Select(s => (s, s)), string.IsNullOrWhiteSpace(v) ? "Pending" : v)}</select>";
+        }
+        else if (f.Name == "Summary" || f.Name == "Remark")
+        {
+            input = $"<textarea class=\"form-control\" name=\"{f.Name}\" rows=\"3\" placeholder=\"{Label(f.Name)}...\">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
+        }
+        else if (f.Name is "Calls" or "Visit" or "NewLeads")
+        {
+            var numVal = string.IsNullOrWhiteSpace(v) ? "0" : v;
+            input = $"<input class=\"form-control\" name=\"{f.Name}\" type=\"number\" min=\"0\" value=\"{System.Net.WebUtility.HtmlEncode(numVal)}\" />";
+        }
+        else
+        {
+            var isDate = f.DataType.Contains("date", StringComparison.OrdinalIgnoreCase);
+            var type = isDate ? "date" : "text";
+            var defValue = f.Name == "ReportDate" && string.IsNullOrWhiteSpace(v) ? defaultDate : v;
+            input = $"<input class=\"form-control\" name=\"{f.Name}\" type=\"{type}\" value=\"{System.Net.WebUtility.HtmlEncode(defValue)}\" placeholder=\"Enter {Label(f.Name)}\" />";
+        }
+        return new HtmlString($"<div class=\"{colClass}\">{label}{input}</div>");
+    }
+}
+
+<style>
+    #drForm .dr-title{font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #eef2f7;padding-bottom:8px;display:flex;align-items:center;gap:8px}
+    #drForm .dr-title i{color:#2563eb}
+    #drForm .form-label{font-size:12px;font-weight:700;color:#334155}
+    #drForm .form-control,#drForm .form-select{height:40px;font-size:13.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+    #drForm textarea.form-control{height:auto}
+    #drForm .form-control:focus,#drForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Add Daily Report</h4>
+    <a href="/DailyReport" class="btn btn-light border"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<form method="post" id="drForm">
+    @Html.AntiForgeryToken()
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+
+            <div class="dr-title"><i class="bi bi-calendar2-check"></i> Report Info</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => new[] { "ReportDate", "AssignedTo", "Status" }.Contains(f.Name)))
+                {
+                    @RenderField(f, "col-md-4")
+                }
+            </div>
+
+            <div class="dr-title mt-4"><i class="bi bi-bar-chart-fill"></i> Activity Counts</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => new[] { "Calls", "Visit", "NewLeads" }.Contains(f.Name)))
+                {
+                    @RenderField(f, "col-md-4")
+                }
+            </div>
+
+            <div class="dr-title mt-4"><i class="bi bi-chat-left-text"></i> Notes</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => new[] { "Summary", "Remark" }.Contains(f.Name)))
+                {
+                    @RenderField(f, "col-md-6")
+                }
+            </div>
+
+            @if (otherFields.Any())
+            {
+                <div class="dr-title mt-4"><i class="bi bi-plus-square"></i> Additional Information</div>
+                <div class="row g-3 mt-1">
+                    @foreach (var f in otherFields) { @RenderField(f, "col-md-6") }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a href="/DailyReport" class="btn btn-light border px-4">Cancel</a>
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Save Daily Report</button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        var form = document.getElementById("drForm");
+        if (!form) return;
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            Ajax.submit({
+                url: "/DailyReport/Create",
+                form: form,
+                successMessage: "Daily report saved successfully.",
+                onSuccess: function () { window.loadPage("/DailyReport"); }
+            });
+        });
+    })();
+</script>

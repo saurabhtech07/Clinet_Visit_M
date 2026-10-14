@@ -93,6 +93,9 @@ builder.Services.AddScoped<DynamicRepository>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<DashboardRepository>();
 builder.Services.AddScoped<FollowUpRepository>();
+builder.Services.AddScoped<LeadRepository>();
+builder.Services.AddScoped<DailyFollowUpRepository>();
+builder.Services.AddScoped<DailyReportRepository>();
 
 builder.Services.AddDistributedMemoryCache();
 

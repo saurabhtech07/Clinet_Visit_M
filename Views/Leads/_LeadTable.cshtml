@@ -1,0 +1,230 @@
+@model ClientVisitManagement.Models.DynamicTableViewModel
+@{
+    int start = Model.TotalRecords == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords);
+
+    var fStatus = ViewBag.FilterStatus as string;
+    var fStateId = ViewBag.FilterStateId as int?;
+    var fAssignedTo = ViewBag.FilterAssignedTo as int?;
+    var fFrom = ViewBag.FilterFrom as string;
+    var fTo = ViewBag.FilterTo as string;
+
+    string BuildUrl(int page, int pageSize, string? sort, string? dir)
+    {
+        var q = new List<string> { "page=" + page, "pageSize=" + pageSize };
+        if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) q.Add("search=" + Uri.EscapeDataString(Model.SearchTerm));
+        if (!string.IsNullOrWhiteSpace(fStatus)) q.Add("status=" + Uri.EscapeDataString(fStatus));
+        if (fStateId.HasValue) q.Add("stateId=" + fStateId.Value);
+        if (fAssignedTo.HasValue) q.Add("assignedTo=" + fAssignedTo.Value);
+        if (!string.IsNullOrWhiteSpace(fFrom)) q.Add("fromDate=" + fFrom);
+        if (!string.IsNullOrWhiteSpace(fTo)) q.Add("toDate=" + fTo);
+        if (!string.IsNullOrWhiteSpace(sort)) q.Add("sort=" + Uri.EscapeDataString(sort));
+        if (!string.IsNullOrWhiteSpace(dir)) q.Add("direction=" + dir);
+        return "/Leads?" + string.Join("&", q);
+    }
+
+    string DisplayName(string col) => col switch
+    {
+        "LeadId" => "Lead Id",
+        "LeadPerson" => "Lead Person",
+        "StateName" => "State",
+        "AssignedToName" => "Assigned To",
+        "DealValue" => "Deal Value",
+        "CreatedOn" => "Created On",
+        "EntryTime" => "Entry Time",
+        "Mobile" => "Mobile",
+        "Email" => "Email",
+        _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    string Fmt(object? val)
+    {
+        if (val == null) return "";
+        if (val is DateTime dt) return dt.ToString("dd-MM-yyyy hh:mm tt");
+        if (val is decimal dc) return dc.ToString("N2");
+        if (val is double db) return db.ToString("N2");
+        if (val is bool b) return b ? "Yes" : "No";
+        return val.ToString() ?? "";
+    }
+
+    string StatusStyle(string s) => s switch
+    {
+        "New" => "background:#e2e8f0;color:#334155;",
+        "Contacted" => "background:#dbeafe;color:#1d4ed8;",
+        "Qualified" => "background:#ede9fe;color:#6d28d9;",
+        "Proposal Sent" => "background:#fef3c7;color:#b45309;",
+        "Negotiation" => "background:#ffedd5;color:#c2410c;",
+        "Won" => "background:#dcfce7;color:#15803d;",
+        "Lost" => "background:#fee2e2;color:#b91c1c;",
+        _ => "background:#f1f5f9;color:#475569;"
+    };
+}
+
+<style>
+    .table-scroll-container { max-height: 440px; overflow-y: auto; overflow-x: auto; position: relative; }
+    .dss-table thead th {
+        position: sticky; top: 0; z-index: 10;
+        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        color: #64748b; text-transform: uppercase;
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px; white-space: nowrap;
+        box-shadow: 0 1px 0 #e2e8f0;
+    }
+    .dss-table tbody td { font-size: 13px; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; }
+    .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
+    .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
+    .lead-id-pill { background: #1e293b; color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .table-sort-link { color: #475569 !important; text-decoration: none; }
+    .table-sort-link:hover { color: #0f172a !important; }
+    .lead-grid-table { border-collapse: separate; border-spacing: 0; }
+    .cell-clip { display: inline-block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    .act-btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; }
+    .dss-table tbody td.actions-cell { white-space: nowrap; }
+</style>
+
+<div class="table-scroll-container">
+    <table class="table mb-0 dss-table table-hover lead-grid-table">
+        <thead>
+            <tr>
+                <th style="width:65px;">Sr.No</th>
+                @foreach (var col in Model.Columns)
+                {
+                    var nextDir = (Model.SortColumn == col && Model.SortDirection == "ASC") ? "DESC" : "ASC";
+                    <th>
+                        <a class="table-sort-link ajax-lead-link" href="@BuildUrl(1, Model.PageSize, col, nextDir)">
+                            @DisplayName(col)
+                            @if (Model.SortColumn == col)
+                            {
+                                <i class="bi @(Model.SortDirection == "ASC" ? "bi-arrow-up" : "bi-arrow-down") ms-1"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-arrow-down-up ms-1" style="opacity:0.3; font-size:11px;"></i>
+                            }
+                        </a>
+                    </th>
+                }
+                <th style="width:120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Any())
+            {
+                foreach (var row in Model.Rows)
+                {
+                    var leadId = row.ContainsKey("LeadId") ? row["LeadId"]?.ToString() : "";
+                    bool isConv = row.ContainsKey("IsConverted") && row["IsConverted"] != null && Convert.ToBoolean(row["IsConverted"]);
+                    var convClientId = row.ContainsKey("ConvertedClientId") && row["ConvertedClientId"] != null ? row["ConvertedClientId"]?.ToString() : null;
+
+                    <tr>
+                        <td style="color:#64748b;">@start</td>
+                        @foreach (var col in Model.Columns)
+                        {
+                            object? val = row.ContainsKey(col) ? row[col] : null;
+                            if (col == "LeadId")
+                            {
+                                <td><span class="lead-id-pill">@val</span></td>
+                            }
+                            else if (col == "Status")
+                            {
+                                var st = val?.ToString() ?? "";
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(st))
+                                    {
+                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @StatusStyle(st)">@st</span>
+                                    }
+                                </td>
+                            }
+                            else if (col == "DealValue")
+                            {
+                                <td class="fw-semibold" style="color:#0f172a;">@(val == null ? "" : "₹ " + Convert.ToDecimal(val).ToString("N0"))</td>
+                            }
+                            else if (col == "LeadPerson" || col == "Company")
+                            {
+                                var t = Fmt(val);
+                                <td class="fw-semibold" style="color:#0f172a;"><span class="cell-clip" title="@t">@t</span></td>
+                            }
+                            else
+                            {
+                                var t = Fmt(val);
+                                <td><span class="cell-clip" title="@t">@t</span></td>
+                            }
+                        }
+                        <td class="actions-cell">
+                            @if (isConv)
+                            {
+                                <span style="padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; background:#dcfce7; color:#15803d;" title="Converted to Client">
+                                    <i class="bi bi-check2-circle"></i> Done
+                                </span>
+                                @if (!string.IsNullOrEmpty(convClientId))
+                                {
+                                    <a href="/Client/Edit/@convClientId" class="btn btn-light border act-btn ms-1" title="Converted Client dekho"><i class="bi bi-building"></i></a>
+                                }
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-success act-btn" onclick="convertLead(@leadId, this)" title="Client me convert karo">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                </button>
+                            }
+                            <a href="/Leads/Edit/@leadId" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="/Leads/Delete/@leadId" onsubmit="return confirm('Is lead ko delete karna hai?');" style="display:inline" class="ms-1">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    start++;
+                }
+            }
+            else
+            {
+                <tr><td colspan="@(Model.Columns.Count + 2)" class="text-center text-muted py-5">Koi lead nahi mila</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+    <div class="d-flex align-items-center gap-2">
+        <select id="leadPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
+            <option value="10" selected="@(Model.PageSize == 10)">10</option>
+            <option value="20" selected="@(Model.PageSize == 20)">20</option>
+            <option value="50" selected="@(Model.PageSize == 50)">50</option>
+            <option value="100" selected="@(Model.PageSize == 100)">100</option>
+        </select>
+        <span style="font-size:12px; color:#64748b;">records per page</span>
+    </div>
+    <div style="font-size:12px; color:#64748b;">Showing @start to @end of @Model.TotalRecords entries</div>
+    <div class="d-flex gap-1">
+        @if (Model.CurrentPage > 1)
+        {
+            <a class="btn btn-sm btn-light border ajax-lead-link" href="@BuildUrl(Model.CurrentPage - 1, Model.PageSize, Model.SortColumn, Model.SortDirection)">Previous</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-light border" disabled>Previous</button>
+        }
+        @for (int p = 1; p <= Model.TotalPages; p++)
+        {
+            if (p == Model.CurrentPage)
+            {
+                <span class="btn btn-sm" style="background:#0f172a; color:#fff;">@p</span>
+            }
+            else
+            {
+                <a class="btn btn-sm btn-light border ajax-lead-link" href="@BuildUrl(p, Model.PageSize, Model.SortColumn, Model.SortDirection)">@p</a>
+            }
+        }
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a class="btn btn-sm btn-light border ajax-lead-link" href="@BuildUrl(Model.CurrentPage + 1, Model.PageSize, Model.SortColumn, Model.SortDirection)">Next</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-light border" disabled>Next</button>
+        }
+    </div>
+</div>

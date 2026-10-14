@@ -1,0 +1,171 @@
+@using Microsoft.AspNetCore.Html
+@model List<DynamicField>
+@{
+    var row = (Dictionary<string, object?>)ViewBag.RowData;
+    var leadId = ViewBag.LeadId;
+    var states = ((DynamicTableViewModel)ViewBag.States).Rows;
+    var users = ViewBag.Users as List<User> ?? new List<User>();
+    var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+
+    bool isConverted = row.ContainsKey("IsConverted") && row["IsConverted"] != null && Convert.ToBoolean(row["IsConverted"]);
+    var convertedClientId = row.ContainsKey("ConvertedClientId") && row["ConvertedClientId"] != null ? row["ConvertedClientId"]?.ToString() : null;
+
+    var mainFields = new[] { "LeadPerson", "Company", "Mobile", "Email", "City", "StateId" };
+    var statusFields = new[] { "Status", "DealValue", "AssignedTo" };
+
+    var otherFields = Model.Where(f =>
+        !mainFields.Contains(f.Name) &&
+        !statusFields.Contains(f.Name)).ToList();
+
+    string Label(string name) => name switch
+    {
+        "LeadPerson" => "Lead Person",
+        "StateId" => "State",
+        "DealValue" => "Deal Value",
+        "AssignedTo" => "Assigned To",
+        _ => System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    IHtmlContent RenderField(DynamicField f, string colClass)
+    {
+        var raw = row.ContainsKey(f.Name) ? row[f.Name] : null;
+        var v = raw is DateTime dt ? dt.ToString("yyyy-MM-ddTHH:mm") : raw?.ToString() ?? "";
+        var star = f.IsNullable ? "" : " *";
+        var label = $"<label class=\"form-label mb-1\">{Label(f.Name)}{star}</label>";
+        string input;
+
+        if (f.Name == "StateId")
+        {
+            var cur = raw?.ToString();
+            var opts = string.Join("", states.Select(s =>
+            {
+                var id = s["StateId"]?.ToString();
+                var sel = id == cur ? " selected" : "";
+                return $"<option value=\"{id}\"{sel}>{s["StateName"]}</option>";
+            }));
+            input = $@"<select class=""form-select"" name=""StateId""><option value="""">Select State</option>{opts}</select>";
+        }
+        else if (f.Name == "Status")
+        {
+            var opts = string.Join("", statusOptions.Select(s =>
+            {
+                var sel = s == v ? " selected" : "";
+                return $"<option value=\"{s}\"{sel}>{s}</option>";
+            }));
+            input = $@"<select class=""form-select"" name=""Status""><option value="""">Select Status</option>{opts}</select>";
+        }
+        else if (f.Name == "AssignedTo")
+        {
+            var opts = string.Join("", users.Select(u =>
+            {
+                var nm = System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName);
+                var sel = u.UserId.ToString() == v ? " selected" : "";
+                return $"<option value=\"{u.UserId}\"{sel}>{nm}</option>";
+            }));
+            input = $@"<select class=""form-select"" name=""AssignedTo""><option value="""">Unassigned</option>{opts}</select>";
+        }
+        else
+        {
+            var type = f.DataType.Contains("decimal") || f.DataType.Contains("money") || f.DataType.Contains("float") ? "number"
+                     : f.DataType.Contains("int") ? "number"
+                     : f.DataType.Contains("date") || f.DataType.Contains("time") ? "datetime-local"
+                     : "text";
+            var step = type == "number" ? " step=\"0.01\"" : "";
+            var req = f.IsNullable ? "" : "required";
+            input = $@"<input class=""form-control"" name=""{f.Name}"" type=""{type}""{step} value=""{System.Net.WebUtility.HtmlEncode(v)}"" {req} />";
+        }
+        return new HtmlString($"<div class=\"{colClass}\">{label}{input}</div>");
+    }
+}
+
+<style>
+    #leadForm .lf-title{font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #eef2f7;padding-bottom:8px;display:flex;align-items:center;gap:8px}
+    #leadForm .lf-title i{color:#2563eb}
+    #leadForm .form-label{font-size:12px;font-weight:700;color:#334155}
+    #leadForm .form-control,#leadForm .form-select{height:40px;font-size:13.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+    #leadForm .form-control:focus,#leadForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Edit Lead @(leadId != null ? "#" + leadId : "")</h4>
+    @if (isConverted)
+    {
+        <span style="padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#dcfce7; color:#15803d;">
+            <i class="bi bi-check2-circle"></i> Converted to Client @(!string.IsNullOrEmpty(convertedClientId) ? "#" + convertedClientId : "")
+        </span>
+    }
+</div>
+
+<form method="post" id="leadForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="LeadId" value="@leadId" />
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+
+            <div class="lf-title"><i class="bi bi-person-badge"></i> Lead Information</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => mainFields.Contains(f.Name))) { @RenderField(f, "col-md-6") }
+            </div>
+
+            <div class="lf-title mt-4"><i class="bi bi-sliders"></i> Status &amp; Assignment</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => statusFields.Contains(f.Name))) { @RenderField(f, "col-md-4") }
+            </div>
+
+            @if (otherFields.Any())
+            {
+                <div class="lf-title mt-4"><i class="bi bi-plus-square"></i> Additional Information</div>
+                <div class="row g-3 mt-1">
+                    @foreach (var f in otherFields) { @RenderField(f, "col-md-6") }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end align-items-center gap-2 mt-4">
+        @if (!isConverted)
+        {
+            <button type="button" id="convertLeadBtn" class="btn btn-success px-4"><i class="bi bi-arrow-left-right me-1"></i> Convert to Client</button>
+        }
+        else if (!string.IsNullOrEmpty(convertedClientId))
+        {
+            <a href="/Client/Edit/@convertedClientId" class="btn btn-light border px-4"><i class="bi bi-building me-1"></i> View Client</a>
+        }
+        <a href="/Leads" class="btn btn-light border px-4">Cancel</a>
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Update Lead</button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        var form = document.getElementById("leadForm");
+        if (form) {
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                Ajax.submit({
+                    url: "/Leads/Edit/@leadId",
+                    form: form,
+                    successMessage: "Lead updated successfully.",
+                    onSuccess: function () { window.loadPage("/Leads"); }
+                });
+            });
+        }
+
+        var cbtn = document.getElementById("convertLeadBtn");
+        if (cbtn) {
+            cbtn.addEventListener("click", function () {
+                if (!confirm("Is lead ko Client me convert karna hai?")) return;
+                cbtn.disabled = true;
+                Ajax.post("/Leads/Convert/@leadId", new FormData())
+                    .then(function (d) {
+                        Ajax.toast(d.message || "Converted to Client.", "success");
+                        window.loadPage("/Leads");
+                    })
+                    .catch(function (e) {
+                        cbtn.disabled = false;
+                        Ajax.toast(e.message, "error");
+                    });
+            });
+        }
+    })();
+</script>
