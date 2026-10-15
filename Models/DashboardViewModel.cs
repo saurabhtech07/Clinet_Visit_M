@@ -27,27 +27,25 @@ public class DashboardViewModel
     public int TotalUsers { get; set; }
     public int ActiveUsers { get; set; }
 
-    // ---------------- Support / Daily Support KPIs ----------------
-    public int SupportTodayCalls { get; set; }
-    public int SupportTotalCalls { get; set; }
-    public int SupportOpenCalls { get; set; }
-    public int SupportClosedToday { get; set; }
-    public int SupportPending { get; set; }
+    // ---------------- Leads KPIs ----------------
+    public int TotalLeads { get; set; }
+    public int OpenLeads { get; set; }
+    public int ConvertedLeads { get; set; }
+    public int NewLeadsThisMonth { get; set; }
+    public decimal PipelineValue { get; set; }
 
     // ---------------- Charts ----------------
     public List<NameValue> MonthlyVisits { get; set; } = new();
     public List<NameValue> FollowUpStatuses { get; set; } = new();
-    public List<NameValue> SupportStatuses { get; set; } = new();
     public List<NameValue> TopClients { get; set; } = new();
-    public List<NameValue> SupportPriorities { get; set; } = new();
+    public List<NameValue> LeadStatuses { get; set; } = new();
+    public List<NameValue> LeadCities { get; set; } = new();
 
     // ---------------- Recent (live) ----------------
     public List<RecentVisit> RecentVisits { get; set; } = new();
-    public List<RecentTicket> RecentTickets { get; set; } = new();
+    public List<RecentLead> RecentLeads { get; set; } = new();
 
     public DateTime GeneratedOn { get; set; } = DateTime.Now;
-
-    public bool HasSupportData { get; set; }
 }
 
 /// <summary>Chart ka ek segment - Name (label) + Value (count/amount).</summary>
@@ -65,10 +63,13 @@ public class RecentVisit
     public string? PersonMet { get; set; }
 }
 
-public class RecentTicket
+public class RecentLead
 {
-    public string? TicketNo { get; set; }
-    public string? ClientName { get; set; }
+    public string? LeadPerson { get; set; }
+    public string? Company { get; set; }
+    public string? City { get; set; }
     public string? Status { get; set; }
-    public string? SupportDate { get; set; }
+    public decimal DealValue { get; set; }
+    public bool IsConverted { get; set; }
+    public string? CreatedOn { get; set; }
 }

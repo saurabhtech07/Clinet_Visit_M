@@ -7,7 +7,9 @@ namespace ClientVisitManagement.Data;
 /// Daily Follow Up module ka data layer.
 ///
 ///  - GetPage : grid + 4 cards (sab queries LIVE DB se)
-///  - GetLead : form me lead select karne par auto-fill ke liye
+///
+/// SINGLE SOURCE OF TRUTH: Company / Mobile / City / Contact Person form me nahi bharte,
+/// grid me Leads table se LIVE dikhte hain (Lead me value na ho to row ka purana snapshot).
 ///
 /// NOTE: Table na ho (DDL na chali ho) to grid/cards khaali dikhte hain,
 /// page toot-ta nahi. Insert/Update/Delete DynamicRepository ke through hote hain.
@@ -22,7 +24,14 @@ public class DailyFollowUpRepository
         new(StringComparer.OrdinalIgnoreCase) { "LeadId", "CreatedBy", "AssignedTo" };
 
     private const string FromJoin =
-        " FROM DailyFollowUp d LEFT JOIN Users u ON d.AssignedTo = u.UserId ";
+        " FROM DailyFollowUp d LEFT JOIN Users u ON d.AssignedTo = u.UserId" +
+        " LEFT JOIN Leads l ON d.LeadId = l.LeadId ";
+
+    // Lead me value ho to wahi, warna row ka purana snapshot (legacy rows ke liye).
+    private const string ContactExpr = "ISNULL(NULLIF(l.LeadPerson,''), d.ContactPerson)";
+    private const string CompanyExpr = "ISNULL(NULLIF(l.Company,''), d.Company)";
+    private const string MobileExpr  = "ISNULL(NULLIF(l.Mobile,''), d.Mobile)";
+    private const string CityExpr    = "ISNULL(NULLIF(l.City,''), d.City)";
 
     // =====================================================================
     //  PAGE DATA
@@ -85,7 +94,7 @@ public class DailyFollowUpRepository
 
             string order = BuildOrder(sort, grid.SortDirection!);
             string sql =
-                "SELECT d.*, ISNULL(NULLIF(u.FullName,''), u.Username) AS AssignedName" + FromJoin +
+                BuildSelectList(con) + FromJoin +
                 where + order + " OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
 
             using var cmd = new SqlCommand(sql, con);
@@ -113,29 +122,39 @@ public class DailyFollowUpRepository
         return vm;
     }
 
-    /// <summary>Form me lead select karne par details auto-fill karne ke liye.</summary>
-    public Dictionary<string, object?>? GetLead(int leadId)
-    {
-        try
-        {
-            using var con = _db.GetConnection();
-            using var cmd = new SqlCommand(
-                "SELECT TOP 1 LeadPerson, Company, Mobile, City FROM Leads WHERE LeadId=@Id", con);
-            cmd.Parameters.AddWithValue("@Id", leadId);
-            con.Open();
-            using var r = cmd.ExecuteReader();
-            if (!r.Read()) return null;
-            var row = new Dictionary<string, object?>();
-            for (int i = 0; i < r.FieldCount; i++)
-                row[r.GetName(i)] = r.IsDBNull(i) ? null : r.GetValue(i);
-            return row;
-        }
-        catch { return null; }
-    }
-
     // =====================================================================
     //  HELPERS
     // =====================================================================
+    /// <summary>
+    /// Grid ka SELECT: DailyFollowUp ke saare columns dynamic (DB se), lekin
+    /// ContactPerson / Company / Mobile / City Leads se LIVE aate hain.
+    /// Naya column add karo to grid me khud aa jaayega.
+    /// </summary>
+    private static string BuildSelectList(SqlConnection con)
+    {
+        var cols = new List<string>();
+        using (var cmd = new SqlCommand("SELECT TOP 0 * FROM DailyFollowUp", con))
+        using (var r = cmd.ExecuteReader())
+            for (int i = 0; i < r.FieldCount; i++) cols.Add(r.GetName(i));
+
+        var parts = new List<string>();
+        foreach (var c in cols)
+        {
+            parts.Add(c.ToLowerInvariant() switch
+            {
+                "contactperson" => ContactExpr + " AS ContactPerson",
+                "company"       => CompanyExpr + " AS Company",
+                "mobile"        => MobileExpr  + " AS Mobile",
+                "city"          => CityExpr    + " AS City",
+                _               => "d." + Quote(c)
+            });
+        }
+        parts.Add("ISNULL(NULLIF(u.FullName,''), u.Username) AS AssignedName");
+        return "SELECT " + string.Join(", ", parts);
+    }
+
+    private static string Quote(string col) => "[" + col.Replace("]", "]]") + "]";
+
     private static string BuildWhere(string? search, string? status, string? priority,
         int? assignedTo, DateTime? fromDate, DateTime? toDate)
     {
@@ -146,8 +165,8 @@ public class DailyFollowUpRepository
         if (fromDate.HasValue) w += " AND CAST(d.FollowUpDate AS DATE) >= @From";
         if (toDate.HasValue) w += " AND CAST(d.FollowUpDate AS DATE) <= @To";
         if (!string.IsNullOrWhiteSpace(search))
-            w += " AND (ISNULL(d.ContactPerson,'') LIKE @Search OR ISNULL(d.Company,'') LIKE @Search" +
-                 " OR ISNULL(d.Mobile,'') LIKE @Search OR ISNULL(d.City,'') LIKE @Search" +
+            w += " AND (" + ContactExpr + " LIKE @Search OR " + CompanyExpr + " LIKE @Search" +
+                 " OR " + MobileExpr + " LIKE @Search OR " + CityExpr + " LIKE @Search" +
                  " OR ISNULL(d.Remarks,'') LIKE @Search)";
         return w;
     }
@@ -168,10 +187,10 @@ public class DailyFollowUpRepository
         var dir = string.Equals(direction, "ASC", StringComparison.OrdinalIgnoreCase) ? "ASC" : "DESC";
         switch ((sort ?? "").Trim().ToLowerInvariant())
         {
-            case "contactperson":     return $" ORDER BY d.ContactPerson {dir}, d.DailyFollowUpId DESC";
-            case "company":           return $" ORDER BY d.Company {dir}, d.DailyFollowUpId DESC";
-            case "mobile":            return $" ORDER BY d.Mobile {dir}, d.DailyFollowUpId DESC";
-            case "city":              return $" ORDER BY d.City {dir}, d.DailyFollowUpId DESC";
+            case "contactperson":     return $" ORDER BY {ContactExpr} {dir}, d.DailyFollowUpId DESC";
+            case "company":           return $" ORDER BY {CompanyExpr} {dir}, d.DailyFollowUpId DESC";
+            case "mobile":            return $" ORDER BY {MobileExpr} {dir}, d.DailyFollowUpId DESC";
+            case "city":              return $" ORDER BY {CityExpr} {dir}, d.DailyFollowUpId DESC";
             case "followupdate":      return $" ORDER BY d.FollowUpDate {dir}, d.DailyFollowUpId DESC";
             case "nextfollowupdate":  return $" ORDER BY CASE WHEN d.NextFollowUpDate IS NULL THEN 1 ELSE 0 END, d.NextFollowUpDate {dir}, d.DailyFollowUpId DESC";
             case "status":            return $" ORDER BY CASE WHEN ISNULL(d.Status,'')='Done' THEN 1 ELSE 0 END {dir}, d.DailyFollowUpId DESC";

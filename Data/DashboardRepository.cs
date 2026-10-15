@@ -55,13 +55,12 @@ public class DashboardRepository
         vm.TotalUsers  = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM Users"));
         vm.ActiveUsers = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM Users WHERE IsActive = 1"));
 
-        // ---------------- Daily Support ----------------
-        vm.SupportTodayCalls  = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM DailySupport WHERE CAST(SupportDate AS DATE) = CAST(GETDATE() AS DATE)"));
-        vm.SupportTotalCalls  = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM DailySupport"));
-        vm.SupportOpenCalls   = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM DailySupport WHERE Status IN ('Open','In Progress','On Hold','Pending')"));
-        vm.SupportClosedToday = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM DailySupport WHERE Status = 'Closed' AND CAST(SupportDate AS DATE) = CAST(GETDATE() AS DATE)"));
-        vm.SupportPending     = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM DailySupport WHERE Status IN ('In Progress','Pending','On Hold')"));
-        vm.HasSupportData = vm.SupportTotalCalls > 0;
+        // ---------------- Leads ----------------
+        vm.TotalLeads         = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM Leads"));
+        vm.OpenLeads          = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM Leads WHERE ISNULL(IsConverted,0) = 0"));
+        vm.ConvertedLeads     = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM Leads WHERE ISNULL(IsConverted,0) = 1"));
+        vm.NewLeadsThisMonth  = Exec(() => ScalarInt(con, "SELECT COUNT(*) FROM Leads WHERE CreatedOn >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)"));
+        vm.PipelineValue      = ExecDecimal(() => ScalarDecimal(con, "SELECT ISNULL(SUM(DealValue),0) FROM Leads WHERE ISNULL(IsConverted,0) = 0"));
 
         // ---------------- Charts ----------------
         vm.MonthlyVisits = ExecList(con, """
@@ -77,9 +76,9 @@ public class DashboardRepository
             "SELECT ISNULL(NULLIF(FollowUpStatus, ''), 'Not Set') AS Name, COUNT(*) AS Cnt FROM ClientVisit GROUP BY FollowUpStatus",
             "Name", "Cnt");
 
-        vm.SupportStatuses = ExecList(con, """
+        vm.LeadStatuses = ExecList(con, """
             SELECT ISNULL(NULLIF(Status, ''), 'Not Set') AS Name, COUNT(*) AS Cnt
-            FROM DailySupport GROUP BY Status
+            FROM Leads GROUP BY Status
             """, "Name", "Cnt");
 
         vm.TopClients = ExecList(con, """
@@ -88,9 +87,9 @@ public class DashboardRepository
             GROUP BY c.ClientName ORDER BY Cnt DESC
             """, "Name", "Cnt");
 
-        vm.SupportPriorities = ExecList(con, """
-            SELECT ISNULL(NULLIF(Priority, ''), 'Not Set') AS Name, COUNT(*) AS Cnt
-            FROM DailySupport GROUP BY Priority
+        vm.LeadCities = ExecList(con, """
+            SELECT TOP 5 ISNULL(NULLIF(City, ''), 'Not Set') AS Name, COUNT(*) AS Cnt
+            FROM Leads GROUP BY City ORDER BY Cnt DESC
             """, "Name", "Cnt");
 
         // ---------------- Recent (live) ----------------
@@ -107,17 +106,20 @@ public class DashboardRepository
                 PersonMet  = r.TryGetValue("PersonMet",  out var m) ? m?.ToString() : null
             });
 
-        vm.RecentTickets = ExecRows(con, """
-            SELECT TOP 6 d.TicketNo, c.ClientName, d.Status,
-                   CONVERT(VARCHAR(16), d.SupportDate, 103) AS SupportDate
-            FROM DailySupport d LEFT JOIN Client c ON d.ClientId = c.ClientId
-            ORDER BY d.SupportId DESC
-            """, r => new RecentTicket
+        vm.RecentLeads = ExecRows(con, """
+            SELECT TOP 5 l.LeadPerson, l.Company, l.City, l.Status, l.DealValue, l.IsConverted,
+                   CONVERT(VARCHAR(12), l.CreatedOn, 103) AS CreatedOn
+            FROM Leads l
+            ORDER BY l.LeadId DESC
+            """, r => new RecentLead
             {
-                TicketNo    = r.TryGetValue("TicketNo",    out var t) ? t?.ToString() : null,
-                ClientName  = r.TryGetValue("ClientName",  out var n) ? n?.ToString() : null,
-                Status      = r.TryGetValue("Status",      out var s) ? s?.ToString() : null,
-                SupportDate = r.TryGetValue("SupportDate", out var d) ? d?.ToString() : null
+                LeadPerson  = r.TryGetValue("LeadPerson",  out var lp) ? lp?.ToString() : null,
+                Company     = r.TryGetValue("Company",     out var co) ? co?.ToString() : null,
+                City        = r.TryGetValue("City",        out var ci) ? ci?.ToString() : null,
+                Status      = r.TryGetValue("Status",      out var st) ? st?.ToString() : null,
+                DealValue   = r.TryGetValue("DealValue",   out var dv) && dv is not null ? Convert.ToDecimal(dv) : 0m,
+                IsConverted = r.TryGetValue("IsConverted", out var ic) && ic is not null && Convert.ToBoolean(ic),
+                CreatedOn   = r.TryGetValue("CreatedOn",   out var cr) ? cr?.ToString() : null
             });
 
         return vm;
@@ -149,6 +151,20 @@ public class DashboardRepository
     {
         using var cmd = new SqlCommand(sql, con);
         return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    /// <summary>Safe decimal scalar (paise/deal value ke liye).</summary>
+    private static decimal ExecDecimal(Func<decimal> query)
+    {
+        try { return query(); }
+        catch { return 0m; }
+    }
+
+    private static decimal ScalarDecimal(SqlConnection con, string sql)
+    {
+        using var cmd = new SqlCommand(sql, con);
+        var v = cmd.ExecuteScalar();
+        return v == null || v is DBNull ? 0m : Convert.ToDecimal(v);
     }
 
     private static List<NameValue> ExecList(SqlConnection con, string sql, string nameCol, string valCol)

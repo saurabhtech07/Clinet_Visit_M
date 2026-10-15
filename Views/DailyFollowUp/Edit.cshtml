@@ -62,7 +62,7 @@
             var items = leads.Select(l => (
                 Value: l.ContainsKey("LeadId") ? l["LeadId"]?.ToString() ?? "" : "",
                 Text: BuildLeadText(l)));
-            input = $"<select class=\"form-select\" name=\"LeadId\" id=\"dfuLead\" onchange=\"dfuFillFromLead(this.value)\">{Options(items, v)}</select>";
+            input = $"<select class=\"form-select\" name=\"LeadId\" id=\"dfuLead\" data-searchable=\"1\" data-placeholder=\"Search lead...\">{Options(items, v)}</select>";
         }
         else if (f.Name == "Status")
         {
@@ -102,10 +102,7 @@
     #dfuForm .form-control:focus,#dfuForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold mb-0">Edit Daily Follow Up @(followUpId != null ? "#" + followUpId : "")</h4>
-    <a href="/DailyFollowUp" class="btn btn-light border"><i class="bi bi-arrow-left me-1"></i> Back</a>
-</div>
+<h4 class="fw-bold mb-3">Edit Daily Follow Up @(followUpId != null ? "#" + followUpId : "")</h4>
 
 <form method="post" id="dfuForm">
     @Html.AntiForgeryToken()
@@ -113,9 +110,9 @@
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-body p-4">
 
-            <div class="dfu-title"><i class="bi bi-person-lines-fill"></i> Lead &amp; Contact</div>
+            <div class="dfu-title"><i class="bi bi-person-lines-fill"></i> Lead</div>
             <div class="row g-3 mt-1">
-                @foreach (var f in Model.Where(f => new[] { "LeadId", "ContactPerson", "Company", "Mobile", "City" }.Contains(f.Name)))
+                @foreach (var f in Model.Where(f => new[] { "LeadId" }.Contains(f.Name)))
                 {
                     @RenderField(f, "col-md-6")
                 }
@@ -154,23 +151,7 @@
 </form>
 
 <script>
-    window.dfuFillFromLead = window.dfuFillFromLead || function (leadId) {
-        if (!leadId) return;
-        fetch("/DailyFollowUp/GetLead?id=" + encodeURIComponent(leadId), { headers: { "X-Requested-With": "XMLHttpRequest" } })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (d) {
-                if (!d) return;
-                function set(name, value) {
-                    var el = document.querySelector('#dfuForm [name="' + name + '"]');
-                    if (el && value != null) el.value = value;
-                }
-                set("ContactPerson", d.contactPerson);
-                set("Company", d.company);
-                set("Mobile", d.mobile);
-                set("City", d.city);
-            })
-            .catch(function () { });
-    };
+    if (window.SearchableSelect) { window.SearchableSelect.initAll(document); }
 
     (function () {
         var form = document.getElementById("dfuForm");

@@ -45,6 +45,17 @@
         transition: all 0.2s;
     }
   .action-edit:hover { background: #2563eb; color: #fff !important; }
+  .action-delete {
+        width: 32px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 8px;
+        border: 1px solid #fee2e2;
+        background: #fef2f2;
+        color: #dc2626 !important;
+        transition: all 0.2s;
+        margin-left: 6px;
+    }
+  .action-delete:hover { background: #dc2626; color: #fff !important; }
   .table-sort-link { color: #475569 !important; }
   .table-sort-link:hover { color: #0f172a !important; }
   .sort-neutral { opacity: 0.4; }
@@ -108,7 +119,7 @@
                 <th>Mobile</th>
                 <th>Email</th>
                 <th>Assigned To</th>
-                <th style="width:80px;">Actions</th>
+                <th style="width:118px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -130,6 +141,8 @@
                             @if (row.ContainsKey("ClientId"))
                             {
                                 <a href="/Client/Edit/@row["ClientId"]" title="Edit" class="action-edit"><i class="bi bi-pencil"></i></a>
+                                <a href="/Client/Delete/@row["ClientId"]" title="Delete" class="action-delete ajax-delete"
+                                   data-confirm="Delete this client and ALL its related visits, follow-ups and support tickets? This cannot be undone."><i class="bi bi-trash"></i></a>
                             }
                         </td>
                     </tr>

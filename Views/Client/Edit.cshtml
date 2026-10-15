@@ -10,6 +10,14 @@
     var contactFields = new[] { "LandlineNo", "MobileNo", "Email" };
     var businessFields = new[] { "CompanyTypeId", "AssignedTo" };
 
+    // Naya column (GSTNo, PANNo, Website, etc.) DB se add karo -> yahan khud aa jaayega
+    var otherFields = Model.Where(f =>
+        !companyFields.Contains(f.Name) &&
+        !contactFields.Contains(f.Name) &&
+        !businessFields.Contains(f.Name) &&
+        f.Name != "ClientId" && f.Name != "CreatedOn" && f.Name != "CompanyType"
+    ).ToList();
+
     IHtmlContent RenderField(DynamicField f)
     {
         var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name == "AssignedTo" ? "Assigned To" : f.Name;
@@ -91,6 +99,16 @@
                 @foreach (var f in Model.Where(f => businessFields.Contains(f.Name)))
                 {
                     @RenderField(f)
+                }
+
+                @if (otherFields.Any())
+                {
+                    <hr />
+                    <h6 class="fw-bold">Additional Information - Auto Added</h6>
+                    @foreach (var f in otherFields)
+                    {
+                        @RenderField(f)
+                    }
                 }
 
                 <!-- BUTTONS AB YAHAN -->

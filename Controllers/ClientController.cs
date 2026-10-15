@@ -128,6 +128,36 @@ public class ClientController : Controller
         }
     }
 
+    // DELETE - client + usse juda saara data (visits / follow-ups / support) har jagah se hata jata hai
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Delete(int id)
+    {
+        try
+        {
+            var existing = _repo.GetById(id);
+            if (existing == null)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return StatusCode(StatusCodes.Status404NotFound, new { success = false, message = "Client not found." });
+                return NotFound();
+            }
+
+            _repo.Delete(id);   // cascade: follow-ups, visits, support tickets + client
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, message = "Client and all its related data deleted successfully." });
+
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
+            throw;
+        }
+    }
+
     [HttpGet]
     public IActionResult ExportExcel(string? search = null)
     {

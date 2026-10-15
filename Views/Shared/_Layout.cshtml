@@ -10,6 +10,9 @@
 </head>
 <body>
 
+    @* Har page par antiforgery token - Ajax.post() / delete links ise padhte hain *@
+    @Html.AntiForgeryToken()
+
     <!-- =====================================================
          SIDEBAR
          ===================================================== -->
@@ -189,12 +192,52 @@
     </div>
 
     <!-- =====================================================
+         SHARED FORM MODAL
+         Add / Edit forms poore page ki jagah yahan popup me khulte hain
+         ===================================================== -->
+    <div class="modal fade" id="appFormModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="max-width:900px;">
+            <div class="modal-content" style="border-radius:14px; overflow:hidden;">
+                <div class="modal-header align-items-center">
+                    <button type="button" class="btn btn-sm btn-light border" id="appFormModalBack">
+                        <i class="bi bi-arrow-left me-1"></i>Back
+                    </button>
+                    <h6 class="modal-title fw-bold ms-3 me-auto" id="appFormModalTitle">Form</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="appFormModalBody">
+                    <div class="text-center py-5 text-muted">Loading…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Compact look inside the shared form modal */
+        #appFormModal .modal-header { padding: .5rem .85rem; }
+        #appFormModal .modal-title { font-size: .95rem; }
+        #appFormModal .modal-body { font-size: 13px; padding: 14px 18px; }
+        #appFormModal .form-label { font-size: 12px; margin-bottom: 2px; }
+        #appFormModal .form-control,
+        #appFormModal .form-select { font-size: 13px; padding: .3rem .55rem; height: auto; }
+        #appFormModal .form-control-sm,
+        #appFormModal .form-select-sm { font-size: 12.5px; padding: .22rem .5rem; }
+        #appFormModal h4 { font-size: 1.05rem; margin-bottom: .7rem !important; }
+        #appFormModal h5 { font-size: 1rem; }
+        #appFormModal h6 { font-size: .85rem; margin-bottom: .4rem; }
+        #appFormModal .mb-3 { margin-bottom: .6rem !important; }
+        #appFormModal .card-section { padding: .75rem !important; }
+        #appFormModal .row { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+    </style>
+
+    <!-- =====================================================
          SCRIPTS
          ===================================================== -->
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery/jquery.min.js"></script>
     <script src="~/js/page-loader.js"></script>
     <script src="~/js/ajax-helper.js"></script>
+    <script src="~/js/searchable-select.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     <!-- =====================================================
@@ -311,6 +354,11 @@
             });
         })();
     </script>
+
+    <!-- =====================================================
+         FORM MODAL (Add / Edit forms popup)
+         ===================================================== -->
+    <script src="~/js/form-modal.js"></script>
 
 </body>
 </html>

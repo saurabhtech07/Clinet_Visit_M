@@ -125,6 +125,13 @@
         });
     }
 
+    // Delete ke baad table refresh (ajax-helper ise call karta hai)
+    window.refreshCurrentTable = function () {
+        const pageSize = document.getElementById("clientPageSize")?.value || 10;
+        const search = document.getElementById("clientSearch")?.value.trim() || "";
+        loadClientTable("/Client?page=1&pageSize=" + pageSize + "&search=" + encodeURIComponent(search));
+    };
+
     // SORT + PAGINATION + PAGE SIZE - sirf ek baar register (AJAX nav safe)
     if (!window.__clientNav.delegates) {
         window.__clientNav.delegates = true;

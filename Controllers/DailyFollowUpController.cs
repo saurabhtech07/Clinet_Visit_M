@@ -25,8 +25,12 @@ public class DailyFollowUpController : Controller
 
     private static readonly int[] AllowedPageSizes = { 10, 20, 50, 100 };
 
-    // Ye columns form me nahi dikhte (auto / internal).
-    private static readonly string[] ExcludeFromForm = { "DailyFollowUpId", "CreatedBy", "CreatedOn" };
+    // Ye columns form me nahi dikhte.
+    //  - auto / internal : DailyFollowUpId, CreatedBy, CreatedOn
+    //  - Lead ka data (single source of truth) : ContactPerson, Company, Mobile, City
+    //    ye grid me Leads table se LIVE dikhte hain, form me dobara nahi bharte.
+    private static readonly string[] ExcludeFromForm =
+        { "DailyFollowUpId", "CreatedBy", "CreatedOn", "ContactPerson", "Company", "Mobile", "City" };
 
     // =====================================================================
     //  LOOKUPS
@@ -186,23 +190,6 @@ public class DailyFollowUpController : Controller
         {
             return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
         }
-    }
-
-    // =====================================================================
-    //  LEAD AUTO-FILL (form)
-    // =====================================================================
-    [HttpGet]
-    public IActionResult GetLead(int id)
-    {
-        var lead = _repo.GetLead(id);
-        if (lead == null) return Json(null);
-        return Json(new
-        {
-            contactPerson = lead.ContainsKey("LeadPerson") ? lead["LeadPerson"] : null,
-            company       = lead.ContainsKey("Company") ? lead["Company"] : null,
-            mobile        = lead.ContainsKey("Mobile") ? lead["Mobile"] : null,
-            city          = lead.ContainsKey("City") ? lead["City"] : null
-        });
     }
 
     // =====================================================================

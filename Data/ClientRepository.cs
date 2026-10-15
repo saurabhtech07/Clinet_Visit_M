@@ -119,13 +119,48 @@ public class ClientRepository
         cmd.ExecuteNonQuery();
     }
 
+    // Client delete karte waqt usse juda saara data bhi hata do,
+    // taaki wo har jagah (visits, follow-ups, support) se gayab ho jaye.
     public void Delete(int id)
     {
         using var con = _db.GetConnection();
-        using var cmd = new SqlCommand("DELETE FROM Client WHERE ClientId=@Id", con);
-        cmd.Parameters.AddWithValue("@Id", id);
         con.Open();
-        cmd.ExecuteNonQuery();
+        using var tx = con.BeginTransaction();
+        try
+        {
+            // ORDER MATTERS: child tables pehle, phir Client (FK safe)
+            var steps = new[]
+            {
+                // Us client ke visits ke follow-ups
+                "DELETE FROM FollowUp WHERE VisitId IN (SELECT VisitId FROM ClientVisit WHERE ClientId=@Id)",
+                // Client ke apne follow-ups
+                "DELETE FROM FollowUp WHERE ClientId=@Id",
+                // Client ke visits
+                "DELETE FROM ClientVisit WHERE ClientId=@Id",
+                // Client ke support tickets
+                "DELETE FROM DailySupport WHERE ClientId=@Id"
+            };
+
+            foreach (var sql in steps)
+            {
+                using var cmd = new SqlCommand(sql, con, tx);
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.ExecuteNonQuery();
+            }
+
+            using (var delClient = new SqlCommand("DELETE FROM Client WHERE ClientId=@Id", con, tx))
+            {
+                delClient.Parameters.AddWithValue("@Id", id);
+                delClient.ExecuteNonQuery();
+            }
+
+            tx.Commit();
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
     }
 
     private static void AddParams(SqlCommand cmd, Client c)

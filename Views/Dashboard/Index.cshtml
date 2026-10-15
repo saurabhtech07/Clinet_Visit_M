@@ -166,37 +166,37 @@
     </div>
 </div>
 
-<!-- ================= KPI: DAILY SUPPORT ================= -->
+<!-- ================= KPI: LEADS ================= -->
 <h6 class="fw-bold mb-2" style="color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">
-    <i class="bi bi-headset me-1"></i>Daily Support System
+    <i class="bi bi-person-lines-fill me-1"></i>Leads Pipeline
 </h6>
 <div class="row g-3 mb-4">
     <div class="col-md-3 col-sm-6">
         <div class="dash-kpi">
             <div>
-                <div class="dash-kpi-label">Today's Calls</div>
-                <div class="dash-kpi-value">@Model.SupportTodayCalls</div>
-                <div class="dash-kpi-sub">Total @Model.SupportTotalCalls</div>
+                <div class="dash-kpi-label">Total Leads</div>
+                <div class="dash-kpi-value">@Model.TotalLeads</div>
+                <div class="dash-kpi-sub">+@Model.NewLeadsThisMonth this month</div>
             </div>
-            <div class="dash-kpi-icon" style="background:#f59e0b;"><i class="bi bi-telephone"></i></div>
+            <div class="dash-kpi-icon" style="background:#4f6ef2;"><i class="bi bi-person-lines-fill"></i></div>
         </div>
     </div>
     <div class="col-md-3 col-sm-6">
         <div class="dash-kpi">
             <div>
-                <div class="dash-kpi-label">Open Tickets</div>
-                <div class="dash-kpi-value" style="color:#dc3545;">@Model.SupportOpenCalls</div>
-                <div class="dash-kpi-sub">need action</div>
+                <div class="dash-kpi-label">Open Leads</div>
+                <div class="dash-kpi-value" style="color:#f59e0b;">@Model.OpenLeads</div>
+                <div class="dash-kpi-sub">in pipeline</div>
             </div>
-            <div class="dash-kpi-icon" style="background:#ef4444;"><i class="bi bi-exclamation-circle"></i></div>
+            <div class="dash-kpi-icon" style="background:#f59e0b;"><i class="bi bi-hourglass-split"></i></div>
         </div>
     </div>
     <div class="col-md-3 col-sm-6">
         <div class="dash-kpi">
             <div>
-                <div class="dash-kpi-label">Closed Today</div>
-                <div class="dash-kpi-value" style="color:#198754;">@Model.SupportClosedToday</div>
-                <div class="dash-kpi-sub">resolved today</div>
+                <div class="dash-kpi-label">Converted</div>
+                <div class="dash-kpi-value" style="color:#198754;">@Model.ConvertedLeads</div>
+                <div class="dash-kpi-sub">became clients</div>
             </div>
             <div class="dash-kpi-icon" style="background:#10b981;"><i class="bi bi-check-circle"></i></div>
         </div>
@@ -204,11 +204,11 @@
     <div class="col-md-3 col-sm-6">
         <div class="dash-kpi">
             <div>
-                <div class="dash-kpi-label">In Progress / Pending</div>
-                <div class="dash-kpi-value" style="color:#6f42c1;">@Model.SupportPending</div>
-                <div class="dash-kpi-sub">working on</div>
+                <div class="dash-kpi-label">Open Pipeline Value</div>
+                <div class="dash-kpi-value" style="color:#6f42c1;font-size:22px;">@("₹" + Model.PipelineValue.ToString("N0"))</div>
+                <div class="dash-kpi-sub">deal value in progress</div>
             </div>
-            <div class="dash-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-hourglass-split"></i></div>
+            <div class="dash-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-cash-stack"></i></div>
         </div>
     </div>
 </div>
@@ -242,34 +242,34 @@
         </div>
     </div>
 
-    @* Support status donut *@
+    @* Leads by status donut *@
     <div class="col-lg-6 col-md-12">
         <div class="dash-card">
-            <div class="dash-card-head"><i class="bi bi-ticket-perforated-fill me-2" style="color:#2ec5ce;"></i>Tickets by Status</div>
+            <div class="dash-card-head"><i class="bi bi-funnel-fill me-2" style="color:#2ec5ce;"></i>Leads by Status</div>
             <div class="dash-card-body">
-                @if (Model.SupportStatuses.Count > 0)
+                @if (Model.LeadStatuses.Count > 0)
                 {
-                    var tot = Sum(Model.SupportStatuses);
-                    <div class="dash-donut" data-segments="@SegmentsJson(Model.SupportStatuses, tot)" style="@DonutStyle(Model.SupportStatuses, tot)">
+                    var tot = Sum(Model.LeadStatuses);
+                    <div class="dash-donut" data-segments="@SegmentsJson(Model.LeadStatuses, tot)" style="@DonutStyle(Model.LeadStatuses, tot)">
                         <div class="dash-donut-center">
                             <span class="dash-donut-num">@tot</span>
-                            <span class="dash-donut-lbl">Tickets</span>
+                            <span class="dash-donut-lbl">Leads</span>
                         </div>
                     </div>
                     <ul class="dash-legend">
-                        @for (int i = 0; i < Model.SupportStatuses.Count; i++)
+                        @for (int i = 0; i < Model.LeadStatuses.Count; i++)
                         {
-                            <li data-tip="@LegendTip(Model.SupportStatuses[i].Name, Model.SupportStatuses[i].Value, tot)">
+                            <li data-tip="@LegendTip(Model.LeadStatuses[i].Name, Model.LeadStatuses[i].Value, tot)">
                                 <span class="dot" style="background:@Color(i);"></span>
-                                <span class="ln">@Model.SupportStatuses[i].Name</span>
-                                <span class="cnt">@Model.SupportStatuses[i].Value</span>
+                                <span class="ln">@Model.LeadStatuses[i].Name</span>
+                                <span class="cnt">@Model.LeadStatuses[i].Value</span>
                             </li>
                         }
                     </ul>
                 }
                 else
                 {
-                    <div class="dash-empty">Daily Support data not available yet.</div>
+                    <div class="dash-empty">No leads yet.</div>
                 }
             </div>
         </div>
@@ -309,24 +309,24 @@
         </div>
     </div>
 
-    @* Support priority hbar *@
+    @* Leads by city hbar *@
     <div class="col-lg-6 col-md-12">
         <div class="dash-card">
-            <div class="dash-card-head"><i class="bi bi-flag-fill me-2" style="color:#ef4444;"></i>Tickets by Priority</div>
+            <div class="dash-card-head"><i class="bi bi-geo-alt-fill me-2" style="color:#8b5cf6;"></i>Top Cities by Leads</div>
             <div class="dash-card-body">
-                @if (Model.SupportPriorities.Count > 0)
+                @if (Model.LeadCities.Count > 0)
                 {
-                    var max = MaxValue(Model.SupportPriorities);
-                    @for (int i = 0; i < Model.SupportPriorities.Count; i++)
+                    var max = MaxValue(Model.LeadCities);
+                    @for (int i = 0; i < Model.LeadCities.Count; i++)
                     {
-                        <div class="dash-hrow" data-tip="@Model.SupportPriorities[i].Name — @Model.SupportPriorities[i].Value tickets">
+                        <div class="dash-hrow" data-tip="@Model.LeadCities[i].Name — @Model.LeadCities[i].Value leads">
                             <div class="dash-hrow-top">
-                                <span class="nm">@Model.SupportPriorities[i].Name</span>
-                                <span><b>@Model.SupportPriorities[i].Value</b> tickets</span>
+                                <span class="nm">@Model.LeadCities[i].Name</span>
+                                <span><b>@Model.LeadCities[i].Value</b> leads</span>
                             </div>
                             <div class="dash-hrow-track">
-                                <div class="dash-hrow-fill" style="width:@(HBarWidth(Model.SupportPriorities[i].Value, max))%;background:@Color(i);">
-                                    @if (HBarWidth(Model.SupportPriorities[i].Value, max) > 15) { @Model.SupportPriorities[i].Value }
+                                <div class="dash-hrow-fill" style="width:@(HBarWidth(Model.LeadCities[i].Value, max))%;background:@Color(i);">
+                                    @if (HBarWidth(Model.LeadCities[i].Value, max) > 15) { @Model.LeadCities[i].Value }
                                 </div>
                             </div>
                         </div>
@@ -334,7 +334,64 @@
                 }
                 else
                 {
-                    <div class="dash-empty">Daily Support data not available yet.</div>
+                    <div class="dash-empty">No leads yet.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= RECENT LEADS ================= -->
+<div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="dash-card">
+            <div class="dash-card-head d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person-lines-fill me-2" style="color:#4f6ef2;"></i>Recent Leads</span>
+                <a href="/Leads" class="dash-chip text-decoration-none" style="font-size:11px;">View all <i class="bi bi-arrow-right-short"></i></a>
+            </div>
+            <div class="dash-card-body p-0">
+                @if (Model.RecentLeads.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table dash-recent mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Lead</th>
+                                    <th>Company</th>
+                                    <th>City</th>
+                                    <th>Status</th>
+                                    <th>Deal Value</th>
+                                    <th>Added</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var l in Model.RecentLeads)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold" style="color:#0f172a;">@(string.IsNullOrWhiteSpace(l.LeadPerson) ? "—" : l.LeadPerson)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(l.Company) ? "—" : l.Company)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(l.City) ? "—" : l.City)</td>
+                                        <td>
+                                            @if (l.IsConverted)
+                                            {
+                                                <span class="dash-badge" style="background:#dcfce7;color:#15803d;">Converted</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="dash-badge" style="background:#eef2f7;color:#475569;">@(string.IsNullOrWhiteSpace(l.Status) ? "New" : l.Status)</span>
+                                            }
+                                        </td>
+                                        <td>@(l.DealValue > 0 ? "₹" + l.DealValue.ToString("N0") : "—")</td>
+                                        <td class="text-muted">@(string.IsNullOrWhiteSpace(l.CreatedOn) ? "—" : l.CreatedOn)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-empty">No leads yet.</div>
                 }
             </div>
         </div>
