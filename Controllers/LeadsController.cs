@@ -15,12 +15,14 @@ public class LeadsController : Controller
     private readonly DynamicRepository _dynamicRepo;
     private readonly LeadRepository _leadRepo;
     private readonly UserRepository _userRepo;
+    private readonly ClientRepository _clientRepo;
 
-    public LeadsController(DynamicRepository dynamicRepo, LeadRepository leadRepo, UserRepository userRepo)
+    public LeadsController(DynamicRepository dynamicRepo, LeadRepository leadRepo, UserRepository userRepo, ClientRepository clientRepo)
     {
         _dynamicRepo = dynamicRepo;
         _leadRepo = leadRepo;
         _userRepo = userRepo;
+        _clientRepo = clientRepo;
     }
 
     private static readonly int[] AllowedPageSizes = { 10, 20, 50, 100 };
@@ -95,6 +97,7 @@ public class LeadsController : Controller
             .Where(f => !ExcludeFromForm.Contains(f.Name, StringComparer.OrdinalIgnoreCase)).ToList();
 
         PopulateLookups();
+        ViewBag.Clients = _clientRepo.GetAll();
         return View(fields);
     }
 
@@ -136,6 +139,7 @@ public class LeadsController : Controller
         ViewBag.RowData = data;
         ViewBag.LeadId = id;
         PopulateLookups();
+        ViewBag.Clients = _clientRepo.GetAll();
         return View(fields);
     }
 

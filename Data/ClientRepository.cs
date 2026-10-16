@@ -38,6 +38,23 @@ public class ClientRepository
         return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
+    /// <summary>
+    /// Company Master me ClientName already exists hai ya nahi (case-insensitive).
+    /// excludeId diya jaye to usi client ko chhod kar check karta hai (Edit ke liye).
+    /// </summary>
+    public bool ClientNameExists(string? name, int? excludeId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        using var con = _db.GetConnection();
+        using var cmd = new SqlCommand(
+            "SELECT COUNT(*) FROM Client WHERE UPPER(LTRIM(RTRIM(ClientName))) = UPPER(LTRIM(RTRIM(@Name)))" +
+            (excludeId.HasValue ? " AND ClientId <> @Id" : ""), con);
+        cmd.Parameters.AddWithValue("@Name", name.Trim());
+        if (excludeId.HasValue) cmd.Parameters.AddWithValue("@Id", excludeId.Value);
+        con.Open();
+        return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+    }
+
     public int GetTotalVisits()
     {
         using var con = _db.GetConnection();
@@ -87,10 +104,10 @@ public class ClientRepository
         using var con = _db.GetConnection();
         using var cmd = new SqlCommand(@"
             INSERT INTO Client
-            (ClientName, Address1, Address2, City, StateId, Pincode, LandlineNo, MobileNo, Email, CompanyTypeId, AssignedTo)
+            (ClientName, Address1, Address2, City, StateId, Pincode, LandlineNo, MobileNo, Email, ContactPerson, CompanyTypeId, AssignedTo)
             OUTPUT INSERTED.ClientId
             VALUES
-            (@Name, @Add1, @Add2, @City, @StateId, @Pincode, @Landline, @Mobile, @Email, @CompanyTypeId, @AssignedTo)", con);
+            (@Name, @Add1, @Add2, @City, @StateId, @Pincode, @Landline, @Mobile, @Email, @ContactPerson, @CompanyTypeId, @AssignedTo)", con);
         AddParams(cmd, c);
         con.Open();
         return Convert.ToInt32(cmd.ExecuteScalar());
@@ -110,6 +127,7 @@ public class ClientRepository
                 LandlineNo=@Landline,
                 MobileNo=@Mobile,
                 Email=@Email,
+                ContactPerson=@ContactPerson,
                 CompanyTypeId=@CompanyTypeId,
                 AssignedTo=@AssignedTo
             WHERE ClientId=@Id", con);
@@ -174,6 +192,7 @@ public class ClientRepository
         cmd.Parameters.AddWithValue("@Landline", (object?)c.LandlineNo ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Mobile", (object?)c.MobileNo ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@Email", (object?)c.Email ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ContactPerson", (object?)c.ContactPerson ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@CompanyTypeId", (object?)c.CompanyTypeId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@AssignedTo", (object?)c.AssignedTo ?? DBNull.Value);
     }
@@ -191,6 +210,7 @@ private static Client Map(SqlDataReader r) => new()
     LandlineNo = r["LandlineNo"]?.ToString(),
     MobileNo = r["MobileNo"]?.ToString(),
     Email = r["Email"]?.ToString(),
+    ContactPerson = r["ContactPerson"] == DBNull.Value ? null : r["ContactPerson"]?.ToString(),
     CompanyTypeId = r["CompanyTypeId"] != DBNull.Value ? Convert.ToInt32(r["CompanyTypeId"]) : (int?)null,
     CompanyTypeName = r["CompanyTypeName"] != DBNull.Value ? r["CompanyTypeName"]?.ToString() : "",
     AssignedTo = r["AssignedTo"] != DBNull.Value ? Convert.ToInt32(r["AssignedTo"]) : (int?)null,

@@ -7,7 +7,7 @@
     var users = ViewBag.Users as List<User> ?? new List<User>();
 
     var companyFields = new[] { "ClientName", "Address1", "Address2", "City", "StateId", "Pincode" };
-    var contactFields = new[] { "LandlineNo", "MobileNo", "Email" };
+    var contactFields = new[] { "ContactPerson", "LandlineNo", "MobileNo", "Email" };
     var businessFields = new[] { "CompanyTypeId", "AssignedTo" };
 
     // Naya column (GSTNo, PANNo, Website, etc.) DB se add karo -> yahan khud aa jaayega
@@ -20,7 +20,7 @@
 
     IHtmlContent RenderField(DynamicField f)
     {
-        var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name == "AssignedTo" ? "Assigned To" : f.Name;
+        var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name == "AssignedTo" ? "Assigned To" : f.Name == "ContactPerson" ? "Contact Person" : f.Name;
         var label = $"<label class=\"form-label mt-2 mb-1 small fw-bold\">{displayName}{(f.IsNullable ? "" : " *")}</label>";
         string input;
 

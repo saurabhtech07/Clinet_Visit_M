@@ -6,6 +6,7 @@
     var states = ((DynamicTableViewModel)ViewBag.States).Rows;
     var users = ViewBag.Users as List<User> ?? new List<User>();
     var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    var clients = ViewBag.Clients as List<Client> ?? new List<Client>();
 
     bool isConverted = row.ContainsKey("IsConverted") && row["IsConverted"] != null && Convert.ToBoolean(row["IsConverted"]);
     var convertedClientId = row.ContainsKey("ConvertedClientId") && row["ConvertedClientId"] != null ? row["ConvertedClientId"]?.ToString() : null;
@@ -15,7 +16,7 @@
     var requirementFields = new[] { "Requirement" };
 
     // Ye columns khud se bhar jaate hain -> form me nahi dikhate
-    var autoFields = new[] { "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn" };
+    var autoFields = new[] { "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn", "ClientId" };
 
     var otherFields = Model.Where(f =>
         !mainFields.Contains(f.Name) &&
@@ -32,6 +33,8 @@
         _ => System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2")
     };
 
+    string Enc(string? s) => System.Net.WebUtility.HtmlEncode(s ?? "");
+
     IHtmlContent RenderField(DynamicField f, string colClass)
     {
         var raw = row.ContainsKey(f.Name) ? row[f.Name] : null;
@@ -40,7 +43,27 @@
         var label = $"<label class=\"form-label mb-1\">{Label(f.Name)}{star}</label>";
         string input;
 
-        if (f.Name == "StateId")
+        if (f.Name == "Company")
+        {
+            // Company Master (Client) ka searchable dropdown. Purane lead me ClientId na ho
+            // to Company naam se match karke preselect karte hain.
+            var curClientId = row.ContainsKey("ClientId") ? row["ClientId"]?.ToString() : null;
+            var curName = raw?.ToString();
+            if (string.IsNullOrEmpty(curClientId) && !string.IsNullOrEmpty(curName))
+            {
+                var m = clients.FirstOrDefault(c => string.Equals(c.ClientName, curName, StringComparison.OrdinalIgnoreCase));
+                if (m != null) curClientId = m.ClientId.ToString();
+            }
+            var opts = string.Join("", clients.Select(c =>
+            {
+                var id = c.ClientId.ToString();
+                var sel = id == curClientId ? " selected" : "";
+                return $"<option value=\"{id}\"{sel} data-name=\"{Enc(c.ClientName)}\" data-city=\"{Enc(c.City)}\" data-state=\"{c.StateId}\" data-mobile=\"{Enc(c.MobileNo)}\">{Enc(c.ClientName)}</option>";
+            }));
+            input = $@"<select class=""form-select"" id=""leadCompanySelect"" name=""ClientId"" data-searchable data-add-new data-add-new-label=""+ Add New Company"" data-placeholder=""Search company...""><option value="""">Select Company</option>{opts}</select>" +
+                    $@"<input type=""hidden"" name=""Company"" id=""leadCompanyName"" value=""{Enc(curName)}"" />";
+        }
+        else if (f.Name == "StateId")
         {
             var cur = raw?.ToString();
             var opts = string.Join("", states.Select(s =>
@@ -153,9 +176,116 @@
 </form>
 
 <script>
+    if (window.SearchableSelect) { window.SearchableSelect.initAll(document); }
+
     (function () {
         var form = document.getElementById("leadForm");
         if (form) {
+            // ---------- Company -> City/State/Mobile auto-fill ----------
+            var companySel = document.getElementById("leadCompanySelect");
+            var companyNameEl = document.getElementById("leadCompanyName");
+
+            function setReadonly(name, val) {
+                var el = form.querySelector('[name="' + name + '"]');
+                if (!el) return;
+                el.value = val || "";
+                el.readOnly = true;
+                el.style.background = "#eef2f7";
+            }
+
+            function applyCompany(id) {
+                if (!companySel) return;
+                var opt = id ? companySel.querySelector('option[value="' + String(id) + '"]') : null;
+                if (!opt) { if (companyNameEl) companyNameEl.value = ""; return; }
+
+                if (companyNameEl) companyNameEl.value = opt.getAttribute("data-name") || "";
+                setReadonly("City", opt.getAttribute("data-city"));
+                setReadonly("Mobile", opt.getAttribute("data-mobile"));
+
+                var st = form.querySelector('[name="StateId"]');
+                if (st) {
+                    st.value = opt.getAttribute("data-state") || "";
+                    st.style.pointerEvents = "none";
+                    st.style.background = "#eef2f7";
+                }
+            }
+
+            if (companySel) {
+                companySel.addEventListener("change", function () { applyCompany(this.value); });
+                companySel.addEventListener("ss:addnew", function (e) {
+                    openQuickCompany(e.detail ? e.detail.query : "");
+                });
+                // Edit: agar company pehle se selected hai to auto-fill + readonly laga do
+                if (companySel.value) applyCompany(companySel.value);
+            }
+
+            function ensureQuickModal() {
+                var el = document.getElementById("quickCompanyModal");
+                if (!el) {
+                    el = document.createElement("div");
+                    el.className = "modal fade";
+                    el.id = "quickCompanyModal";
+                    el.tabIndex = -1;
+                    el.innerHTML = '<div class="modal-dialog modal-dialog-centered">' +
+                        '<div class="modal-content" style="border-radius:14px;overflow:hidden;">' +
+                        '<div class="modal-header align-items-center"><h6 class="modal-title fw-bold me-auto">Add New Company</h6>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>' +
+                        '<div class="modal-body" id="quickCompanyModalBody"></div></div></div>';
+                    document.body.appendChild(el);
+                }
+                return el;
+            }
+
+            function openQuickCompany(query) {
+                var modalEl = ensureQuickModal();
+                var body = modalEl.querySelector("#quickCompanyModalBody");
+                body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading\u2026</div>';
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+                fetch("/Client/QuickAdd?name=" + encodeURIComponent(query || ""), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+                    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+                    .then(function (html) {
+                        body.innerHTML = html;
+                        var qf = document.getElementById("quickClientForm");
+                        if (qf) {
+                            qf.addEventListener("submit", function (ev) {
+                                ev.preventDefault();
+                                Ajax.submit({
+                                    url: "/Client/QuickAdd",
+                                    form: qf,
+                                    successMessage: "Company added successfully.",
+                                    onSuccess: function (d) {
+                                        addCompanyOption(d);
+                                        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                                    }
+                                });
+                            });
+                        }
+                    })
+                    .catch(function () {
+                        body.innerHTML = '<div class="text-danger py-3">Could not load the form.</div>';
+                    });
+            }
+
+            function addCompanyOption(d) {
+                if (!companySel || !d || !d.id) return;
+                var existing = companySel.querySelector('option[value="' + d.id + '"]');
+                if (existing) existing.remove();
+
+                var opt = document.createElement("option");
+                opt.value = d.id;
+                opt.textContent = d.name || "";
+                opt.setAttribute("data-name", d.name || "");
+                opt.setAttribute("data-city", d.city || "");
+                opt.setAttribute("data-state", (d.stateId !== null && d.stateId !== undefined) ? d.stateId : "");
+                opt.setAttribute("data-mobile", d.mobile || "");
+                companySel.appendChild(opt);
+
+                companySel.value = d.id;
+                if (typeof companySel.__ssSync === "function") companySel.__ssSync();
+                applyCompany(d.id);
+            }
+
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
                 Ajax.submit({

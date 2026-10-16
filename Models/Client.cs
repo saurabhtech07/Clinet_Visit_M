@@ -13,6 +13,9 @@ namespace ClientVisitManagement.Models
         public string? LandlineNo { get; set; }
         public string? MobileNo { get; set; }
         public string? Email { get; set; }
+
+        // Contact Person Name — "Suntec me kaun baat karta hai (Rahul / Amit)"
+        public string? ContactPerson { get; set; }
         
         // NAYA - Sirf 3 types
         public int? CompanyTypeId { get; set; }

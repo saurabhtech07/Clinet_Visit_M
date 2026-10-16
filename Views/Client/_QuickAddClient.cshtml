@@ -1,0 +1,59 @@
+@{
+    Layout = null;
+    var states = ((DynamicTableViewModel)ViewBag.States).Rows;
+    var prefillName = ViewBag.PrefillName as string ?? "";
+}
+
+<style>
+    #quickClientForm .form-label { font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 2px; }
+    #quickClientForm .form-control,
+    #quickClientForm .form-select { height: 38px; font-size: 13.5px; border-radius: 9px; background: #f8fafc; border: 1px solid #e2e8f0; }
+    #quickClientForm .form-control:focus,
+    #quickClientForm .form-select:focus { background: #fff; border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+    #quickClientForm .qa-hint { font-size: 11.5px; color: #64748b; }
+</style>
+
+<form id="quickClientForm" method="post" autocomplete="off">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3">
+        <div class="col-12">
+            <label class="form-label">Company Name *</label>
+            <input class="form-control" name="ClientName" id="qaClientName" type="text" required
+                   value="@prefillName" placeholder="Enter company name" />
+            <div class="qa-hint mt-1">Company name must be unique.</div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">City *</label>
+            <input class="form-control" name="City" type="text" required placeholder="Enter city" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">State</label>
+            <select class="form-select" name="StateId">
+                <option value="">Select State</option>
+                @foreach (var s in states)
+                {
+                    var id = s["StateId"]?.ToString();
+                    <option value="@id">@s["StateName"]</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Mobile No</label>
+            <input class="form-control" name="MobileNo" type="text" placeholder="Enter mobile no" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Contact Person</label>
+            <input class="form-control" name="ContactPerson" type="text" placeholder="Kaun baat karta hai? (Rahul / Amit)" />
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Save Company</button>
+    </div>
+</form>

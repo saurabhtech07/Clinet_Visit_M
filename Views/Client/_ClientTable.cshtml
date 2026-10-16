@@ -98,6 +98,7 @@
                         }
                     </a>
                 </th>
+                <th>Contact Person</th>
                 <th>City</th>
                 <th>
                     @{
@@ -131,6 +132,7 @@
                         <td class="serial-col" style="color:#64748b;">@start</td>
                         <td><span class="client-id-pill">@(row.ContainsKey("ClientId") ? row["ClientId"] : "")</span></td>
                         <td class="fw-semibold" style="color:#0f172a;">@(row.ContainsKey("ClientName") ? row["ClientName"] : "")</td>
+                        <td>@(row.ContainsKey("ContactPerson") ? row["ContactPerson"] : "")</td>
                         <td>@(row.ContainsKey("City") ? row["City"] : "")</td>
                         <td>@(row.ContainsKey("StateName") ? row["StateName"] : "")</td>
                         <td>@(row.ContainsKey("Pincode") ? row["Pincode"] : "")</td>
@@ -151,7 +153,7 @@
             }
             else
             {
-                <tr><td colspan="10" class="text-center text-muted py-5">No clients found</td></tr>
+                <tr><td colspan="11" class="text-center text-muted py-5">No clients found</td></tr>
             }
         </tbody>
     </table>

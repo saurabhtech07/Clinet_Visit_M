@@ -19,6 +19,9 @@
             "white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
             ".ss-item:hover,.ss-item.ss-active{background:#eff6ff;color:#1d4ed8}" +
             ".ss-empty{padding:7px 10px;font-size:12.5px;color:#94a3b8}" +
+            ".ss-addnew{padding:8px 10px;font-size:13px;border-radius:7px;cursor:pointer;color:#1d4ed8;" +
+            "font-weight:600;border-bottom:1px dashed #e2e8f0;margin-bottom:2px}" +
+            ".ss-addnew:hover{background:#eff6ff}" +
             ".ss-input{cursor:text}";
         var el = document.createElement("style");
         el.id = STYLE_ID;
@@ -56,12 +59,16 @@
             input.value = (o && o.value) ? text(o) : "";
         }
 
+        // Bahar se (JS) value set karne par visible input ko sync karne ke liye
+        select.__ssSync = syncInput;
+
         function render(filter) {
             var f = (filter || "").toLowerCase().trim();
             list.innerHTML = "";
             var count = 0;
             opts().forEach(function (o) {
                 if (!o.value) return;                                  // "-- Select --" skip
+                if (o.hasAttribute("data-add-new")) return;            // special add-new option skip
                 if (f && text(o).toLowerCase().indexOf(f) === -1) return;
                 var item = document.createElement("div");
                 item.className = "ss-item" + (o.selected ? " ss-active" : "");
@@ -77,11 +84,28 @@
                 list.appendChild(item);
                 count++;
             });
-            if (!count) {
+            if (!count && !select.hasAttribute("data-add-new")) {
                 var empty = document.createElement("div");
                 empty.className = "ss-empty";
                 empty.textContent = "No records found";
                 list.appendChild(empty);
+            }
+
+            // "+ Add New" item hamesha list ke sabse upar (chahe match mile ya na mile)
+            if (select.hasAttribute("data-add-new")) {
+                var add = document.createElement("div");
+                add.className = "ss-addnew";
+                add.textContent = select.dataset.addNewLabel || "+ Add New Company";
+                add.addEventListener("mousedown", function (e) {
+                    e.preventDefault();
+                    select.dispatchEvent(new CustomEvent("ss:addnew", {
+                        bubbles: true,
+                        detail: { query: (filter || "").trim() }
+                    }));
+                    list.innerHTML = "";
+                    wrap.classList.remove("ss-open");
+                });
+                list.insertBefore(add, list.firstChild);
             }
         }
 

@@ -19,6 +19,7 @@ BEGIN
         DealValue         DECIMAL(18,2)  NULL,
         Requirement       NVARCHAR(1000) NULL,   -- customer ki requirement / need
         AssignedTo        INT            NULL,   -- -> Users(UserId)
+        ClientId          INT            NULL,   -- -> Client(ClientId) : Company Master link
         CreatedOn         DATETIME       NOT NULL CONSTRAINT DF_Leads_CreatedOn  DEFAULT (GETDATE()),
         EntryTime         DATETIME       NOT NULL CONSTRAINT DF_Leads_EntryTime  DEFAULT (GETDATE()),
         IsConverted       BIT            NOT NULL CONSTRAINT DF_Leads_IsConverted DEFAULT (0),
@@ -40,5 +41,12 @@ BEGIN
     -- Requirement column (customer requirement / need)
     IF COL_LENGTH('dbo.Leads','Requirement') IS NULL
         ALTER TABLE dbo.Leads ADD Requirement NVARCHAR(1000) NULL;
+
+    -- ClientId column (Company Master / Client link)
+    IF COL_LENGTH('dbo.Leads','ClientId') IS NULL
+        ALTER TABLE dbo.Leads ADD ClientId INT NULL;
+
+    IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Leads_ClientId' AND object_id = OBJECT_ID('dbo.Leads'))
+        CREATE INDEX IX_Leads_ClientId ON dbo.Leads(ClientId);
 END
 GO

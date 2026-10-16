@@ -21,7 +21,7 @@ public class LeadRepository
     /// <summary>Ye columns grid me nahi dikhate (internal / duplicate of join names).</summary>
     private static readonly HashSet<string> HiddenGridColumns =
         new(StringComparer.OrdinalIgnoreCase)
-        { "IsConverted", "ConvertedClientId", "ConvertedOn", "StateId", "AssignedTo" };
+        { "IsConverted", "ConvertedClientId", "ConvertedOn", "StateId", "AssignedTo", "ClientId" };
 
     /// <summary>Leads table ke actual columns (INFORMATION_SCHEMA se — live).</summary>
     public List<string> GetColumns()
@@ -189,7 +189,39 @@ public class LeadRepository
 
             string? mobile = lead.GetValueOrDefault("Mobile")?.ToString()?.Trim();
 
-            // 2) Duplicate check (same mobile ka client already hai?)
+            // 2) Company Master me pehle se hai? (ClientId link ya naam se match)
+            //    Duplicate company na bane — existing client se hi lead link ho jaye.
+            int? existingClientId = null;
+            if (lead.TryGetValue("ClientId", out var lcid) && lcid != null && lcid != DBNull.Value)
+            {
+                int cid = Convert.ToInt32(lcid);
+                using var chk = new SqlCommand("SELECT COUNT(*) FROM Client WHERE ClientId=@id", con, tx);
+                chk.Parameters.AddWithValue("@id", cid);
+                if (Convert.ToInt32(chk.ExecuteScalar()) > 0) existingClientId = cid;
+            }
+            if (existingClientId == null)
+            {
+                using var find = new SqlCommand(
+                    "SELECT TOP 1 ClientId FROM Client WHERE UPPER(LTRIM(RTRIM(ClientName))) = UPPER(LTRIM(RTRIM(@n)))", con, tx);
+                find.Parameters.AddWithValue("@n", company);
+                var found = find.ExecuteScalar();
+                if (found != null && found != DBNull.Value) existingClientId = Convert.ToInt32(found);
+            }
+
+            if (existingClientId.HasValue)
+            {
+                using (var link = new SqlCommand(
+                    "UPDATE Leads SET IsConverted=1, ConvertedClientId=@cid, ConvertedOn=GETDATE() WHERE LeadId=@id", con, tx))
+                {
+                    link.Parameters.AddWithValue("@cid", existingClientId.Value);
+                    link.Parameters.AddWithValue("@id", leadId);
+                    link.ExecuteNonQuery();
+                }
+                tx.Commit();
+                return (true, $"Ye company Company Master me already thi — lead Client #{existingClientId.Value} se link ho gaya.", existingClientId.Value);
+            }
+
+            // 3) Duplicate check (same mobile ka client already hai?)
             if (!string.IsNullOrWhiteSpace(mobile))
             {
                 using var dup = new SqlCommand("SELECT TOP 1 ClientId FROM Client WHERE MobileNo=@m", con, tx);

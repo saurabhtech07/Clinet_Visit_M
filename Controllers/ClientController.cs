@@ -71,6 +71,15 @@ public class ClientController : Controller
 
         try
         {
+            // Company name unique hona chahiye (duplicate companies na bane)
+            var name = form["ClientName"].ToString();
+            if (_repo.ClientNameExists(name))
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = $"A company named '{name.Trim()}' already exists." });
+                throw new InvalidOperationException($"A company named '{name.Trim()}' already exists.");
+            }
+
             int newId = _dynamicRepo.Insert("Client", values);
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return Json(new { success = true, id = newId, message = "Client saved successfully." });
@@ -81,6 +90,73 @@ public class ClientController : Controller
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
             throw;
+        }
+    }
+
+    // =====================================================================
+    //  QUICK ADD (Leads se: naya company banao — sirf 5 fields)
+    // =====================================================================
+    [HttpGet]
+    public IActionResult QuickAdd(string? name = null)
+    {
+        var statesTable = _dynamicRepo.GetTable("StateMaster");
+        statesTable.Rows = statesTable.Rows
+            .Where(r => r.ContainsKey("IsActive") && r["IsActive"] != null && Convert.ToBoolean(r["IsActive"]))
+            .ToList();
+        ViewBag.States = statesTable;
+        ViewBag.PrefillName = name ?? "";
+        return PartialView("_QuickAddClient");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult QuickAdd(IFormCollection form)
+    {
+        var name = form["ClientName"].ToString().Trim();
+        var city = form["City"].ToString().Trim();
+        var mobile = form["MobileNo"].ToString().Trim();
+        var contactPerson = form["ContactPerson"].ToString().Trim();
+        int? stateId = int.TryParse(form["StateId"], out var sid) && sid > 0 ? sid : (int?)null;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = "Company name is required." });
+
+            if (_repo.ClientNameExists(name))
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = $"A company named '{name}' already exists. Please select it from the list." });
+
+            var client = new Client
+            {
+                ClientName = name,
+                City = city,
+                MobileNo = string.IsNullOrWhiteSpace(mobile) ? null : mobile,
+                ContactPerson = string.IsNullOrWhiteSpace(contactPerson) ? null : contactPerson,
+                StateId = stateId,
+                // Quick Add me ye fields nahi dikhate, lekin DB me NOT NULL hain -> empty string
+                Address1 = "",
+                Pincode = ""
+            };
+
+            int newId = _repo.Add(client);
+            var saved = _repo.GetById(newId);
+
+            return Json(new
+            {
+                success = true,
+                id = newId,
+                name = saved?.ClientName ?? name,
+                city = saved?.City ?? city,
+                mobile = saved?.MobileNo ?? mobile,
+                contactPerson = saved?.ContactPerson,
+                stateId = saved?.StateId,
+                stateName = saved?.StateName,
+                message = "Company added successfully."
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
         }
     }
 
@@ -115,6 +191,15 @@ public class ClientController : Controller
 
         try
         {
+            // Company name unique (khud ko chhod kar)
+            var name = form["ClientName"].ToString();
+            if (_repo.ClientNameExists(name, id))
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = $"Another company named '{name.Trim()}' already exists." });
+                throw new InvalidOperationException($"Another company named '{name.Trim()}' already exists.");
+            }
+
             _dynamicRepo.Update("Client", "ClientId", id, values);
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return Json(new { success = true, id = id, message = "Client updated successfully." });
