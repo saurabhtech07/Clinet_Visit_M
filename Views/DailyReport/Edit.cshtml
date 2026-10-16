@@ -4,9 +4,8 @@
     var row = (Dictionary<string, object?>)ViewBag.RowData;
     var reportId = ViewBag.ReportId;
     var users = ViewBag.Users as List<User> ?? new List<User>();
-    var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
 
-    var known = new[] { "ReportDate", "AssignedTo", "Calls", "Visit", "NewLeads", "Summary", "Remark", "Status" };
+    var known = new[] { "ReportDate", "AssignedTo", "Calls", "Visit", "NewLeads", "Summary", "Remark" };
     var otherFields = Model.Where(f => !known.Contains(f.Name, StringComparer.OrdinalIgnoreCase)).ToList();
 
     string Label(string name) => name switch
@@ -14,6 +13,8 @@
         "ReportDate" => "Date",
         "AssignedTo" => "Assigned To",
         "NewLeads" => "New Leads",
+        "Summary" => "Work Summary",
+        "Remark" => "Issues / Concerns",
         _ => System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2")
     };
 
@@ -40,7 +41,9 @@
             null => "",
             _ => raw.ToString() ?? ""
         };
-        var star = f.IsNullable ? "" : " <span class=\"text-danger\">*</span>";
+        // Assigned To DB me nullable ho sakta hai, lekin report ke liye hamesha required hai
+        var isRequired = !f.IsNullable || f.Name.Equals("AssignedTo", StringComparison.OrdinalIgnoreCase);
+        var star = isRequired ? " <span class=\"text-danger\">*</span>" : "";
         var label = $"<label class=\"form-label mb-1\">{Label(f.Name)}{star}</label>";
         string input;
 
@@ -49,20 +52,16 @@
             var items = users.Select(u => (
                 Value: u.UserId.ToString(),
                 Text: string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName));
-            input = $"<select class=\"form-select\" name=\"AssignedTo\">{Options(items, v)}</select>";
-        }
-        else if (f.Name == "Status")
-        {
-            input = $"<select class=\"form-select\" name=\"Status\">{Options(statusOptions.Select(s => (s, s)), string.IsNullOrWhiteSpace(v) ? "Pending" : v)}</select>";
+            input = $"<select class=\"form-select\" name=\"AssignedTo\" required>{Options(items, v)}</select>";
         }
         else if (f.Name == "Summary" || f.Name == "Remark")
         {
-            input = $"<textarea class=\"form-control\" name=\"{f.Name}\" rows=\"3\" placeholder=\"{Label(f.Name)}...\">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
+            input = $"<textarea class=\"form-control\" name=\"{f.Name}\" rows=\"3\" maxlength=\"1000\" placeholder=\"{Label(f.Name)}...\">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
         }
         else if (f.Name is "Calls" or "Visit" or "NewLeads")
         {
             var numVal = string.IsNullOrWhiteSpace(v) ? "0" : v;
-            input = $"<input class=\"form-control\" name=\"{f.Name}\" type=\"number\" min=\"0\" value=\"{System.Net.WebUtility.HtmlEncode(numVal)}\" />";
+            input = $"<input class=\"form-control\" name=\"{f.Name}\" type=\"number\" min=\"0\" step=\"1\" value=\"{System.Net.WebUtility.HtmlEncode(numVal)}\" />";
         }
         else
         {
@@ -88,6 +87,11 @@
     <a href="/DailyReport" class="btn btn-light border"><i class="bi bi-arrow-left me-1"></i> Back</a>
 </div>
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger py-2" style="font-size:13px;"><i class="bi bi-exclamation-triangle me-1"></i>@TempData["Error"]</div>
+}
+
 <form method="post" id="drForm">
     @Html.AntiForgeryToken()
     <input type="hidden" name="DailyReportId" value="@reportId" />
@@ -96,21 +100,13 @@
 
             <div class="dr-title"><i class="bi bi-calendar2-check"></i> Report Info</div>
             <div class="row g-3 mt-1">
-                @foreach (var f in Model.Where(f => new[] { "ReportDate", "AssignedTo", "Status" }.Contains(f.Name)))
+                @foreach (var f in Model.Where(f => new[] { "ReportDate", "AssignedTo" }.Contains(f.Name)))
                 {
-                    @RenderField(f, "col-md-4")
+                    @RenderField(f, "col-md-6")
                 }
             </div>
 
-            <div class="dr-title mt-4"><i class="bi bi-bar-chart-fill"></i> Activity Counts</div>
-            <div class="row g-3 mt-1">
-                @foreach (var f in Model.Where(f => new[] { "Calls", "Visit", "NewLeads" }.Contains(f.Name)))
-                {
-                    @RenderField(f, "col-md-4")
-                }
-            </div>
-
-            <div class="dr-title mt-4"><i class="bi bi-chat-left-text"></i> Notes</div>
+            <div class="dr-title mt-4"><i class="bi bi-chat-left-text"></i> Summary &amp; Concerns</div>
             <div class="row g-3 mt-1">
                 @foreach (var f in Model.Where(f => new[] { "Summary", "Remark" }.Contains(f.Name)))
                 {

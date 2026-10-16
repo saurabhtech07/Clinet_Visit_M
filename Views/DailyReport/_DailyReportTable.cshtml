@@ -1,6 +1,7 @@
 @model ClientVisitManagement.Models.DailyReportViewModel
 @{
     var grid = Model.Grid;
+    bool showActions = Model.IsUserSummary || grid.Columns.Contains("DailyReportId");
     int start = grid.TotalRecords == 0 ? 0 : ((grid.CurrentPage - 1) * grid.PageSize) + 1;
     int end = Math.Min(grid.CurrentPage * grid.PageSize, grid.TotalRecords);
 
@@ -8,7 +9,6 @@
     {
         var q = new List<string> { "page=" + page, "pageSize=" + pageSize };
         if (!string.IsNullOrWhiteSpace(grid.SearchTerm)) q.Add("search=" + Uri.EscapeDataString(grid.SearchTerm));
-        if (!string.IsNullOrWhiteSpace(Model.FilterStatus)) q.Add("status=" + Uri.EscapeDataString(Model.FilterStatus));
         if (Model.FilterAssignedTo.HasValue) q.Add("assignedTo=" + Model.FilterAssignedTo.Value);
         if (Model.FilterFrom.HasValue) q.Add("fromDate=" + Model.FilterFrom.Value.ToString("yyyy-MM-dd"));
         if (Model.FilterTo.HasValue) q.Add("toDate=" + Model.FilterTo.Value.ToString("yyyy-MM-dd"));
@@ -23,8 +23,15 @@
         "ReportDate" => "Date",
         "AssignedName" => "Assigned To",
         "AssignedTo" => "Assigned To",
+        "Visit" => "Visits",
         "NewLeads" => "New Leads",
+        "TotalFollowUp" => "Total Follow Up",
+        "InterestedLeads" => "Interested Leads",
+        "ConvertedLeads" => "Converted Leads",
+        "Summary" => "Work Summary",
+        "Remark" => "Issues / Concerns",
         "EntryTime" => "Entry Time",
+        "ModifiedOn" => "Modified On",
         "CreatedBy" => "Created By",
         _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
     };
@@ -32,20 +39,22 @@
     string Fmt(object? val)
     {
         if (val == null) return "";
-        if (val is DateTime dt) return dt.ToString("dd-MM-yyyy hh:mm tt");
+        if (val is DateTime dt) return dt.TimeOfDay == TimeSpan.Zero ? dt.ToString("dd-MM-yyyy") : dt.ToString("dd-MM-yyyy hh:mm tt");
         if (val is decimal dc) return dc.ToString("N2");
         if (val is bool b) return b ? "Yes" : "No";
         return val.ToString() ?? "";
     }
 
-    string StatusStyle(string s) => s switch
-    {
-        "Done" => "background:#dcfce7;color:#15803d;",
-        "Pending" => "background:#fef3c7;color:#b45309;",
-        _ => "background:#f1f5f9;color:#475569;"
-    };
+    bool IsNumCol(string col) => col is "Calls" or "Visit" or "NewLeads" or "TotalFollowUp" or "InterestedLeads" or "ConvertedLeads";
 
-    bool IsNumCol(string col) => col is "Calls" or "Visit" or "NewLeads";
+    string NumBg(string col) => col switch
+    {
+        "NewLeads" => "background:#eef2ff;color:#4338ca;",
+        "TotalFollowUp" => "background:#e0f2fe;color:#0369a1;",
+        "InterestedLeads" => "background:#fef3c7;color:#b45309;",
+        "ConvertedLeads" => "background:#dcfce7;color:#15803d;",
+        _ => "background:#f1f5f9;color:#0f172a;"
+    };
 }
 
 <style>
@@ -71,6 +80,11 @@
     .num-pill { display:inline-block; min-width:34px; text-align:center; padding:3px 10px; border-radius:7px; font-size:12px; font-weight:700; }
     .act-btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; }
     .drp-table tbody td.actions-cell { white-space: nowrap; }
+    .drp-table tfoot td {
+        background: #f8fafc; border-top: 1px solid #e2e8f0;
+        font-size: 12.5px; padding: 10px 14px; position: sticky; bottom: 0; z-index: 9;
+        box-shadow: 0 -1px 0 #e2e8f0;
+    }
 </style>
 
 <div class="table-scroll-container">
@@ -95,7 +109,10 @@
                         </a>
                     </th>
                 }
-                <th style="width:130px;">Actions</th>
+                @if (showActions)
+                {
+                    <th style="width:90px;">Actions</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -104,8 +121,6 @@
                 foreach (var row in grid.Rows)
                 {
                     var id = row.ContainsKey("DailyReportId") ? row["DailyReportId"]?.ToString() : "";
-                    var status = row.ContainsKey("Status") ? row["Status"]?.ToString() ?? "" : "";
-                    bool isDone = status.Equals("Done", StringComparison.OrdinalIgnoreCase);
 
                     <tr>
                         <td style="color:#64748b;">@start</td>
@@ -116,21 +131,10 @@
                             {
                                 <td><span class="drp-id-pill">@val</span></td>
                             }
-                            else if (col == "Status")
-                            {
-                                var st = val?.ToString() ?? "";
-                                <td>
-                                    @if (!string.IsNullOrWhiteSpace(st))
-                                    {
-                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @StatusStyle(st)">@st</span>
-                                    }
-                                </td>
-                            }
                             else if (IsNumCol(col))
                             {
                                 var n = val == null ? "0" : val.ToString();
-                                var bg = col == "NewLeads" ? "background:#eef2ff;color:#4338ca;" : "background:#f1f5f9;color:#0f172a;";
-                                <td><span class="num-pill" style="@bg">@n</span></td>
+                                <td><span class="num-pill" style="@NumBg(col)">@n</span></td>
                             }
                             else if (col == "AssignedName")
                             {
@@ -143,32 +147,29 @@
                                 <td><span class="cell-clip" title="@t">@t</span></td>
                             }
                         }
-                        <td class="actions-cell">
-                            @if (!isDone)
-                            {
-                                <button type="button" class="btn btn-success act-btn" onclick="drMarkDone(@id, this)" title="Mark as Done">
-                                    <i class="bi bi-check2"></i>
-                                </button>
-                            }
-                            else
-                            {
-                                <span style="padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; background:#dcfce7; color:#15803d;" title="Done">
-                                    <i class="bi bi-check2-circle"></i> Done
-                                </span>
-                            }
-                            <a href="/DailyReport/Edit/@id" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
-                            <form method="post" action="/DailyReport/Delete/@id" onsubmit="return confirm('Is daily report ko delete karna hai?');" style="display:inline" class="ms-1">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </td>
+                        @if (showActions)
+                        {
+                            <td class="actions-cell">
+                                @if (Model.IsUserSummary)
+                                {
+                                    var uid = row.ContainsKey("UserId") ? row["UserId"]?.ToString() : "";
+                                    var dayStr = Model.SummaryDay.ToString("yyyy-MM-dd");
+                                    var viewUrl = "/DailyReport/UserDetails?userId=" + uid + "&date=" + dayStr;
+                                    <a href="@viewUrl" class="btn btn-light border act-btn dr-view-btn" data-url="@viewUrl" title="View"><i class="bi bi-eye"></i></a>
+                                }
+                                else
+                                {
+                                    <a href="/DailyReport/Details/@id" class="btn btn-light border act-btn dr-view-btn" data-id="@id" title="View"><i class="bi bi-eye"></i></a>
+                                }
+                            </td>
+                        }
                     </tr>
                     start++;
                 }
             }
             else
             {
-                <tr><td colspan="@(grid.Columns.Count + 2)" class="text-center text-muted py-5">Koi daily report nahi mili</td></tr>
+                <tr><td colspan="@(grid.Columns.Count + (showActions ? 2 : 1))" class="text-center text-muted py-5">No records found</td></tr>
             }
         </tbody>
     </table>

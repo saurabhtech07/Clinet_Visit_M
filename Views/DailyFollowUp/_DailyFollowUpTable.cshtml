@@ -24,6 +24,7 @@
         "ContactPerson" => "Contact Person",
         "FollowUpDate" => "Follow Up Date",
         "NextFollowUpDate" => "Next Follow Up",
+        "FollowUpType" => "Follow Up Type",
         "AssignedName" => "Assigned To",
         "CreatedOn" => "Created On",
         _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
@@ -50,6 +51,14 @@
         "High" => "background:#fee2e2;color:#b91c1c;",
         "Medium" => "background:#ffedd5;color:#c2410c;",
         "Low" => "background:#dcfce7;color:#15803d;",
+        _ => "background:#f1f5f9;color:#475569;"
+    };
+
+    string TypeStyle(string t) => t switch
+    {
+        "Phone Call" => "background:#e0e7ff;color:#3730a3;",
+        "Online" => "background:#cffafe;color:#0e7490;",
+        "Office" => "background:#fef9c3;color:#a16207;",
         _ => "background:#f1f5f9;color:#475569;"
     };
 }
@@ -141,6 +150,16 @@
                                     }
                                 </td>
                             }
+                            else if (col == "FollowUpType")
+                            {
+                                var ft = val?.ToString() ?? "";
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(ft))
+                                    {
+                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @TypeStyle(ft)">@ft</span>
+                                    }
+                                </td>
+                            }
                             else if (col == "ContactPerson" || col == "Company")
                             {
                                 var t = Fmt(val);
@@ -166,7 +185,7 @@
                                 </span>
                             }
                             <a href="/DailyFollowUp/Edit/@id" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
-                            <form method="post" action="/DailyFollowUp/Delete/@id" onsubmit="return confirm('Is follow-up ko delete karna hai?');" style="display:inline" class="ms-1">
+                            <form method="post" action="/DailyFollowUp/Delete/@id" onsubmit="return confirm('Delete this follow-up?');" style="display:inline" class="ms-1">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
                             </form>
@@ -177,7 +196,7 @@
             }
             else
             {
-                <tr><td colspan="@(grid.Columns.Count + 2)" class="text-center text-muted py-5">Koi follow-up nahi mila</td></tr>
+                <tr><td colspan="@(grid.Columns.Count + 2)" class="text-center text-muted py-5">No follow-ups found</td></tr>
             }
         </tbody>
     </table>

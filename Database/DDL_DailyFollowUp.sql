@@ -19,8 +19,9 @@ BEGIN
         City             NVARCHAR(100)  NULL,
         Status           NVARCHAR(20)   NOT NULL CONSTRAINT DF_DFU_Status DEFAULT ('Pending'), -- Pending / Done
         Priority         NVARCHAR(20)   NULL,   -- Low / Medium / High
+        FollowUpType     NVARCHAR(50)   NULL,   -- Phone Call / Online / Office
         AssignedTo       INT            NULL,   -- -> Users(UserId)
-        Remarks          NVARCHAR(500)  NULL,
+        Discussion       NVARCHAR(500)  NULL,   -- discussion / notes (pehle 'Remarks' tha)
         CreatedBy        INT            NULL,   -- -> Users(UserId) jo entry kar raha hai
         CreatedOn        DATETIME       NOT NULL CONSTRAINT DF_DFU_CreatedOn DEFAULT (GETDATE())
     );
@@ -31,5 +32,21 @@ BEGIN
     CREATE INDEX IX_DFU_Priority     ON dbo.DailyFollowUp(Priority);
     CREATE INDEX IX_DFU_AssignedTo   ON dbo.DailyFollowUp(AssignedTo);
     CREATE INDEX IX_DFU_LeadId       ON dbo.DailyFollowUp(LeadId);
+END
+GO
+
+-- =========================================================
+--  UPGRADE (purani table ho to) — idempotent, data safe
+-- =========================================================
+IF OBJECT_ID(N'dbo.DailyFollowUp', N'U') IS NOT NULL
+BEGIN
+    -- Follow Up Type column: Phone Call / Online / Office
+    IF COL_LENGTH('dbo.DailyFollowUp','FollowUpType') IS NULL
+        ALTER TABLE dbo.DailyFollowUp ADD FollowUpType NVARCHAR(50) NULL;
+
+    -- 'Remarks' ko 'Discussion' bana do (data preserve rehta hai)
+    IF COL_LENGTH('dbo.DailyFollowUp','Remarks') IS NOT NULL
+       AND COL_LENGTH('dbo.DailyFollowUp','Discussion') IS NULL
+        EXEC sp_rename 'dbo.DailyFollowUp.Remarks', 'Discussion', 'COLUMN';
 END
 GO

@@ -28,4 +28,5 @@ public class DailyFollowUpViewModel
     // Fixed option sets (form + filter dono use karte hain)
     public static readonly string[] StatusOptions = { "Pending", "Done" };
     public static readonly string[] PriorityOptions = { "Low", "Medium", "High" };
+    public static readonly string[] FollowUpTypeOptions = { "Phone Call", "Online", "Office" };
 }

@@ -80,7 +80,7 @@
             if (!count) {
                 var empty = document.createElement("div");
                 empty.className = "ss-empty";
-                empty.textContent = "Koi record nahi mila";
+                empty.textContent = "No records found";
                 list.appendChild(empty);
             }
         }

@@ -102,7 +102,7 @@
             })
             .catch(function (err) {
                 console.error("Form modal load failed:", err);
-                if (window.Ajax && Ajax.toast) Ajax.toast("Form load nahi hua.", "error");
+                if (window.Ajax && Ajax.toast) Ajax.toast("Could not load the form.", "error");
                 hide();
             });
     }

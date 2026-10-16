@@ -1,0 +1,152 @@
+@model ClientVisitManagement.Models.DailyReportUserDetailVM
+@{
+    string Fmt(object? val)
+    {
+        if (val == null) return "—";
+        if (val is DateTime dt) return dt.TimeOfDay == TimeSpan.Zero ? dt.ToString("dd-MM-yyyy") : dt.ToString("dd-MM-yyyy hh:mm tt");
+        var s = val.ToString();
+        return string.IsNullOrWhiteSpace(s) ? "—" : s;
+    }
+
+    var leadCols = new[] { "LeadPerson", "Company", "Mobile", "City", "Status" };
+    var followCols = new[] { "ContactPerson", "Company", "Mobile", "FollowUpType", "Status" };
+    var convCols = new[] { "LeadPerson", "Company", "Mobile", "ConvertedOn" };
+
+    string ColLabel(string c) => c switch
+    {
+        "LeadPerson" => "Lead / Person",
+        "ContactPerson" => "Contact Person",
+        "Company" => "Company",
+        "Mobile" => "Mobile",
+        "City" => "City",
+        "Status" => "Status",
+        "FollowUpType" => "Type",
+        "ConvertedOn" => "Converted On",
+        _ => System.Text.RegularExpressions.Regex.Replace(c, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    Func<Dictionary<string, object?>, string, object?> cell = (row, c) => row.ContainsKey(c) ? row[c] : null;
+}
+
+<div class="modal-header" style="border-bottom:1px solid #eef2f7;">
+    <div>
+        <h5 class="modal-title fw-bold mb-0">@Model.UserName</h5>
+        <div class="small text-muted">Daily Report &middot; @Model.Day.ToString("dd-MM-yyyy")</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <!-- Us din ke totals -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="num-pill" style="background:#eef2ff;color:#4338ca;">New Leads: @Model.NewLeads</span>
+        <span class="num-pill" style="background:#e0f2fe;color:#0369a1;">Total Follow Up: @Model.TotalFollowUps</span>
+        <span class="num-pill" style="background:#dcfce7;color:#15803d;">Converted Leads: @Model.ConvertedLeads</span>
+    </div>
+
+    <!-- New Leads -->
+    <div class="mb-4">
+        <div class="fw-semibold mb-2" style="font-size:13px;color:#0f172a;">
+            <i class="bi bi-person-plus me-1" style="color:#4338ca;"></i>New Leads (@Model.Leads.Count)
+        </div>
+        @if (Model.Leads.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" style="font-size:12.5px;">
+                    <thead>
+                        <tr>
+                            @foreach (var c in leadCols) { <th style="font-size:10px;text-transform:uppercase;color:#64748b;">@ColLabel(c)</th> }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Leads)
+                        {
+                            <tr>
+                                @foreach (var c in leadCols)
+                                {
+                                    <td class="@(c == "LeadPerson" ? "fw-semibold" : null)">@Fmt(cell(row, c))</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted small fst-italic">Koi naya lead nahi.</div>
+        }
+    </div>
+
+    <!-- Follow Ups -->
+    <div class="mb-4">
+        <div class="fw-semibold mb-2" style="font-size:13px;color:#0f172a;">
+            <i class="bi bi-arrow-repeat me-1" style="color:#0369a1;"></i>Follow Ups (@Model.FollowUps.Count)
+        </div>
+        @if (Model.FollowUps.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" style="font-size:12.5px;">
+                    <thead>
+                        <tr>
+                            @foreach (var c in followCols) { <th style="font-size:10px;text-transform:uppercase;color:#64748b;">@ColLabel(c)</th> }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.FollowUps)
+                        {
+                            <tr>
+                                @foreach (var c in followCols)
+                                {
+                                    <td class="@(c == "ContactPerson" ? "fw-semibold" : null)">@Fmt(cell(row, c))</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted small fst-italic">Koi follow up nahi.</div>
+        }
+    </div>
+
+    <!-- Converted -->
+    <div>
+        <div class="fw-semibold mb-2" style="font-size:13px;color:#0f172a;">
+            <i class="bi bi-trophy me-1" style="color:#15803d;"></i>Converted Leads (@Model.Converted.Count)
+        </div>
+        @if (Model.Converted.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" style="font-size:12.5px;">
+                    <thead>
+                        <tr>
+                            @foreach (var c in convCols) { <th style="font-size:10px;text-transform:uppercase;color:#64748b;">@ColLabel(c)</th> }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Converted)
+                        {
+                            <tr>
+                                @foreach (var c in convCols)
+                                {
+                                    <td class="@(c == "LeadPerson" ? "fw-semibold" : null)">@Fmt(cell(row, c))</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted small fst-italic">Koi converted lead nahi.</div>
+        }
+    </div>
+</div>
+
+<div class="modal-footer" style="border-top:1px solid #eef2f7;">
+    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+</div>

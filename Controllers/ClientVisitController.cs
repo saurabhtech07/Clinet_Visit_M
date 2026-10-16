@@ -306,7 +306,15 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         ViewBag.CurrentDate = dt.CurrentDate;
         ViewBag.CurrentTime = dt.CurrentTime;
         ViewBag.VisitTypes = _dynamicRepo.GetTable("VisitTypeMaster");
+        ViewBag.Users = SafeUsers();
         return View(cols);
+    }
+
+    // Visited By dropdown ke liye employees (Visit ko employee se jodne ke liye)
+    private List<Dictionary<string, object?>> SafeUsers()
+    {
+        try { return _dynamicRepo.GetTable("Users").Rows; }
+        catch { return new List<Dictionary<string, object?>>(); }
     }
 
     [HttpPost][ValidateAntiForgeryToken]
@@ -353,6 +361,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         ViewBag.Clients = _clientRepo.GetAll();
         var cols = _dynamicRepo.GetColumns("ClientVisit").Where(c=>c.Name!="VisitId" && c.Name!="UserId").ToList();
         ViewBag.VisitTypes = _dynamicRepo.GetTable("VisitTypeMaster");
+        ViewBag.Users = SafeUsers();
         return View(cols);
     }
 
@@ -362,7 +371,6 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     {
         values.Remove("__RequestVerificationToken");
         values.Remove("VisitId");
-        values.Remove("UserId");
         try
         {
             _dynamicRepo.Update("ClientVisit", "VisitId", id, values);

@@ -118,6 +118,16 @@ public class DailyFollowUpRepository
         }
 
         grid.Columns.RemoveAll(c => HiddenGridColumns.Contains(c));
+
+        // Follow Up Type naya column DB me last add hua tha — ise Priority ke turant baad dikhao
+        var typeIdx = grid.Columns.FindIndex(c => c.Equals("FollowUpType", StringComparison.OrdinalIgnoreCase));
+        if (typeIdx >= 0)
+        {
+            grid.Columns.RemoveAt(typeIdx);
+            var prioIdx = grid.Columns.FindIndex(c => c.Equals("Priority", StringComparison.OrdinalIgnoreCase));
+            grid.Columns.Insert(prioIdx >= 0 ? prioIdx + 1 : grid.Columns.Count, "FollowUpType");
+        }
+
         vm.Grid = grid;
         return vm;
     }
@@ -167,7 +177,7 @@ public class DailyFollowUpRepository
         if (!string.IsNullOrWhiteSpace(search))
             w += " AND (" + ContactExpr + " LIKE @Search OR " + CompanyExpr + " LIKE @Search" +
                  " OR " + MobileExpr + " LIKE @Search OR " + CityExpr + " LIKE @Search" +
-                 " OR ISNULL(d.Remarks,'') LIKE @Search)";
+                 " OR ISNULL(d.Discussion,'') LIKE @Search OR ISNULL(d.FollowUpType,'') LIKE @Search)";
         return w;
     }
 
@@ -195,6 +205,8 @@ public class DailyFollowUpRepository
             case "nextfollowupdate":  return $" ORDER BY CASE WHEN d.NextFollowUpDate IS NULL THEN 1 ELSE 0 END, d.NextFollowUpDate {dir}, d.DailyFollowUpId DESC";
             case "status":            return $" ORDER BY CASE WHEN ISNULL(d.Status,'')='Done' THEN 1 ELSE 0 END {dir}, d.DailyFollowUpId DESC";
             case "priority":          return $" ORDER BY d.Priority {dir}, d.DailyFollowUpId DESC";
+            case "followuptype":      return $" ORDER BY d.FollowUpType {dir}, d.DailyFollowUpId DESC";
+            case "discussion":        return $" ORDER BY d.Discussion {dir}, d.DailyFollowUpId DESC";
             case "assignedname":      return $" ORDER BY ISNULL(NULLIF(u.FullName,''), u.Username) {dir}, d.DailyFollowUpId DESC";
             default:
                 // Default: Pending pehle, phir next-date, phir newest

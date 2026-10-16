@@ -17,6 +17,7 @@ BEGIN
         StateId           INT            NULL,   -- -> StateMaster(StateId)
         Status            NVARCHAR(30)   NULL,   -- New / Contacted / Qualified / Won / Lost ...
         DealValue         DECIMAL(18,2)  NULL,
+        Requirement       NVARCHAR(1000) NULL,   -- customer ki requirement / need
         AssignedTo        INT            NULL,   -- -> Users(UserId)
         CreatedOn         DATETIME       NOT NULL CONSTRAINT DF_Leads_CreatedOn  DEFAULT (GETDATE()),
         EntryTime         DATETIME       NOT NULL CONSTRAINT DF_Leads_EntryTime  DEFAULT (GETDATE()),
@@ -28,5 +29,16 @@ BEGIN
     CREATE INDEX IX_Leads_Status     ON dbo.Leads(Status);
     CREATE INDEX IX_Leads_AssignedTo ON dbo.Leads(AssignedTo);
     CREATE INDEX IX_Leads_StateId    ON dbo.Leads(StateId);
+END
+GO
+
+-- =========================================================
+--  UPGRADE (purani table ho to) — idempotent, data safe
+-- =========================================================
+IF OBJECT_ID(N'dbo.Leads', N'U') IS NOT NULL
+BEGIN
+    -- Requirement column (customer requirement / need)
+    IF COL_LENGTH('dbo.Leads','Requirement') IS NULL
+        ALTER TABLE dbo.Leads ADD Requirement NVARCHAR(1000) NULL;
 END
 GO

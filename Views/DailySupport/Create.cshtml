@@ -343,7 +343,7 @@ function renderClientOptions(filter=''){
     const filtered=allClients.filter(c=>c.name.toLowerCase().includes(f)||c.mobile.toLowerCase().includes(f)||c.fullText.toLowerCase().includes(f)).slice(0,50);
     clientDropdown.innerHTML='';
     if(filtered.length===0){
-        clientDropdown.innerHTML='<div class="select-option text-muted">No client found - Naya customer: "'+filter+'" CallerName me set ho gaya</div>';
+        clientDropdown.innerHTML='<div class="select-option text-muted">No client found - New customer: "'+filter+'", will be set in Caller Name</div>';
         hiddenClientId.value='';hiddenCustomerID.value='';
         if(filter &&!callerNameInput.value) callerNameInput.value=filter;
     }else{

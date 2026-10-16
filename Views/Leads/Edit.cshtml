@@ -12,10 +12,16 @@
 
     var mainFields = new[] { "LeadPerson", "Company", "Mobile", "Email", "City", "StateId" };
     var statusFields = new[] { "Status", "DealValue", "AssignedTo" };
+    var requirementFields = new[] { "Requirement" };
+
+    // Ye columns khud se bhar jaate hain -> form me nahi dikhate
+    var autoFields = new[] { "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn" };
 
     var otherFields = Model.Where(f =>
         !mainFields.Contains(f.Name) &&
-        !statusFields.Contains(f.Name)).ToList();
+        !statusFields.Contains(f.Name) &&
+        !requirementFields.Contains(f.Name) &&
+        !autoFields.Contains(f.Name)).ToList();
 
     string Label(string name) => name switch
     {
@@ -64,6 +70,10 @@
             }));
             input = $@"<select class=""form-select"" name=""AssignedTo""><option value="""">Unassigned</option>{opts}</select>";
         }
+        else if (f.Name == "Requirement")
+        {
+            input = $@"<textarea class=""form-control"" name=""Requirement"" rows=""3"" placeholder=""Enter customer requirement..."">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
+        }
         else
         {
             var type = f.DataType.Contains("decimal") || f.DataType.Contains("money") || f.DataType.Contains("float") ? "number"
@@ -83,6 +93,7 @@
     #leadForm .lf-title i{color:#2563eb}
     #leadForm .form-label{font-size:12px;font-weight:700;color:#334155}
     #leadForm .form-control,#leadForm .form-select{height:40px;font-size:13.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+    #leadForm textarea.form-control{height:auto}
     #leadForm .form-control:focus,#leadForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
 </style>
 
@@ -110,6 +121,11 @@
             <div class="lf-title mt-4"><i class="bi bi-sliders"></i> Status &amp; Assignment</div>
             <div class="row g-3 mt-1">
                 @foreach (var f in Model.Where(f => statusFields.Contains(f.Name))) { @RenderField(f, "col-md-4") }
+            </div>
+
+            <div class="lf-title mt-4"><i class="bi bi-card-text"></i> Requirement</div>
+            <div class="row g-3 mt-1">
+                @foreach (var f in Model.Where(f => requirementFields.Contains(f.Name))) { @RenderField(f, "col-md-12") }
             </div>
 
             @if (otherFields.Any())
@@ -154,7 +170,7 @@
         var cbtn = document.getElementById("convertLeadBtn");
         if (cbtn) {
             cbtn.addEventListener("click", function () {
-                if (!confirm("Is lead ko Client me convert karna hai?")) return;
+                if (!confirm("Convert this lead to a Client?")) return;
                 cbtn.disabled = true;
                 Ajax.post("/Leads/Convert/@leadId", new FormData())
                     .then(function (d) {

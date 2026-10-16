@@ -1,0 +1,21 @@
+@model string
+@{
+    // Visited By = ClientVisit.UserId. Isi se Daily Report me Visits count hote hain.
+    var users = ViewBag.Users as List<Dictionary<string, object?>> ?? new List<Dictionary<string, object?>>();
+    var selected = Model ?? "";
+}
+<div class="col-6">
+    <label class="form-label">Visited By *</label>
+    <select class="form-select form-select-sm" name="UserId" required>
+        <option value="">-- Select employee --</option>
+        @foreach (var u in users)
+        {
+            var uid = u.ContainsKey("UserId") ? u["UserId"]?.ToString() ?? "" : "";
+            var name = u.ContainsKey("FullName") && !string.IsNullOrWhiteSpace(u["FullName"]?.ToString())
+                        ? u["FullName"]!.ToString()
+                        : (u.ContainsKey("Username") ? u["Username"]?.ToString() ?? "" : "");
+            if (string.IsNullOrWhiteSpace(name)) name = uid;
+            <option value="@uid" selected="@(uid == selected ? "selected" : null)">@name</option>
+        }
+    </select>
+</div>

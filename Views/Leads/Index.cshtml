@@ -196,7 +196,7 @@
         // Expose for the shared delete handler + convert
         window.refreshCurrentTable = function () { loadLeadTable(buildLeadUrl(1)); };
         window.convertLead = function (id, btn) {
-            if (!confirm("Is lead ko Client me convert karna hai?")) return;
+            if (!confirm("Convert this lead to a Client?")) return;
             if (btn) btn.disabled = true;
             Ajax.post("/Leads/Convert/" + id, new FormData())
                 .then(function (d) {

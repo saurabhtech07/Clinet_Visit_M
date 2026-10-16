@@ -216,7 +216,9 @@ where = @" WHERE CAST(c.ClientId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName 
         using var cmd = new SqlCommand($"INSERT INTO [{tableName}] ({colList}) OUTPUT INSERTED.[{pk}] VALUES ({paramList})", con);
         var info = GetColumnInfo(tableName);
         foreach (var c in cols) { cmd.Parameters.AddWithValue("@" + c, PrepareValue(info.TryGetValue(c, out var ci) ? ci : null, values[c])); }
-        return Convert.ToInt32(cmd.ExecuteScalar());
+        int newId = Convert.ToInt32(cmd.ExecuteScalar());
+        EnsureDailyReportRow(con, tableName, newId);
+        return newId;
     }
 
     public void Delete(string tableName, string idColumn, int id)
@@ -250,6 +252,7 @@ where = @" WHERE CAST(c.ClientId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName 
         foreach (var c in cols) { cmd.Parameters.AddWithValue("@" + c, PrepareValue(info.TryGetValue(c, out var ci) ? ci : null, values[c])); }
         cmd.Parameters.AddWithValue("@Id", id);
         cmd.ExecuteNonQuery();
+        EnsureDailyReportRow(con, tableName, id);
     }
 
 private static DynamicTableViewModel ReadTable(SqlCommand cmd, int page = 1, int pageSize = 0, int total = 0, string? search = null, string? sort = null, string direction = "DESC")
@@ -345,6 +348,66 @@ private static DynamicTableViewModel ReadTable(SqlCommand cmd, int page = 1, int
                 throw new InvalidOperationException($"'{raw}' is not a valid date.");
             default:
                 return raw!;
+        }
+    }
+
+    /// <summary>
+    /// AUTO DAILY REPORT ROW:
+    /// Jab bhi Leads / ClientVisit / DailySupport me koi entry hoti hai (add ya edit),
+    /// us employee + us date ka DailyReport row (agar pehle se nahi hai to) khud-ba-khud ban jaata hai.
+    /// Isse Daily Report grid me Calls/Visits/New Leads counts automatically dikhne lagte hain —
+    /// kyunki report row ke bina wo counts kahin show nahi hote.
+    ///
+    ///   Leads        -> AssignedTo + CreatedOn
+    ///   ClientVisit  -> UserId     + VisitDate
+    ///   DailySupport -> AssignedTo + SupportDate
+    ///
+    /// Summary / Remark khaali rehte hain (employee baad me bhare). Koi status workflow nahi.
+    /// Note: ye automation fail ho to source insert ko rokta nahi (best-effort).
+    /// </summary>
+    private void EnsureDailyReportRow(SqlConnection con, string tableName, int newId)
+    {
+        string empCol, dateCol;
+        switch (tableName.ToLowerInvariant())
+        {
+            case "leads":        empCol = "AssignedTo"; dateCol = "CreatedOn";   break;
+            case "clientvisit":  empCol = "UserId";     dateCol = "VisitDate";   break;
+            case "dailysupport": empCol = "AssignedTo"; dateCol = "SupportDate"; break;
+            default: return;   // baaki tables (DailyReport, Client, Users, ...) ke liye kuch nahi
+        }
+
+        try
+        {
+            // Insert/Update ke baad asli row se employee + date padho (DB default create time bhi cover ho jaata hai)
+            int? emp = null;
+            DateTime? date = null;
+            string pk = GetPrimaryKey(tableName);
+            using (var read = new SqlCommand($"SELECT [{empCol}], [{dateCol}] FROM [{tableName}] WHERE [{pk}] = @Id", con))
+            {
+                read.Parameters.AddWithValue("@Id", newId);
+                using var r = read.ExecuteReader();
+                if (r.Read())
+                {
+                    if (!r.IsDBNull(0)) emp = Convert.ToInt32(r.GetValue(0));
+                    if (!r.IsDBNull(1)) date = Convert.ToDateTime(r.GetValue(1));
+                }
+            }
+
+            // Employee ya date nahi mile to count attribute nahi kar sakte
+            if (emp is null || emp <= 0 || date is null) return;
+
+            // DailyReport row sirf tab banao jab table ho aur us combo ka row pehle se na ho
+            using var cmd = new SqlCommand(
+                "IF OBJECT_ID('DailyReport','U') IS NOT NULL " +
+                "AND NOT EXISTS (SELECT 1 FROM DailyReport WHERE ReportDate = @Date AND AssignedTo = @Emp) " +
+                "INSERT INTO DailyReport (ReportDate, AssignedTo) VALUES (@Date, @Emp)", con);
+            cmd.Parameters.AddWithValue("@Date", date.Value.Date);
+            cmd.Parameters.AddWithValue("@Emp", emp.Value);
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            // Best-effort: DailyReport automation fail ho to asli source insert revert na ho
         }
     }
 

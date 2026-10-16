@@ -1,0 +1,88 @@
+@model Dictionary<string, object?>
+@{
+    string DisplayName(string col) => col switch
+    {
+        "DailyReportId" => "Report Id",
+        "ReportDate" => "Date",
+        "AssignedName" => "Assigned To",
+        "AssignedTo" => "Assigned To",
+        "Calls" => "Calls",
+        "Visit" => "Visits",
+        "NewLeads" => "New Leads Today",
+        "TotalFollowUp" => "Total Follow Up",
+        "InterestedLeads" => "Interested Leads",
+        "ConvertedLeads" => "Converted Leads",
+        "Summary" => "Work Summary",
+        "Remark" => "Issues / Concerns",
+        "EntryTime" => "Entry Time",
+        "ModifiedOn" => "Modified On",
+        _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
+    };
+
+    string Fmt(object? val)
+    {
+        if (val == null) return "—";
+        if (val is DateTime dt) return dt.TimeOfDay == TimeSpan.Zero ? dt.ToString("dd-MM-yyyy") : dt.ToString("dd-MM-yyyy hh:mm tt");
+        if (val is decimal dc) return dc.ToString("N2");
+        if (val is bool b) return b ? "Yes" : "No";
+        var s = val.ToString();
+        return string.IsNullOrWhiteSpace(s) ? "—" : s;
+    }
+
+    var countCols = new[] { "Calls", "Visit", "NewLeads", "TotalFollowUp", "ConvertedLeads" };
+    string CountBg(string col) => col switch
+    {
+        "NewLeads" => "background:#eef2ff;color:#4338ca;",
+        "TotalFollowUp" => "background:#e0f2fe;color:#0369a1;",
+        "InterestedLeads" => "background:#fef3c7;color:#b45309;",
+        "ConvertedLeads" => "background:#dcfce7;color:#15803d;",
+        _ => "background:#f1f5f9;color:#0f172a;"
+    };
+
+    var reportId = Model.ContainsKey("DailyReportId") ? Model["DailyReportId"]?.ToString() : "";
+    var assigned = Model.ContainsKey("AssignedName") ? Fmt(Model["AssignedName"]) : "—";
+    var reportDate = Model.ContainsKey("ReportDate") ? Fmt(Model["ReportDate"]) : "—";
+
+    // Preferred display order; baaki columns end me (InterestedLeads abhi hata diya)
+    var excludeCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "InterestedLeads" };
+    var order = new[] { "ReportDate", "AssignedName", "Calls", "Visit", "NewLeads",
+        "TotalFollowUp", "ConvertedLeads", "Summary", "Remark", "EntryTime", "ModifiedOn", "DailyReportId" };
+    var fields = order.Where(k => Model.ContainsKey(k) && !excludeCols.Contains(k)).ToList();
+    fields.AddRange(Model.Keys.Where(k => !excludeCols.Contains(k) && !fields.Contains(k, StringComparer.OrdinalIgnoreCase)));
+}
+
+<div class="modal-header" style="border-bottom:1px solid #eef2f7;">
+    <div>
+        <h5 class="modal-title fw-bold mb-0">Daily Report @(string.IsNullOrEmpty(reportId) ? "" : "#" + reportId)</h5>
+        <div class="small text-muted">@assigned &middot; @reportDate</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <!-- Daily totals (is report ke LIVE counts) -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        @foreach (var c in countCols)
+        {
+            var v = Model.ContainsKey(c) && Model[c] != null ? Model[c]!.ToString() : "0";
+            <span class="num-pill" style="@CountBg(c)">@DisplayName(c): @v</span>
+        }
+    </div>
+
+    <div class="row g-0">
+        @foreach (var col in fields)
+        {
+            var isNote = col == "Summary" || col == "Remark";
+            <div class="@(isNote ? "col-12" : "col-md-6")">
+                <div style="padding:10px 12px;border-bottom:1px solid #f1f5f9;">
+                    <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">@DisplayName(col)</div>
+                    <div style="font-size:13px;color:#0f172a;word-break:break-word;@(isNote ? "white-space:pre-wrap;" : "")">@Fmt(Model[col])</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal-footer" style="border-top:1px solid #eef2f7;">
+    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+</div>

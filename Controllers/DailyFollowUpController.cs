@@ -40,6 +40,7 @@ public class DailyFollowUpController : Controller
         ViewBag.Users = _userRepo.GetAll();
         ViewBag.StatusOptions = DailyFollowUpViewModel.StatusOptions;
         ViewBag.PriorityOptions = DailyFollowUpViewModel.PriorityOptions;
+        ViewBag.FollowUpTypeOptions = DailyFollowUpViewModel.FollowUpTypeOptions;
 
         try { ViewBag.Leads = _dynamicRepo.GetTable("Leads").Rows; }
         catch { ViewBag.Leads = new List<Dictionary<string, object?>>(); }
@@ -227,6 +228,7 @@ public class DailyFollowUpController : Controller
         "ContactPerson" => "Contact Person",
         "FollowUpDate" => "Follow Up Date",
         "NextFollowUpDate" => "Next Follow Up",
+        "FollowUpType" => "Follow Up Type",
         "AssignedName" => "Assigned To",
         "CreatedOn" => "Created On",
         _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")

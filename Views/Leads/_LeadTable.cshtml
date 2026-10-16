@@ -160,17 +160,17 @@
                                 </span>
                                 @if (!string.IsNullOrEmpty(convClientId))
                                 {
-                                    <a href="/Client/Edit/@convClientId" class="btn btn-light border act-btn ms-1" title="Converted Client dekho"><i class="bi bi-building"></i></a>
+                                    <a href="/Client/Edit/@convClientId" class="btn btn-light border act-btn ms-1" title="View Client"><i class="bi bi-building"></i></a>
                                 }
                             }
                             else
                             {
-                                <button type="button" class="btn btn-success act-btn" onclick="convertLead(@leadId, this)" title="Client me convert karo">
+                                <button type="button" class="btn btn-success act-btn" onclick="convertLead(@leadId, this)" title="Convert to Client">
                                     <i class="bi bi-arrow-left-right"></i>
                                 </button>
                             }
                             <a href="/Leads/Edit/@leadId" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
-                            <form method="post" action="/Leads/Delete/@leadId" onsubmit="return confirm('Is lead ko delete karna hai?');" style="display:inline" class="ms-1">
+                            <form method="post" action="/Leads/Delete/@leadId" onsubmit="return confirm('Delete this lead?');" style="display:inline" class="ms-1">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
                             </form>
@@ -181,7 +181,7 @@
             }
             else
             {
-                <tr><td colspan="@(Model.Columns.Count + 2)" class="text-center text-muted py-5">Koi lead nahi mila</td></tr>
+                <tr><td colspan="@(Model.Columns.Count + 2)" class="text-center text-muted py-5">No leads found</td></tr>
             }
         </tbody>
     </table>

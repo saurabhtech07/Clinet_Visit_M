@@ -114,9 +114,9 @@ body {
 /* ================= SECTION TITLES ================= */
 
 .sidebar-section-title {
-    padding: 15px 16px 7px;
+    padding: 13px 16px 6px;
     color: #aebbd0;
-    font-size: 11.5px;
+    font-size: 10.5px;
     font-weight: 700;
     letter-spacing: .4px;
     text-transform: uppercase;
@@ -129,26 +129,26 @@ body {
 .sidebar .nav-link {
     display: flex;
     align-items: center;
-    gap: 11px;
-    height: 44px;
-    padding: 9px 18px;
+    gap: 10px;
+    height: 38px;
+    padding: 7px 18px;
     color: #d5deed;
     text-decoration: none;
-    font-size: 15px;
+    font-size: 13.5px;
     border-left: 3px solid transparent;
     white-space: nowrap;
     transition: all .15s ease;
 }
 
 .sidebar .nav-link i {
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: 7px;
+    font-size: 13px;
     text-align: center;
 }
 
@@ -213,8 +213,8 @@ body.sidebar-collapsed .sidebar-section-title {
 /* ONLY ICONS */
 body.sidebar-collapsed .sidebar .nav-link {
     justify-content: center;
-    height: 40px;
-    padding: 8px 0;
+    height: 36px;
+    padding: 7px 0;
     border-left: 0;
 }
 
@@ -223,10 +223,10 @@ body.sidebar-collapsed .sidebar .nav-link > span {
 }
 
 body.sidebar-collapsed .sidebar .nav-link i {
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    font-size: 15px;
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+    font-size: 13px;
 }
 
 
