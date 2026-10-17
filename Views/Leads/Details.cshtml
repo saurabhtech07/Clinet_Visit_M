@@ -80,10 +80,7 @@
         }
         <div>
             <h4 class="fw-bold mb-0">@Str("LeadPerson") <span class="text-muted" style="font-size:14px;font-weight:600;">@Str("Company")</span></h4>
-            @if (!isPipe)
-            {
-                <div class="text-muted" style="font-size:12px;">Lead #@leadId &nbsp;·&nbsp; Activity &amp; Details</div>
-            }
+            <div class="text-muted" style="font-size:12px;">Lead #@leadId &nbsp;·&nbsp; Activity &amp; Details</div>
         </div>
     </div>
     <div class="d-flex gap-2 align-items-center">
@@ -104,10 +101,7 @@
                         }
                     }
                 </select>
-                @if (!isPipe)
-                {
-                    <button type="button" id="leadNextStage" class="btn btn-light border btn-sm" title="Move to next stage"><i class="bi bi-arrow-right"></i></button>
-                }
+                <button type="button" id="leadNextStage" class="btn btn-light border btn-sm" title="Move to next stage"><i class="bi bi-arrow-right"></i></button>
             </div>
         }
         @if (IsConv)
@@ -115,7 +109,7 @@
             <span style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#dcfce7; color:#15803d;">
                 <i class="bi bi-check2-circle"></i> Converted
             </span>
-            @if (!isPipe && !string.IsNullOrEmpty(ConvClientId))
+            @if (!string.IsNullOrEmpty(ConvClientId))
             {
                 <a href="/Client/Edit/@ConvClientId" class="btn btn-light border btn-sm"><i class="bi bi-building me-1"></i> View Client</a>
             }
@@ -133,8 +127,6 @@
 
 @Html.AntiForgeryToken()
 
-@if (!isPipe)
-{
 <div class="row g-3">
     <!-- LEFT : info + activity -->
     <div class="col-lg-12">
@@ -218,7 +210,6 @@
         </div>
     </div>
 </div>
-}
 
 <script>
     (function () {

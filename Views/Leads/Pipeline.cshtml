@@ -109,7 +109,7 @@
                 var id = card.dataset.leadId;
                 if (!id) return;
                 var url = '/Leads/Details/' + id + '?mode=pipe';
-                if (window.FormModal && window.FormModal.open) window.FormModal.open(url, 'Lead Details', { narrow: true });
+                if (window.FormModal && window.FormModal.open) window.FormModal.open(url, 'Lead Details', { wide: true });
                 else if (window.loadPage) window.loadPage(url, 'Activity & Details');
                 else window.location.href = url;
             });
