@@ -99,7 +99,7 @@
             });
         }
 
-        // Card click -> wahi Lead View jo Leads page ke eye icon se khulti hai
+        // Card click -> DSS Report waisa modal: /Leads/Details/{id} se content load
         window.__pipeDragging = false;
         if (!window.__pipeNavClick) {
             window.__pipeNavClick = true;
@@ -108,9 +108,41 @@
                 if (!card || window.__pipeDragging) return;
                 var id = card.dataset.leadId;
                 if (!id) return;
-                var url = '/Leads/Details/' + id;
-                if (window.loadPage) window.loadPage(url, 'Activity & Details');
-                else window.location.href = url;
+
+                var modalEl = document.getElementById('leadViewModal');
+                var body = modalEl ? modalEl.querySelector('.lv-body') : null;
+                var titleEl = modalEl ? modalEl.querySelector('.lv-title') : null;
+                if (!modalEl || !body) { window.location.href = '/Leads/Details/' + id; return; }
+
+                if (titleEl) titleEl.textContent = 'Lead Details';
+                body.innerHTML = '<div class=\"text-center py-4 text-muted\"><div class=\"spinner-border spinner-border-sm me-2\"></div>Loading...</div>';
+
+                var bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                bsModal.show();
+
+                setTimeout(function () {
+                    fetch('/Leads/Details/' + id, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+                        .then(function (html) {
+                            var tmp = document.createElement('div');
+                            tmp.innerHTML = html;
+                            var area = tmp.querySelector('#mainContentArea');
+                            body.innerHTML = area ? area.innerHTML : html;
+                            body.querySelectorAll('a[href^=\"/Leads/Edit/\"], .actions-col, .actions-cell').forEach(function (el) { el.remove(); });
+                            var h = body.querySelector('h1,h2,h3,h4,h5');
+                            if (h && titleEl) { titleEl.innerHTML = '<i class=\"bi bi-person-lines-fill me-1\"></i> ' + h.textContent.trim(); h.remove(); }
+                        })
+                        .catch(function () {
+                            body.innerHTML = '<div class=\"text-center py-4 text-muted\">Could not load details.</div>';
+                        });
+                }, 0);
+            });
+
+            document.addEventListener('hidden.bs.modal', function (e) {
+                if (e.target && e.target.id === 'leadViewModal') {
+                    var b = e.target.querySelector('.lv-body');
+                    if (b) b.innerHTML = '';
+                }
             });
         }
 
@@ -162,3 +194,20 @@
         initSortable(0);
     })();
 </script>
+
+<!-- LEAD VIEW MODAL (DSS Report jaisa) -->
+<div class="modal fade" id="leadViewModal" tabindex="-1" aria-labelledby="leadViewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:12px;">
+      <div class="modal-header" style="background:#0f172a; color:#fff; border-radius:11px 11px 0 0; padding:10px 14px;">
+        <h6 class="modal-title mb-0 fw-bold lv-title" id="leadViewModalLabel"><i class="bi bi-person-lines-fill me-1"></i> Lead Details</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="max-height:75vh; overflow-y:auto;">
+        <div class="lv-body p-3">
+          <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
