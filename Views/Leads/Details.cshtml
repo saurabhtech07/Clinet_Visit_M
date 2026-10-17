@@ -248,7 +248,7 @@
                     .then(function (d) {
                         Ajax.toast(d.message || "Converted.", "success");
                         if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
-                        else window.location.href = "/Leads/Details/@leadId";
+                        else window.location.href = "/Leads/Details/@leadId");
                     })
                     .catch(function (e) { cbtn.disabled = false; Ajax.toast(e.message, "error"); });
             });
