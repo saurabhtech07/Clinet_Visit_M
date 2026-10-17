@@ -1,8 +1,16 @@
 @model ClientVisitManagement.Models.LeadDetailViewModel
 @{
-    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    bool isModal = Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    if (isModal)
     {
         Layout = null;
+    }
+    else
+    {
+        if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            Layout = null;
+        }
     }
 
     var leadId = Model.LeadId;
@@ -71,7 +79,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="d-flex align-items-center gap-2">
-        <a href="/Leads" class="btn btn-light border btn-sm"><i class="bi bi-arrow-left"></i></a>
+@if (!isModal)
+        {
+            <a href="/Leads" class="btn btn-light border btn-sm"><i class="bi bi-arrow-left"></i></a>
+        }
         <div>
             <h4 class="fw-bold mb-0">@Str("LeadPerson") <span class="text-muted" style="font-size:14px;font-weight:600;">@Str("Company")</span></h4>
             <div class="text-muted" style="font-size:12px;">Lead #@leadId &nbsp;·&nbsp; Activity &amp; Details</div>
@@ -108,11 +119,14 @@
                 <a href="/Client/Edit/@ConvClientId" class="btn btn-light border btn-sm"><i class="bi bi-building me-1"></i> View Client</a>
             }
         }
-        else
+@if (!isModal)
         {
             <button type="button" id="convertLeadBtn" class="btn btn-success btn-sm"><i class="bi bi-arrow-left-right me-1"></i> Convert to Client</button>
         }
-        <a href="/Leads/Edit/@leadId" class="btn btn-primary btn-sm"><i class="bi bi-pencil me-1"></i> Edit Lead</a>
+@if (!isModal)
+        {
+            <a href="/Leads/Edit/@leadId" class="btn btn-primary btn-sm"><i class="bi bi-pencil me-1"></i> Edit Lead</a>
+        }
     </div>
 </div>
 
@@ -120,7 +134,7 @@
 
 <div class="row g-3">
     <!-- LEFT : info + activity -->
-    <div class="col-lg-8">
+    <div class="col-lg-12">
         <div class="ld-card p-3 mb-3">
             <div class="d-flex align-items-center gap-2 mb-3">
                 <i class="bi bi-person-vcard text-primary"></i>
