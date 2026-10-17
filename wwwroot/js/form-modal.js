@@ -30,7 +30,7 @@
         if (backBtn) backBtn.addEventListener("click", function () { hide(); });
         modalEl.addEventListener("hidden.bs.modal", function () {
             if (bodyEl) bodyEl.innerHTML = "";
-            setWide(false);   // normal form width par wapas aa jao
+            setSize(null);   // normal form width par wapas aa jao
         });
         return true;
     }
@@ -97,17 +97,20 @@
         }
     }
 
-    // Detail popups (Lead view) ke liye modal ko thoda chaura kar do
-    function setWide(on) {
+    // Modal width variants: wide for detail popups, narrow for compact popups
+    function setSize(opts) {
         var dlg = modalEl && modalEl.querySelector(".modal-dialog");
-        if (dlg) dlg.classList.toggle("app-modal-wide", !!on);
+        if (!dlg) return;
+        dlg.classList.remove("app-modal-wide", "app-modal-narrow");
+        if (opts && opts.wide) dlg.classList.add("app-modal-wide");
+        else if (opts && opts.narrow) dlg.classList.add("app-modal-narrow");
     }
 
     function load(url, label, opts) {
         if (!ensure()) { window.location.href = url; return Promise.resolve(); }
 
         lastUrl = url;
-        setWide(!!(opts && opts.wide));
+        setSize(opts);
         if (titleEl) titleEl.textContent = (label && label.length < 40) ? label : "Loading…";
         bodyEl.innerHTML = '<div class="text-center py-5 text-muted">' +
             '<div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';

@@ -1,6 +1,8 @@
 @model ClientVisitManagement.Models.LeadDetailViewModel
 @{
     bool isModal = Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+    // Pipeline card popup -> compact view (only stage dropdown + convert button)
+    bool isPipe = isModal && string.Equals(Context.Request.Query["mode"], "pipe", StringComparison.OrdinalIgnoreCase);
     if (isModal)
     {
         Layout = null;
@@ -78,7 +80,10 @@
         }
         <div>
             <h4 class="fw-bold mb-0">@Str("LeadPerson") <span class="text-muted" style="font-size:14px;font-weight:600;">@Str("Company")</span></h4>
-            <div class="text-muted" style="font-size:12px;">Lead #@leadId &nbsp;·&nbsp; Activity &amp; Details</div>
+            @if (!isPipe)
+            {
+                <div class="text-muted" style="font-size:12px;">Lead #@leadId &nbsp;·&nbsp; Activity &amp; Details</div>
+            }
         </div>
     </div>
     <div class="d-flex gap-2 align-items-center">
@@ -99,7 +104,10 @@
                         }
                     }
                 </select>
-                <button type="button" id="leadNextStage" class="btn btn-light border btn-sm" title="Move to next stage"><i class="bi bi-arrow-right"></i></button>
+                @if (!isPipe)
+                {
+                    <button type="button" id="leadNextStage" class="btn btn-light border btn-sm" title="Move to next stage"><i class="bi bi-arrow-right"></i></button>
+                }
             </div>
         }
         @if (IsConv)
@@ -107,12 +115,12 @@
             <span style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#dcfce7; color:#15803d;">
                 <i class="bi bi-check2-circle"></i> Converted
             </span>
-            @if (!string.IsNullOrEmpty(ConvClientId))
+            @if (!isPipe && !string.IsNullOrEmpty(ConvClientId))
             {
                 <a href="/Client/Edit/@ConvClientId" class="btn btn-light border btn-sm"><i class="bi bi-building me-1"></i> View Client</a>
             }
         }
-        @if (!isModal)
+        @if (!isModal || isPipe)
         {
             <button type="button" id="convertLeadBtn" class="btn btn-success btn-sm"><i class="bi bi-arrow-left-right me-1"></i> Convert to Client</button>
         }
@@ -125,6 +133,8 @@
 
 @Html.AntiForgeryToken()
 
+@if (!isPipe)
+{
 <div class="row g-3">
     <!-- LEFT : info + activity -->
     <div class="col-lg-12">
@@ -208,9 +218,25 @@
         </div>
     </div>
 </div>
+}
 
 <script>
     (function () {
+        var isModal = @(isModal ? "true" : "false");
+        var isPipe = @(isPipe ? "true" : "false");
+        // After stage change / convert: close the popup and refresh the right page
+        function reloadAfterChange() {
+            if (isModal && window.FormModal && window.FormModal.hide) window.FormModal.hide();
+            if (isPipe) {
+                if (window.loadPage) window.loadPage("/Leads/Pipeline");
+                else window.location.href = "/Leads/Pipeline";
+                return;
+            }
+            if (isModal && window.refreshCurrentTable) { window.refreshCurrentTable(); return; }
+            if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
+            else window.location.href = "/Leads/Details/@leadId";
+        }
+
         var form = document.getElementById("leadForm");
         if (form) {
             form.addEventListener("submit", function (e) {
@@ -250,8 +276,7 @@
                 Ajax.post("/Leads/Convert/@leadId", new FormData())
                     .then(function (d) {
                         Ajax.toast(d.message || "Converted.", "success");
-                        if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
-                        else window.location.href = "/Leads/Details/@leadId");
+                        reloadAfterChange();
                     })
                     .catch(function (e) { cbtn.disabled = false; Ajax.toast(e.message, "error"); });
             });
@@ -262,8 +287,7 @@
             Ajax.post("/Leads/UpdateStatus?id=@leadId&status=" + encodeURIComponent(newStage), new FormData())
                 .then(function (d) {
                     Ajax.toast(d.message || "Stage updated.", "success");
-                    if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
-                    else window.location.href = "/Leads/Details/@leadId";
+                    reloadAfterChange();
                 })
                 .catch(function (e) { Ajax.toast(e.message, "error"); });
         }
@@ -284,7 +308,7 @@
                 var current = stageSel ? stageSel.value : "";
                 var i = flow.indexOf(current);
                 if (i < 0 || i >= flow.length - 1) {
-                    Ajax.toast("Ye lead already aakhri stage par hai.", "info");
+                    Ajax.toast("This lead is already at the last stage.", "info");
                     return;
                 }
                 nextBtn.disabled = true;
