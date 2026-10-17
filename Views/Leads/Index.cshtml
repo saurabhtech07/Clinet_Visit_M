@@ -7,9 +7,15 @@
 
     var states = ((DynamicTableViewModel)ViewBag.States).Rows;
     var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    var priorityOptions = ViewBag.PriorityOptions as string[] ?? new string[0];
+    var sourceOptions = ViewBag.SourceOptions as string[] ?? new string[0];
+    var users = ViewBag.Users as List<ClientVisitManagement.Models.User> ?? new List<ClientVisitManagement.Models.User>();
 
     var fStatus = ViewBag.FilterStatus as string;
+    var fPriority = ViewBag.FilterPriority as string;
+    var fSource = ViewBag.FilterSource as string;
     var fStateId = ViewBag.FilterStateId as int?;
+    var fAssignedTo = ViewBag.FilterAssignedTo as int?;
     var fFrom = ViewBag.FilterFrom as string;
     var fTo = ViewBag.FilterTo as string;
 
@@ -17,23 +23,23 @@
 }
 
 <style>
-    .dss-kpi-card{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:12px 14px;height:76px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-    .dss-kpi-label{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:2px;letter-spacing:0.5px}
-    .dss-kpi-value{font-size:22px;font-weight:800;color:#0f172a;line-height:1}
-    .dss-kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
-    .dss-toolbar{background:#fff;border-radius:14px;border:1px solid #eef2f7;padding:14px 18px}
+    .dss-kpi-card{background:#fff;border-radius:10px;border:1px solid #eef2f7;padding:8px 12px;height:60px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+    .dss-kpi-label{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:1px;letter-spacing:0.4px}
+    .dss-kpi-value{font-size:18px;font-weight:800;color:#0f172a;line-height:1}
+    .dss-kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0}
+    .dss-toolbar{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:10px 12px}
     .dss-toolbar-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px}
     .dss-search-input{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;padding:9px 14px}
     .dss-table-card{background:#fff;border-radius:14px;border:1px solid #eef2f7;overflow:hidden}
     .btn-dss-dark{background:#0f172a;color:#fff;border-radius:10px;font-size:13px;padding:9px 16px}
     .leads-search{position:relative}
-    .leads-search i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px}
-    .leads-input{height:36px;font-size:13px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+    .leads-search i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px}
+    .leads-input{height:32px;font-size:12.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;padding-top:4px;padding-bottom:4px}
     .leads-input:focus{background:#fff;border-color:#cbd5e1;box-shadow:none}
-    .leads-search input{padding-left:34px}
-    .lead-date{display:flex;align-items:center;gap:5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:0 9px;height:36px}
-    .lead-date span{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase}
-    .lead-date input{border:0;background:transparent;font-size:12.5px;color:#0f172a;outline:none;width:106px}
+    .leads-search input{padding-left:30px}
+    .lead-date{display:flex;align-items:center;gap:5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:0 8px;height:32px}
+    .lead-date span{font-size:9.5px;font-weight:700;color:#64748b;text-transform:uppercase}
+    .lead-date input{border:0;background:transparent;font-size:12px;color:#0f172a;outline:none;width:100px}
     @@media print{
       body *{visibility:hidden}
       .dss-table-card, .dss-table-card *{visibility:visible}
@@ -44,88 +50,99 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-2">
     <div>
         <h4 class="fw-bold mb-0">Lead Management</h4>
         <div class="text-muted" style="font-size:12.5px;">Track, Manage &amp; Convert Your Prospects</div>
     </div>
-    <a href="/Leads/Create" class="btn btn-dss-dark"><i class="bi bi-plus-circle me-1"></i> Add Lead</a>
+    <div class="d-flex gap-2">
+        <a href="/Leads/Pipeline" class="btn btn-light border"><i class="bi bi-kanban me-1"></i> Pipeline</a>
+        <a href="/Leads/Create" class="btn btn-dss-dark"><i class="bi bi-plus-circle me-1"></i> Add Lead</a>
+    </div>
 </div>
 @Html.AntiForgeryToken()
 
-<!-- 4 CARDS -->
-<div class="row g-3 mb-3">
-    <div class="col-md-3">
+<!-- CARDS -->
+<div class="row g-2 mb-2">
+    <div class="col-6 col-md-4">
         <div class="dss-kpi-card">
             <div>
                 <div class="dss-kpi-label">Total Leads</div>
-                <div class="dss-kpi-value">@ViewBag.TotalLeads</div>
+                <div class="dss-kpi-value" id="kpiTotal">@ViewBag.TotalLeads</div>
             </div>
             <div class="dss-kpi-icon" style="background:#2563eb;"><i class="bi bi-person-lines-fill"></i></div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="dss-kpi-card">
-            <div>
-                <div class="dss-kpi-label">Open Leads</div>
-                <div class="dss-kpi-value">@ViewBag.OpenLeads</div>
-            </div>
-            <div class="dss-kpi-icon" style="background:#f59e0b;"><i class="bi bi-hourglass-split"></i></div>
-        </div>
-    </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4">
         <div class="dss-kpi-card">
             <div>
                 <div class="dss-kpi-label">Converted</div>
-                <div class="dss-kpi-value">@ViewBag.ConvertedLeads</div>
+                <div class="dss-kpi-value" id="kpiConverted">@ViewBag.ConvertedLeads</div>
             </div>
             <div class="dss-kpi-icon" style="background:#10b981;"><i class="bi bi-check2-circle"></i></div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4">
         <div class="dss-kpi-card">
             <div>
-                <div class="dss-kpi-label">Total Deal Value</div>
-                <div class="dss-kpi-value" style="font-size:19px;">₹ @dealValue.ToString("N0")</div>
+                <div class="dss-kpi-label">Deal Value</div>
+                <div class="dss-kpi-value" id="kpiDealValue" style="font-size:15px;">₹ @dealValue.ToString("N0")</div>
             </div>
             <div class="dss-kpi-icon" style="background:#8b5cf6;"><i class="bi bi-cash-coin"></i></div>
         </div>
     </div>
 </div>
 
-<!-- FILTER TOOLBAR -->
-<div class="dss-toolbar mb-3">
-    <!-- ROW 1 : 3 boxes (Search / Status / State) -->
-    <div class="row g-2">
-        <div class="col-md-6">
-            <div class="leads-search">
-                <i class="bi bi-search"></i>
-                <input type="text" id="leadSearch" value="@Model.SearchTerm" class="form-control leads-input" placeholder="Search lead / company / mobile / email..." autocomplete="off" />
-            </div>
+<!-- FILTER TOOLBAR (compact single row) -->
+<div class="dss-toolbar mb-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="leads-search" style="flex:1 1 200px; min-width:170px;">
+            <i class="bi bi-search"></i>
+            <input type="text" id="leadSearch" value="@Model.SearchTerm" class="form-control leads-input" placeholder="Search lead / company / mobile..." autocomplete="off" />
         </div>
-        <div class="col-md-3">
-            <select id="leadStatus" class="form-select leads-input" title="Status">
-                <option value="">All Status</option>
-                @foreach (var s in statusOptions)
-                {
-                    <option value="@s" selected="@(fStatus == s)">@s</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select id="leadState" class="form-select leads-input" title="State">
-                <option value="">All States</option>
-                @foreach (var s in states)
-                {
-                    var sid = s["StateId"]?.ToString();
-                    <option value="@sid" selected="@(fStateId.HasValue && fStateId.Value.ToString() == sid)">@s["StateName"]</option>
-                }
-            </select>
-        </div>
-    </div>
 
-    <!-- ROW 2 : From / To / Clear / Export -->
-    <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+        <select id="leadStatus" class="form-select leads-input" style="width:130px;" title="Pipeline Stage">
+            <option value="">All Stages</option>
+            @foreach (var s in statusOptions)
+            {
+                <option value="@s" selected="@(fStatus == s)">@s</option>
+            }
+        </select>
+
+        <select id="leadPriority" class="form-select leads-input d-none" style="width:118px;" title="Priority">
+            <option value="">Priority</option>
+            @foreach (var p in priorityOptions)
+            {
+                <option value="@p" selected="@(fPriority == p)">@p</option>
+            }
+        </select>
+
+        <select id="leadSource" class="form-select leads-input" style="width:125px;" title="Source">
+            <option value="">Source</option>
+            @foreach (var src in sourceOptions)
+            {
+                <option value="@src" selected="@(fSource == src)">@src</option>
+            }
+        </select>
+
+        <select id="leadAssigned" class="form-select leads-input" style="width:140px;" title="Assigned To">
+            <option value="">All Users</option>
+            @foreach (var u in users)
+            {
+                var nm = string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName;
+                <option value="@u.UserId" selected="@(fAssignedTo.HasValue && fAssignedTo.Value == u.UserId)">@nm</option>
+            }
+        </select>
+
+        <select id="leadState" class="form-select leads-input" style="width:140px;" title="State">
+            <option value="">All States</option>
+            @foreach (var s in states)
+            {
+                var sid = s["StateId"]?.ToString();
+                <option value="@sid" selected="@(fStateId.HasValue && fStateId.Value.ToString() == sid)">@s["StateName"]</option>
+            }
+        </select>
+
         <div class="lead-date" title="Created On — From">
             <span>From</span>
             <input type="date" id="leadFrom" value="@fFrom" />
@@ -135,23 +152,21 @@
             <input type="date" id="leadTo" value="@fTo" />
         </div>
 
-        <button id="clearLeadFilter" class="btn btn-light border" style="border-radius:9px; font-size:13px; height:36px;">
+        <button id="clearLeadFilter" class="btn btn-light border" style="border-radius:9px; font-size:12.5px; height:32px;">
             <i class="bi bi-x-circle me-1"></i>Clear
         </button>
 
-        <div class="ms-auto">
-            <div class="dropdown">
-                <button class="btn btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                        style="border-radius:9px; font-size:13px; height:36px;">
-                    <i class="bi bi-download me-1"></i> Export
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                    <li><a id="leadExportExcel" class="dropdown-item" href="/Leads/ExportExcel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel</a></li>
-                    <li><a id="leadExportCsv" class="dropdown-item" href="/Leads/ExportCsv"><i class="bi bi-filetype-csv me-2 text-primary"></i>CSV</a></li>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.print();"><i class="bi bi-printer me-2"></i>Print</a></li>
-                </ul>
-            </div>
+        <div class="dropdown ms-auto">
+            <button class="btn btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                    style="border-radius:9px; font-size:12.5px; height:32px;">
+                <i class="bi bi-download me-1"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li><a id="leadExportExcel" class="dropdown-item" href="/Leads/ExportExcel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel</a></li>
+                <li><a id="leadExportCsv" class="dropdown-item" href="/Leads/ExportCsv"><i class="bi bi-filetype-csv me-2 text-primary"></i>CSV</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.printTable('leadTable','Lead Management');"><i class="bi bi-printer me-2"></i>Print</a></li>
+            </ul>
         </div>
     </div>
 </div>
@@ -173,6 +188,9 @@
             p.append("pageSize", (el("leadPageSize") && el("leadPageSize").value) || 10);
             var s = el("leadSearch"); if (s && s.value.trim()) p.append("search", s.value.trim());
             var st = el("leadStatus"); if (st && st.value) p.append("status", st.value);
+            var pr = el("leadPriority"); if (pr && pr.value) p.append("priority", pr.value);
+            var so = el("leadSource"); if (so && so.value) p.append("source", so.value);
+            var as = el("leadAssigned"); if (as && as.value) p.append("assignedTo", as.value);
             var sd = el("leadState"); if (sd && sd.value) p.append("stateId", sd.value);
             var fd = el("leadFrom"); if (fd && fd.value) p.append("fromDate", fd.value);
             var td = el("leadTo"); if (td && td.value) p.append("toDate", td.value);
@@ -198,12 +216,26 @@
 
         // Expose for the shared delete handler + convert
         window.refreshCurrentTable = function () { loadLeadTable(buildLeadUrl(1)); };
+
+        // Convert hone par KPI cards bhi turant update karo (converted lead Total/Deal Value se hat jaye)
+        function applyConvertedKpi(d) {
+            if (!d || d.total === undefined) return;
+            function set(id, val) { var n = document.getElementById(id); if (n) n.textContent = val; }
+            set("kpiTotal", d.total);
+            set("kpiOpen", d.open);
+            set("kpiConverted", d.converted);
+            var dv = document.getElementById("kpiDealValue");
+            if (dv) dv.textContent = "\u20B9 " + Number(d.dealValue || 0).toLocaleString("en-IN");
+            window.__leadCards = { total: d.total, open: d.open, converted: d.converted, dealValue: d.dealValue };
+        }
+
         window.convertLead = function (id, btn) {
             if (!confirm("Convert this lead to a Client?")) return;
             if (btn) btn.disabled = true;
             Ajax.post("/Leads/Convert/" + id, new FormData())
                 .then(function (d) {
                     Ajax.toast(d.message || "Converted to Client.", "success");
+                    applyConvertedKpi(d);
                     loadLeadTable(buildLeadUrl(1));
                 })
                 .catch(function (e) {
@@ -218,6 +250,15 @@
             window.__leadNav.delegates = true;
 
             document.addEventListener("click", function (e) {
+                var details = e.target.closest(".lead-details-link");
+                if (details) {
+                    e.preventDefault();
+                    var url = details.getAttribute("href");
+                    if (window.loadPage) window.loadPage(url, "Activity & Details");
+                    else window.location.href = url;
+                    return;
+                }
+
                 var link = e.target.closest(".ajax-lead-link");
                 if (!link) return;
                 e.preventDefault();
@@ -241,7 +282,7 @@
         }
 
         // Filters
-        ["leadStatus", "leadState", "leadFrom", "leadTo"].forEach(function (id) {
+        ["leadStatus", "leadPriority", "leadSource", "leadAssigned", "leadState", "leadFrom", "leadTo"].forEach(function (id) {
             var node = el(id);
             if (node) node.addEventListener("change", function () { loadLeadTable(buildLeadUrl(1)); });
         });
@@ -250,7 +291,7 @@
         var clear = el("clearLeadFilter");
         if (clear) {
             clear.addEventListener("click", function () {
-                ["leadSearch", "leadStatus", "leadState", "leadFrom", "leadTo"].forEach(function (id) {
+                ["leadSearch", "leadStatus", "leadPriority", "leadSource", "leadAssigned", "leadState", "leadFrom", "leadTo"].forEach(function (id) {
                     var node = el(id);
                     if (node) node.value = "";
                 });

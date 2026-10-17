@@ -294,18 +294,46 @@
 
 @model ClientVisitManagement.Models.DynamicTableViewModel
 @Html.AntiForgeryToken()
-<div class="table-scroll" style="max-height:420px;overflow-y:auto;">
-<table class="table table-bordered table-hover mb-0">
-<thead style="position:sticky;top:0;z-index:10;background:#f8fafc;">
+@{
+    int startRow = Model.TotalRecords == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int endRow = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords);
+    Func<int, string> PgUrl = p => "/StateMaster?page=" + p
+        + "&pageSize=" + Model.PageSize
+        + "&search=" + Uri.EscapeDataString(Model.SearchTerm ?? "")
+        + "&sort=" + Uri.EscapeDataString(Model.SortColumn ?? "")
+        + "&direction=" + Uri.EscapeDataString(Model.SortDirection ?? "");
+}
+<style>
+  /* site.css ke global .table-scroll ko override — koi inner/horizontal scroll nahi */
+  .table-scroll { position: relative; max-height: none; overflow: visible; border: 0; border-radius: 0; }
+  .table-scroll table { min-width: 0; }
+  .table-scroll .state-grid-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; margin-bottom: 0; }
+  .table-scroll .state-grid-table thead th {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.3px; color: #64748b;
+      text-transform: uppercase; background: #f8fafc !important;
+      border-bottom: 1px solid #e2e8f0; padding: 7px 8px; white-space: nowrap; position: static;
+  }
+  .table-scroll .state-grid-table tbody td {
+      font-size: 12.5px; padding: 5px 8px; border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle; overflow: hidden;
+  }
+  .table-scroll .state-grid-table .cell-clip { display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
+  .table-scroll .state-grid-table tbody td.actions-cell { white-space: nowrap; }
+  .table-scroll .state-grid-table .table-sort-link { color:#475569 !important; text-decoration:none; }
+  .table-scroll .state-grid-table .table-sort-link:hover { color:#0f172a !important; }
+</style>
+<div class="table-scroll">
+<table class="table table-hover mb-0 state-grid-table">
+<thead>
 <tr>
-<th>Sr.No</th>
-<th><a href="/StateMaster?sort=StateId&direction=@(Model.SortColumn=="StateId"&&Model.SortDirection=="ASC"?"DESC":"ASC")&pageSize=@Model.PageSize&search=@Model.SearchTerm" class="ajax-table-link">StateId</a></th>
-<th><a href="/StateMaster?sort=StateCode&direction=@(Model.SortColumn=="StateCode"&&Model.SortDirection=="ASC"?"DESC":"ASC")&pageSize=@Model.PageSize&search=@Model.SearchTerm" class="ajax-table-link">Code</a></th>
-<th><a href="/StateMaster?sort=StateName&direction=ASC&pageSize=@Model.PageSize&search=@Model.SearchTerm" class="ajax-table-link">State Name</a></th>
-<th>Country</th>
-<th>Active</th>
-<th>Date & Time</th>
-<th>Edit</th><th>Delete</th>
+<th style="width:44px;">Sr.No</th>
+<th style="width:70px;"><a href="/StateMaster?sort=StateId&direction=@(Model.SortColumn=="StateId"&&Model.SortDirection=="ASC"?"DESC":"ASC")&pageSize=@Model.PageSize&search=@Model.SearchTerm" class="ajax-table-link table-sort-link">StateId</a></th>
+<th style="width:86px;"><a href="/StateMaster?sort=StateCode&direction=@(Model.SortColumn=="StateCode"&&Model.SortDirection=="ASC"?"DESC":"ASC")&pageSize=@Model.PageSize&search=@Model.SearchTerm" class="ajax-table-link table-sort-link">Code</a></th>
+<th><a href="/StateMaster?sort=StateName&direction=ASC&pageSize=@Model.PageSize&search=@Model.SearchTerm" class="ajax-table-link table-sort-link">State Name</a></th>
+<th style="width:110px;">Country</th>
+<th style="width:74px;">Active</th>
+<th style="width:150px;">Date &amp; Time</th>
+<th class="actions-col" style="width:56px;">Edit</th><th class="actions-col" style="width:64px;">Delete</th>
 </tr>
 </thead>
 <tbody>
@@ -313,14 +341,14 @@
 @foreach(var row in Model.Rows){
 <tr>
 <td>@sr</td>
-<td>@(row.ContainsKey("StateId")?row["StateId"]:"")</td>
+<td><span class="cell-clip">@(row.ContainsKey("StateId")?row["StateId"]:"")</span></td>
 <td><span class="badge bg-light text-dark border">@(row.ContainsKey("StateCode")?row["StateCode"]:"")</span></td>
-<td>@(row.ContainsKey("StateName")?row["StateName"]:"")</td>
-<td>@(row.ContainsKey("Country")?row["Country"]:"India")</td>
+<td><span class="cell-clip">@(row.ContainsKey("StateName")?row["StateName"]:"")</span></td>
+<td><span class="cell-clip">@(row.ContainsKey("Country")?row["Country"]:"India")</span></td>
 <td>@if(row.ContainsKey("IsActive") && row["IsActive"]?.ToString()=="True"){<span class="badge bg-success">Yes</span>}else{<span class="badge bg-secondary">No</span>}</td>
-<td>@(row.ContainsKey("CreatedDate")?Convert.ToDateTime(row["CreatedDate"]).ToString("dd-MM-yyyy hh:mm:ss tt"):"")</td>
-<td><a href="/StateMaster/Edit/@row["StateId"]"><i class="bi bi-pencil-square text-warning"></i></a></td>
-<td><a href="/StateMaster/Delete/@row["StateId"]" class="ajax-delete" data-confirm="Are you sure you want to delete this state?"><i class="bi bi-trash text-danger"></i></a></td>
+<td><span class="cell-clip">@(row.ContainsKey("CreatedDate")?Convert.ToDateTime(row["CreatedDate"]).ToString("dd-MM-yyyy hh:mm tt"):"")</span></td>
+<td class="actions-cell"><a href="/StateMaster/Edit/@row["StateId"]"><i class="bi bi-pencil-square text-warning"></i></a></td>
+<td class="actions-cell"><a href="/StateMaster/Delete/@row["StateId"]" class="ajax-delete" data-confirm="Are you sure you want to delete this state?"><i class="bi bi-trash text-danger"></i></a></td>
 </tr>
 sr++;
 }
@@ -328,16 +356,46 @@ sr++;
 </tbody>
 </table>
 </div>
-<div class="d-flex justify-content-between align-items-center p-3 border-top">
-<span class="text-muted" style="font-size:13px;">Showing @((Model.CurrentPage-1)*Model.PageSize+1) to @Math.Min(Model.CurrentPage*Model.PageSize,Model.TotalRecords) of @Model.TotalRecords</span>
-<div class="d-flex gap-2 align-items-center">
-<select id="statePageSize" class="form-select form-select-sm" style="width:70px;">
-<option value="10" selected="@(Model.PageSize==10)">10</option><option value="25" selected="@(Model.PageSize==25)">25</option><option value="50" selected="@(Model.PageSize==50)">50</option><option value="100" selected="@(Model.PageSize==100)">100</option>
-</select>
-@if(Model.TotalPages>1){
-@for(int p=1;p<=Model.TotalPages;p++){
-@if(p==Model.CurrentPage){<span class="btn btn-sm btn-primary">@p</span>}else{<a class="btn btn-sm btn-light border ajax-table-link" href="/StateMaster?page=@p&pageSize=@Model.PageSize&search=@Model.SearchTerm">@p</a>}
-}
-}
-</div>
+<div class="d-flex justify-content-between align-items-center p-2 border-top bg-white" style="border-radius:0 0 14px 14px;">
+    <div class="d-flex align-items-center gap-2">
+        <select id="statePageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
+            <option value="10" selected="@(Model.PageSize==10)">10</option>
+            <option value="25" selected="@(Model.PageSize==25)">25</option>
+            <option value="50" selected="@(Model.PageSize==50)">50</option>
+            <option value="100" selected="@(Model.PageSize==100)">100</option>
+        </select>
+        <span style="font-size:12px; color:#64748b;">records per page</span>
+    </div>
+    <div style="font-size:12px; color:#64748b;">Showing @startRow to @endRow of @Model.TotalRecords entries</div>
+    <div class="d-flex gap-1">
+        @if (Model.CurrentPage > 1)
+        {
+            <a class="btn btn-sm btn-light border ajax-table-link" href="@PgUrl(Model.CurrentPage - 1)">Previous</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-light border" disabled>Previous</button>
+        }
+
+        @for (int p = 1; p <= Model.TotalPages; p++)
+        {
+            if (p == Model.CurrentPage)
+            {
+                <span class="btn btn-sm" style="background:#0f172a; color:#fff;">@p</span>
+            }
+            else
+            {
+                <a class="btn btn-sm btn-light border ajax-table-link" href="@PgUrl(p)">@p</a>
+            }
+        }
+
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a class="btn btn-sm btn-light border ajax-table-link" href="@PgUrl(Model.CurrentPage + 1)">Next</a>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-light border" disabled>Next</button>
+        }
+    </div>
 </div>

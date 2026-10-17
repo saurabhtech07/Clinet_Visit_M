@@ -1,0 +1,164 @@
+@model List<Dictionary<string, object?>>
+@{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+    var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    var users = ViewBag.Users as List<ClientVisitManagement.Models.User> ?? new List<ClientVisitManagement.Models.User>();
+}
+
+<style>
+    /* Saari 7 columns screen me fit — koi horizontal scroll nahi */
+    .pipe-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .pipe-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start}
+    .pipe-col{background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:8px;min-width:0;display:flex;flex-direction:column}
+    .pipe-col-head{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:#475569;padding:2px 4px 7px;border-bottom:1px solid #e2e8f0}
+    .pipe-col-head span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pipe-count{background:#e2e8f0;color:#475569;border-radius:20px;font-size:10px;font-weight:700;padding:1px 7px;flex-shrink:0}
+    .pipe-cards{display:flex;flex-direction:column;gap:6px;min-height:46px;padding-top:7px}
+    .pipe-card{position:relative;background:#fff;border:1px solid #eef2f7;border-radius:9px;padding:8px 9px;box-shadow:0 1px 2px rgba(15,23,42,0.05);cursor:pointer}
+    .pipe-card:hover{box-shadow:0 3px 10px rgba(15,23,42,0.12);border-color:#dbeafe}
+    .pipe-ghost{opacity:0.45}
+    .pipe-view{position:absolute;top:6px;right:7px;font-size:11px;color:#94a3b8;opacity:0;transition:opacity .15s}
+    .pipe-card:hover .pipe-view{opacity:1}
+    .pipe-name{font-size:12px;font-weight:700;color:#0f172a;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:14px}
+    .pipe-company{font-size:10.5px;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pipe-meta{display:flex;justify-content:space-between;align-items:center;gap:4px;margin-top:6px;flex-wrap:wrap}
+    .pipe-value{font-size:11px;font-weight:700;color:#059669}
+    .pipe-pri{font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:0.3px}
+    .pri-Hot{background:#fee2e2;color:#b91c1c}
+    .pri-Warm{background:#ffedd5;color:#c2410c}
+    .pri-Cold{background:#e0f2fe;color:#0369a1}
+    .pipe-col[data-status="Won"]{border-color:#bbf7d0;background:#f6fef9}
+    .pipe-col[data-status="Lost"]{border-color:#fecaca;background:#fef7f7}
+    @@media (max-width:1200px){ .pipe-board{grid-template-columns:repeat(4,minmax(0,1fr))} }
+    @@media (max-width:720px){ .pipe-board{grid-template-columns:repeat(2,minmax(0,1fr))} }
+</style>
+
+@Html.AntiForgeryToken()
+
+<div class="pipe-head">
+    <div>
+        <h4 class="fw-bold mb-0">Lead Pipeline</h4>
+        <div class="text-muted" style="font-size:12.5px;">Drag a card to change stage &middot; Click a card to view full details</div>
+    </div>
+    <a href="/Leads" class="btn btn-light border" style="border-radius:9px; font-size:12.5px; height:32px; display:inline-flex; align-items:center;">
+        <i class="bi bi-arrow-left me-1"></i> Back to Leads
+    </a>
+</div>
+
+<div class="pipe-board" id="kanbanBoard">
+    @foreach (var status in statusOptions)
+    {
+        var items = Model.Where(l => l.ContainsKey("Status") && l["Status"]?.ToString() == status).ToList();
+        <div class="pipe-col" data-status="@status">
+            <div class="pipe-col-head">
+                <span>@status</span>
+                <span class="pipe-count">@items.Count</span>
+            </div>
+            <div class="pipe-cards">
+                @foreach (var lead in items)
+                {
+                    <div class="pipe-card" data-lead-id="@lead["LeadId"]" title="@lead["LeadPerson"]">
+                        <i class="bi bi-eye pipe-view" title="View full details"></i>
+                        <div class="pipe-name">@lead["LeadPerson"]</div>
+                        @if (lead.ContainsKey("Company") && lead["Company"] != null && !string.IsNullOrWhiteSpace(lead["Company"].ToString()))
+                        {
+                            <div class="pipe-company">@lead["Company"]</div>
+                        }
+                        <div class="pipe-meta">
+                            @if (lead.ContainsKey("DealValue") && lead["DealValue"] != null && decimal.TryParse(lead["DealValue"].ToString(), out var dv) && dv > 0)
+                            {
+                                <span class="pipe-value">₹ @dv.ToString("N0")</span>
+                            }
+                            else
+                            {
+                                <span></span>
+                            }
+                            @if (lead.ContainsKey("Priority") && lead["Priority"] != null && !string.IsNullOrWhiteSpace(lead["Priority"].ToString()))
+                            {
+                                var pr = lead["Priority"].ToString();
+                                <span class="pipe-pri pri-@pr">@pr</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    (function () {
+        function updateCounts() {
+            document.querySelectorAll('.pipe-col').forEach(function (col) {
+                var c = col.querySelector('.pipe-count');
+                if (c) c.textContent = col.querySelectorAll('.pipe-card').length;
+            });
+        }
+
+        // Card click -> wahi Lead View jo Leads page ke eye icon se khulti hai
+        window.__pipeDragging = false;
+        if (!window.__pipeNavClick) {
+            window.__pipeNavClick = true;
+            document.addEventListener('click', function (e) {
+                var card = e.target.closest('.pipe-card');
+                if (!card || window.__pipeDragging) return;
+                var id = card.dataset.leadId;
+                if (!id) return;
+                var url = '/Leads/Details/' + id;
+                if (window.loadPage) window.loadPage(url, 'Activity & Details');
+                else window.location.href = url;
+            });
+        }
+
+        function initSortable(attempt) {
+            attempt = attempt || 0;
+            if (typeof Sortable === 'undefined') {
+                if (attempt < 50) setTimeout(function () { initSortable(attempt + 1); }, 100);
+                return;
+            }
+            document.querySelectorAll('.pipe-cards').forEach(function (el) {
+                if (el.dataset.sortableInit === '1') return;
+                el.dataset.sortableInit = '1';
+                new Sortable(el, {
+                    group: 'kanban',
+                    animation: 150,
+                    ghostClass: 'pipe-ghost',
+                    onStart: function () { window.__pipeDragging = true; },
+                    onEnd: function (evt) {
+                        var leadId = evt.item.dataset.leadId;
+                        var newStatus = evt.to.closest('.pipe-col').dataset.status;
+                        var oldStatus = evt.from.closest('.pipe-col').dataset.status;
+
+                        updateCounts();
+                        // drag ke turant baad aane wale click ko ignore karo
+                        setTimeout(function () { window.__pipeDragging = false; }, 80);
+                        if (newStatus === oldStatus) return;
+
+                        fetch('/Leads/UpdateStatus', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                            },
+                            body: 'id=' + encodeURIComponent(leadId) + '&status=' + encodeURIComponent(newStatus)
+                        }).then(function (r) {
+                            if (!r.ok) {
+                                evt.from.appendChild(evt.item);
+                                updateCounts();
+                            }
+                        }).catch(function () {
+                            evt.from.appendChild(evt.item);
+                            updateCounts();
+                        });
+                    }
+                });
+            });
+        }
+
+        initSortable(0);
+    })();
+</script>

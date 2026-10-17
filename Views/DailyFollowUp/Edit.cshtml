@@ -87,7 +87,7 @@
         }
         else if (f.Name == "Discussion")
         {
-            input = $"<textarea class=\"form-control\" name=\"Discussion\" rows=\"3\" placeholder=\"Discussion / notes...\">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
+            input = $"<textarea class=\"form-control\" name=\"Discussion\" rows=\"2\" placeholder=\"Discussion / notes...\">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
         }
         else
         {
@@ -100,40 +100,44 @@
 }
 
 <style>
-    #dfuForm .dfu-title{font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #eef2f7;padding-bottom:8px;display:flex;align-items:center;gap:8px}
+    #dfuForm .dfu-title{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eef2f7;padding-bottom:6px;display:flex;align-items:center;gap:7px}
     #dfuForm .dfu-title i{color:#2563eb}
-    #dfuForm .form-label{font-size:12px;font-weight:700;color:#334155}
-    #dfuForm .form-control,#dfuForm .form-select{height:40px;font-size:13.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
-    #dfuForm textarea.form-control{height:auto}
+    #dfuForm .form-label{font-size:11.5px;font-weight:700;color:#334155;margin-bottom:2px}
+    #dfuForm .form-control,#dfuForm .form-select{height:34px;font-size:12.5px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;min-width:0}
+    #dfuForm textarea.form-control{height:auto;min-height:56px}
     #dfuForm .form-control:focus,#dfuForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+    #dfuForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
+    /* Flex columns ko shrink karne do — warna lamba label/option horizontal scroll bana deta hai */
+    #dfuForm [class*="col-"]{min-width:0}
+    #dfuForm .ss-wrap,#dfuForm .ss-input{max-width:100%}
 </style>
 
-<h4 class="fw-bold mb-3">Edit Daily Follow Up @(followUpId != null ? "#" + followUpId : "")</h4>
+<h4 class="fw-bold mb-2">Edit Daily Follow Up @(followUpId != null ? "#" + followUpId : "")</h4>
 
 <form method="post" id="dfuForm">
     @Html.AntiForgeryToken()
     <input type="hidden" name="DailyFollowUpId" value="@followUpId" />
     <div class="card border-0 shadow-sm rounded-3">
-        <div class="card-body p-4">
+        <div class="card-body p-3">
 
             <div class="dfu-title"><i class="bi bi-person-lines-fill"></i> Lead</div>
-            <div class="row g-3 mt-1">
+            <div class="row g-2 mt-2">
                 @foreach (var f in Model.Where(f => new[] { "LeadId" }.Contains(f.Name)))
                 {
                     @RenderField(f, "col-md-6")
                 }
             </div>
 
-            <div class="dfu-title mt-4"><i class="bi bi-calendar2-check"></i> Schedule &amp; Assignment</div>
-            <div class="row g-3 mt-1">
+            <div class="dfu-title mt-3"><i class="bi bi-calendar2-check"></i> Schedule &amp; Assignment</div>
+            <div class="row g-2 mt-2">
                 @foreach (var f in Model.Where(f => new[] { "FollowUpDate", "NextFollowUpDate", "FollowUpType", "Status", "Priority", "AssignedTo" }.Contains(f.Name)))
                 {
                     @RenderField(f, "col-md-4")
                 }
             </div>
 
-            <div class="dfu-title mt-4"><i class="bi bi-chat-left-text"></i> Discussion</div>
-            <div class="row g-3 mt-1">
+            <div class="dfu-title mt-3"><i class="bi bi-chat-left-text"></i> Discussion</div>
+            <div class="row g-2 mt-2">
                 @foreach (var f in Model.Where(f => f.Name == "Discussion"))
                 {
                     @RenderField(f, "col-md-12")
@@ -142,15 +146,15 @@
 
             @if (otherFields.Any())
             {
-                <div class="dfu-title mt-4"><i class="bi bi-plus-square"></i> Additional Information</div>
-                <div class="row g-3 mt-1">
+                <div class="dfu-title mt-3"><i class="bi bi-plus-square"></i> Additional Information</div>
+                <div class="row g-2 mt-2">
                     @foreach (var f in otherFields) { @RenderField(f, "col-md-6") }
                 </div>
             }
         </div>
     </div>
 
-    <div class="d-flex justify-content-end gap-2 mt-4">
+    <div class="d-flex justify-content-end gap-2 mt-3">
         <a href="/DailyFollowUp" class="btn btn-light border px-4">Cancel</a>
         <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Update Follow Up</button>
     </div>

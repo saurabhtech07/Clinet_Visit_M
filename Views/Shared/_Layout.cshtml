@@ -38,10 +38,25 @@
         </div>
 
         <!-- CRM DASHBOARD -->
-        <a class="nav-link" href="/Dashboard">
+        <a class="nav-link nav-dashboard" href="/Dashboard">
             <i class="bi bi-speedometer2 ic-dash"></i>
             <span>Dashboard</span>
         </a>
+
+        <!-- LOGGED-IN USER (compact profile card, Dashboard ke niche) -->
+        @{
+            var _fullName = Context.Session.GetString("FullName");
+            var _loggedInUser = string.IsNullOrWhiteSpace(_fullName) ? User.Identity?.Name : _fullName;
+            var _userRole = Context.Session.GetString("Role");
+            var _initial = string.IsNullOrWhiteSpace(_loggedInUser) ? "U" : _loggedInUser!.Trim().Substring(0, 1).ToUpper();
+        }
+        <div class="sidebar-user" title="@_loggedInUser (@_userRole)">
+            <div class="sidebar-avatar">@_initial</div>
+            <div class="sidebar-user-text">
+                <span class="sidebar-user-name">@_loggedInUser</span>
+                <span class="sidebar-user-role">@(string.IsNullOrWhiteSpace(_userRole) ? "User" : _userRole)</span>
+            </div>
+        </div>
 
         <!-- =================================================
              MASTER MODULES
@@ -163,23 +178,12 @@
                 </a>
             </div>
         </div>
-    </div>
 
-    <!-- =====================================================
-         TOPBAR
-         ===================================================== -->
-    <div class="topbar">
-        <div class="topbar-user">
-            <span>
-                <i class="bi bi-person-circle"></i>
-                @Context.Session.GetString("FullName")
-                <small>
-                    (@Context.Session.GetString("Role"))
-                </small>
-            </span>
-            <a href="/Account/Logout" class="logout-btn">
+        <!-- SIDEBAR FOOTER : LOGOUT at bottom -->
+        <div class="sidebar-footer">
+            <a href="/Account/Logout" class="logout-btn sidebar-logout">
                 <i class="bi bi-box-arrow-right"></i>
-                Logout
+                <span class="logout-text">Logout</span>
             </a>
         </div>
     </div>
@@ -214,20 +218,26 @@
 
     <style>
         /* Compact look inside the shared form modal */
-        #appFormModal .modal-header { padding: .5rem .85rem; }
-        #appFormModal .modal-title { font-size: .95rem; }
-        #appFormModal .modal-body { font-size: 13px; padding: 14px 18px; }
-        #appFormModal .form-label { font-size: 12px; margin-bottom: 2px; }
+        #appFormModal .modal-header { padding: .45rem .85rem; }
+        #appFormModal .modal-title { font-size: .9rem; }
+        #appFormModal .modal-body { font-size: 12.5px; padding: 12px 16px; }
+        #appFormModal .form-label { font-size: 11.5px; margin-bottom: 2px; }
         #appFormModal .form-control,
-        #appFormModal .form-select { font-size: 13px; padding: .3rem .55rem; height: auto; }
+        #appFormModal .form-select { font-size: 12.5px; padding: .26rem .5rem; height: auto; min-width: 0; }
         #appFormModal .form-control-sm,
-        #appFormModal .form-select-sm { font-size: 12.5px; padding: .22rem .5rem; }
-        #appFormModal h4 { font-size: 1.05rem; margin-bottom: .7rem !important; }
-        #appFormModal h5 { font-size: 1rem; }
-        #appFormModal h6 { font-size: .85rem; margin-bottom: .4rem; }
-        #appFormModal .mb-3 { margin-bottom: .6rem !important; }
-        #appFormModal .card-section { padding: .75rem !important; }
-        #appFormModal .row { --bs-gutter-x: .75rem; --bs-gutter-y: .75rem; }
+        #appFormModal .form-select-sm { font-size: 12px; padding: .2rem .45rem; }
+        #appFormModal textarea.form-control { min-height: 56px; }
+        #appFormModal h4 { font-size: 1rem; margin-bottom: .5rem !important; }
+        #appFormModal h5 { font-size: .95rem; }
+        #appFormModal h6 { font-size: .85rem; margin-bottom: .35rem; }
+        #appFormModal .mb-3 { margin-bottom: .5rem !important; }
+        #appFormModal .card-section { padding: .65rem !important; }
+        #appFormModal .card-body { padding: .75rem !important; }
+        #appFormModal .row { --bs-gutter-x: .6rem; --bs-gutter-y: .6rem; }
+        /* Flex columns shrink ho sakein -> modal me horizontal scroll na aaye */
+        #appFormModal [class*="col-"] { min-width: 0; }
+        #appFormModal .ss-wrap,
+        #appFormModal .ss-input { max-width: 100%; }
     </style>
 
     <!-- =====================================================
@@ -328,6 +338,58 @@
     </script>
 
     <!-- =====================================================
+         CLEAN PRINT — sirf table/data print ho, Actions column na aaye
+         (Company page jaisa: naye window me sirf table likh ke print)
+         ===================================================== -->
+    <script>
+        window.printTable = function (containerId, title) {
+            var container = document.getElementById(containerId);
+            var table = container ? container.querySelector("table") : null;
+            if (!table) { window.print(); return; }
+
+            var clone = table.cloneNode(true);
+
+            // Actions column (view/edit/delete buttons) print nahi honi chahiye
+            clone.querySelectorAll(".actions-col, .actions-cell").forEach(function (n) { n.remove(); });
+            clone.querySelectorAll("button, select, .dropdown, .pagination, .records-per-page").forEach(function (n) { n.remove(); });
+
+            // Fixed widths hata do taaki table poori width me fit ho
+            var cg = clone.querySelector("colgroup");
+            if (cg) cg.remove();
+            clone.style.width = "100%";
+            clone.style.tableLayout = "auto";
+            clone.querySelectorAll("th, td").forEach(function (c) {
+                c.style.width = "";
+                c.style.maxWidth = "";
+                c.style.minWidth = "";
+                c.removeAttribute("width");
+            });
+
+            var w = window.open("", "", "width=1100,height=800");
+            if (!w) { window.print(); return; }
+
+            var css =
+                "<style>" +
+                "body{font-family:'Segoe UI',Arial,sans-serif;padding:18px;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+                "h4{margin:0 0 12px;font-size:16px;font-weight:700}" +
+                "table{width:100%;border-collapse:collapse;font-size:12px}" +
+                "thead th{background:#eef2f7;border:1px solid #cbd5e1;padding:6px 8px;text-align:left;font-weight:700;white-space:nowrap}" +
+                "tbody td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;vertical-align:top}" +
+                "tbody tr:nth-child(even){background:#f8fafc}" +
+                "</style>";
+
+            w.document.write(
+                "<html><head><meta charset='utf-8'><title>" + (title || "Print") + "</title>" + css + "</head><body>" +
+                "<h4>" + (title || "") + "</h4>" + clone.outerHTML +
+                "</body></html>"
+            );
+            w.document.close();
+            w.focus();
+            setTimeout(function () { w.print(); w.close(); }, 400);
+        };
+    </script>
+
+    <!-- =====================================================
          SIDEBAR DROPDOWN GROUPS (collapsible)
          ===================================================== -->
     <script>
@@ -341,10 +403,9 @@
                 if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
             }
 
-            // Default: saare groups open, sirf jinme data-nav-default="closed" ho (TOOLS) band
+            // Default: saare groups band, sirf jinme data-nav-default="open" ho wo khule
             groups.forEach(function (group) {
-                var defaultClosed = group.getAttribute("data-nav-default") === "closed";
-                setOpen(group, !defaultClosed);
+                setOpen(group, group.getAttribute("data-nav-default") === "open");
                 var btn = group.querySelector(".nav-group-toggle");
                 if (!btn) return;
                 btn.addEventListener("click", function (e) {

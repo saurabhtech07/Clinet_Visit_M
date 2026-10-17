@@ -230,92 +230,89 @@
 }
 
 <style>
-    .page-wrapper { padding: 16px 20px 20px 20px; }
-    .kpi-card {
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        background: #fff;
-        padding: 14px 18px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 75px;
-    }
-    .kpi-icon {
-        width: 38px; height: 38px;
-        border-radius: 9px;
-        display: flex; align-items: center; justify-content: center;
-        color: #fff; font-size: 18px;
-    }
-    .search-box {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 14px 16px;
-    }
-    .table-card {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        overflow: hidden;
-    }
+    .dss-kpi-card{background:#fff;border-radius:10px;border:1px solid #eef2f7;padding:8px 12px;height:60px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+    .dss-kpi-label{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:1px;letter-spacing:0.4px}
+    .dss-kpi-value{font-size:18px;font-weight:800;color:#0f172a;line-height:1}
+    .dss-kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0}
+    .dss-toolbar{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:10px 12px}
+    .dss-table-card{background:#fff;border-radius:14px;border:1px solid #eef2f7;overflow:hidden}
+    .btn-dss-dark{background:#0f172a;color:#fff;border-radius:10px;font-size:13px;padding:9px 16px}
+    .leads-search{position:relative}
+    .leads-search i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px}
+    .leads-input{height:32px;font-size:12.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;padding-top:4px;padding-bottom:4px}
+    .leads-input:focus{background:#fff;border-color:#cbd5e1;box-shadow:none}
+    .leads-search input{padding-left:30px}
 </style>
 
-<div class="page-wrapper">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0" style="font-size:20px;">State Master</h5>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="fw-bold mb-0">State Master</h4>
+    <a href="/StateMaster/Create" class="btn btn-dss-dark"><i class="bi bi-plus-circle me-1"></i> Add State</a>
+</div>
 
-    <!-- KPI - ab upar chipka hua -->
-    <div class="row g-3 mb-3">
-        <div class="col-md-3 col-sm-6">
-            <div class="kpi-card">
-                <div>
-                    <div class="text-muted fw-bold" style="font-size:10px; letter-spacing:0.5px;">TOTAL STATES</div>
-                    <div class="fw-bold" style="font-size:22px; line-height:1;">@ViewBag.TotalStates</div>
-                </div>
-                <div class="kpi-icon bg-primary"><i class="bi bi-geo-alt-fill"></i></div>
+<!-- KPI CARDS -->
+<div class="row g-2 mb-2">
+    <div class="col-6 col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Total States</div>
+                <div class="dss-kpi-value">@ViewBag.TotalStates</div>
             </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="kpi-card">
-                <div>
-                    <div class="text-muted fw-bold" style="font-size:10px; letter-spacing:0.5px;">ACTIVE STATES</div>
-                    <div class="fw-bold" style="font-size:22px; line-height:1;">@ViewBag.ActiveStates</div>
-                </div>
-                <div class="kpi-icon bg-success"><i class="bi bi-check-circle-fill"></i></div>
-            </div>
+            <div class="dss-kpi-icon" style="background:#2563eb;"><i class="bi bi-geo-alt-fill"></i></div>
         </div>
     </div>
-
-    <!-- SEARCH -->
-    <div class="search-box mb-3">
-        <div class="text-muted fw-bold mb-2" style="font-size:10px;">SEARCH STATE / CODE / COUNTRY</div>
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="position-relative" style="width:360px;">
-                <i class="bi bi-search position-absolute" style="left:12px; top:50%; transform:translateY(-50%); color:#888;"></i>
-                <input type="text" id="searchInput" class="form-control form-control-sm ps-5 bg-light" placeholder="Search by state name..." style="border-radius:8px; height:38px;" />
+    <div class="col-6 col-md-3">
+        <div class="dss-kpi-card">
+            <div>
+                <div class="dss-kpi-label">Active States</div>
+                <div class="dss-kpi-value">@ViewBag.ActiveStates</div>
             </div>
-            <div class="d-flex gap-2">
-                <button type="button" id="btnClear" class="btn btn-light border btn-sm px-3" style="border-radius:8px; height:38px;">Clear</button>
-                <a href="/StateMaster/Create" class="btn btn-dark btn-sm px-3 d-flex align-items-center" style="border-radius:8px; height:38px;">
-                    <i class="bi bi-plus-circle me-1"></i> Add State
-                </a>
-            </div>
+            <div class="dss-kpi-icon" style="background:#10b981;"><i class="bi bi-check-circle-fill"></i></div>
         </div>
     </div>
+</div>
 
-    <!-- TABLE -->
-    <div class="table-card">
-        <div id="stateTableContainer">
-            @await Html.PartialAsync("_StateTable", (object)Model)
+<!-- FILTER TOOLBAR (compact single row) -->
+<div class="dss-toolbar mb-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="leads-search" style="flex:1 1 220px; min-width:180px;">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" class="form-control leads-input" placeholder="Search state / code / country..." autocomplete="off" />
         </div>
+
+        <button type="button" id="btnClear" class="btn btn-light border" style="border-radius:9px; font-size:12.5px; height:32px;">
+            <i class="bi bi-x-circle me-1"></i>Clear
+        </button>
+
+        <div class="dropdown ms-auto">
+            <button class="btn btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                    style="border-radius:9px; font-size:12.5px; height:32px;">
+                <i class="bi bi-download me-1"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li><a id="stateExportExcel" class="dropdown-item" href="/StateMaster/ExportExcel"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.printTable('stateTableContainer','State Master');"><i class="bi bi-printer me-2"></i>Print</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="dss-table-card">
+    <div id="stateTableContainer">
+        @await Html.PartialAsync("_StateTable", (object)Model)
     </div>
 </div>
 
 <script>
     window.__stateNav = window.__stateNav || {};
     var searchTimer;
+
+    function updateStateExport() {
+        const term = document.getElementById("searchInput")?.value.trim();
+        const ex = document.getElementById("stateExportExcel");
+        if (ex) ex.href = "/StateMaster/ExportExcel" + (term ? "?search=" + encodeURIComponent(term) : "");
+    }
 
     function loadTable(page = 1) {
         const term = document.getElementById("searchInput").value.trim();
@@ -328,6 +325,7 @@
         .then(html => {
             const container = document.getElementById("stateTableContainer");
             if (container) container.innerHTML = html;
+            updateStateExport();
         })
         .catch(e => console.error(e));
     }
@@ -352,6 +350,8 @@
             if (e.__ajaxNavHandled) return;
             const link = e.target.closest(".ajax-table-link");
             if (!link) return;
+            // Sirf tab handle karo jab is page ka table maujood ho (warna doosre page ka handler click kha jaata hai)
+            if (!document.getElementById("stateTableContainer")) return;
             e.preventDefault();
             e.__ajaxNavHandled = true;
             loadStateTable(link.href);
@@ -380,4 +380,6 @@
             loadTable(1);
         });
     }
+
+    updateStateExport();
 </script>

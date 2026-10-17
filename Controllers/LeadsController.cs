@@ -27,12 +27,11 @@ public class LeadsController : Controller
 
     private static readonly int[] AllowedPageSizes = { 10, 20, 50, 100 };
 
-    private static readonly string[] StatusOptions =
-        { "New", "Contacted", "Qualified", "Proposal Sent", "Negotiation", "Won", "Lost" };
+    private static readonly string[] StatusOptions = LeadOptions.StatusOptions;
 
     // Ye columns form me nahi dikhte (auto / internal).
     private static readonly string[] ExcludeFromForm =
-        { "LeadId", "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn" };
+        { "LeadId", "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn", "LastContactedOn" };
 
     private void PopulateLookups()
     {
@@ -43,7 +42,11 @@ public class LeadsController : Controller
 
         ViewBag.States = statesTable;
         ViewBag.Users = _userRepo.GetAll();
-        ViewBag.StatusOptions = StatusOptions;
+        ViewBag.StatusOptions = LeadOptions.StatusOptions;
+        ViewBag.PriorityOptions = LeadOptions.PriorityOptions;
+        ViewBag.SourceOptions = LeadOptions.SourceOptions;
+        ViewBag.ActivityTypeOptions = LeadOptions.ActivityTypeOptions;
+        ViewBag.OutcomeOptions = LeadOptions.OutcomeOptions;
     }
 
     // =====================================================================
@@ -51,12 +54,12 @@ public class LeadsController : Controller
     // =====================================================================
     [HttpGet]
     public IActionResult Index(int page = 1, int pageSize = 10, string? search = null, string? status = null,
-        int? stateId = null, int? assignedTo = null, DateTime? fromDate = null, DateTime? toDate = null,
-        string? sort = null, string direction = "DESC")
+        string? priority = null, string? source = null, int? stateId = null, int? assignedTo = null,
+        DateTime? fromDate = null, DateTime? toDate = null, string? sort = null, string direction = "DESC")
     {
         if (!AllowedPageSizes.Contains(pageSize)) pageSize = 10;
 
-        var leads = _leadRepo.GetLeads(page, pageSize, search, status, stateId, assignedTo, fromDate, toDate, sort, direction);
+        var leads = _leadRepo.GetLeads(page, pageSize, search, status, priority, source, stateId, assignedTo, fromDate, toDate, sort, direction);
         var cards = _leadRepo.GetCards();
 
         ViewBag.TotalLeads = cards.Total;
@@ -65,6 +68,8 @@ public class LeadsController : Controller
         ViewBag.DealValue = cards.DealValue;
 
         ViewBag.FilterStatus = status;
+        ViewBag.FilterPriority = priority;
+        ViewBag.FilterSource = source;
         ViewBag.FilterStateId = stateId;
         ViewBag.FilterAssignedTo = assignedTo;
         ViewBag.FilterFrom = fromDate?.ToString("yyyy-MM-dd");
@@ -77,7 +82,8 @@ public class LeadsController : Controller
             var q = Request.Query;
             bool tableRequest = q.ContainsKey("page") || q.ContainsKey("pageSize")
                 || !string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(sort)
-                || !string.IsNullOrWhiteSpace(status) || stateId.HasValue || assignedTo.HasValue
+                || !string.IsNullOrWhiteSpace(status) || !string.IsNullOrWhiteSpace(priority)
+                || !string.IsNullOrWhiteSpace(source) || stateId.HasValue || assignedTo.HasValue
                 || fromDate.HasValue || toDate.HasValue;
 
             if (tableRequest) return PartialView("_LeadTable", leads);
@@ -197,17 +203,145 @@ public class LeadsController : Controller
             return StatusCode(StatusCodes.Status400BadRequest,
                 new { success = false, message = result.Message, clientId = result.ClientId });
 
-        return Json(new { success = true, message = result.Message, clientId = result.ClientId });
+        // KPI cards turant update ho sakein (converted lead Total/Deal Value se hat jaye)
+        var cards = _leadRepo.GetCards();
+
+        return Json(new
+        {
+            success = true,
+            message = result.Message,
+            clientId = result.ClientId,
+            total = cards.Total,
+            open = cards.Open,
+            converted = cards.Converted,
+            dealValue = cards.DealValue
+        });
+    }
+
+    // =====================================================================
+    //  LEAD DETAIL (360°) — info + activity timeline + follow-up history
+    // =====================================================================
+    [HttpGet]
+    public IActionResult Details(int id)
+    {
+        var lead = _leadRepo.GetLeadById(id);
+        if (lead == null) return NotFound();
+
+        var vm = new LeadDetailViewModel
+        {
+            LeadId = id,
+            Lead = lead,
+            Activities = _leadRepo.GetActivities(id),
+            FollowUps = _leadRepo.GetFollowUps(id),
+            Users = _userRepo.GetAll()
+        };
+
+        PopulateLookups();
+        ViewBag.LeadId = id;
+
+        // AJAX (in-app) navigation -> sirf content partial do, warna poora layout
+        // mainContentArea ke andar nested ho jaata hai aur page toot jaata hai.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("Details", vm);
+
+        return View(vm);
+    }
+
+    // =====================================================================
+    //  ACTIVITY — add / delete (activity history timeline)
+    // =====================================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult AddActivity(int id, IFormCollection form)
+    {
+        try
+        {
+            var type = form["ActivityType"].ToString().Trim();
+            var summary = form["Summary"].ToString().Trim();
+            var outcome = form["Outcome"].ToString().Trim();
+
+            var date = DateTime.TryParse(form["ActivityDate"].ToString(), out var d) ? d : DateTime.Now;
+
+            DateTime? next = null;
+            if (DateTime.TryParse(form["NextFollowUpDate"].ToString(), out var nf)) next = nf;
+
+            int? assignedTo = int.TryParse(form["AssignedTo"].ToString(), out var at) && at > 0 ? at : null;
+            int createdBy = HttpContext.Session.GetInt32("UserId") ?? 0;
+
+            int newId = _leadRepo.AddActivity(id, type, date, summary, outcome, next, assignedTo, createdBy);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Json(new { success = true, id = newId, message = "Activity added successfully." });
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        catch (Exception ex)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
+            throw;
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteActivity(int id, int leadId)
+    {
+        try
+        {
+            _leadRepo.DeleteActivity(id);
+            return Json(new { success = true, message = "Activity deleted." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
+        }
+    }
+
+    // =====================================================================
+    //  PIPELINE (Kanban board by Status)
+    // =====================================================================
+    [HttpGet]
+    public IActionResult Pipeline()
+    {
+        var leads = _leadRepo.GetPipeline();
+        ViewBag.StatusOptions = LeadOptions.StatusOptions;
+        ViewBag.Users = _userRepo.GetAll();
+
+        // AJAX (in-app) navigation / browser-back -> sirf content partial do,
+        // warna poora layout mainContentArea ke andar nested ho jaata hai.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("Pipeline", leads);
+
+        return View(leads);
+    }
+
+    // Drag-drop se stage badalna
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult UpdateStatus(int id, string status)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = "Status required." });
+
+            _leadRepo.UpdateStatus(id, status.Trim());
+            return Json(new { success = true, message = "Stage updated." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, new { success = false, message = ex.Message });
+        }
     }
 
     // =====================================================================
     //  EXPORT (dynamic columns)
     // =====================================================================
     [HttpGet]
-    public IActionResult ExportExcel(string? search = null, string? status = null, int? stateId = null,
-        int? assignedTo = null, DateTime? fromDate = null, DateTime? toDate = null)
+    public IActionResult ExportExcel(string? search = null, string? status = null, string? priority = null,
+        string? source = null, int? stateId = null, int? assignedTo = null, DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var data = _leadRepo.GetLeads(1, int.MaxValue, search, status, stateId, assignedTo, fromDate, toDate, null, "DESC");
+        var data = _leadRepo.GetLeads(1, int.MaxValue, search, status, priority, source, stateId, assignedTo, fromDate, toDate, null, "DESC");
 
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Leads");
@@ -230,10 +364,10 @@ public class LeadsController : Controller
     }
 
     [HttpGet]
-    public IActionResult ExportCsv(string? search = null, string? status = null, int? stateId = null,
-        int? assignedTo = null, DateTime? fromDate = null, DateTime? toDate = null)
+    public IActionResult ExportCsv(string? search = null, string? status = null, string? priority = null,
+        string? source = null, int? stateId = null, int? assignedTo = null, DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var data = _leadRepo.GetLeads(1, int.MaxValue, search, status, stateId, assignedTo, fromDate, toDate, null, "DESC");
+        var data = _leadRepo.GetLeads(1, int.MaxValue, search, status, priority, source, stateId, assignedTo, fromDate, toDate, null, "DESC");
 
         var csv = new StringBuilder();
         csv.AppendLine(string.Join(",", data.Columns.Select(c => EscapeCsv(DisplayName(c)))));
@@ -256,6 +390,11 @@ public class LeadsController : Controller
         "StateName" => "State",
         "AssignedToName" => "Assigned To",
         "DealValue" => "Deal Value",
+        "LeadSource" => "Source",
+        "Priority" => "Priority",
+        "NextFollowUpDate" => "Next Follow Up",
+        "LastContactedOn" => "Last Contacted",
+        "ActivityCount" => "Activities",
         "CreatedOn" => "Created On",
         "EntryTime" => "Entry Time",
         _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")

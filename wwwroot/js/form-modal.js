@@ -78,6 +78,24 @@
         return fallback || "Form";
     }
 
+    // Modal header me title already aa jata hai (titleOf usi heading se banata hai).
+    // Wahi heading form ke andar bhi rehti hai -> title 2 baar dikhta tha. Use chhupa do.
+    function hideDuplicateTitle(title) {
+        if (!title || !bodyEl) return;
+        var hs = bodyEl.querySelectorAll("h1, h2, h3, h4, h5");
+        for (var i = 0; i < hs.length; i++) {
+            var h = hs[i];
+            if (h.textContent.trim() !== title) continue;
+            var p = h.parentElement;
+            if (p && p !== bodyEl && p.children.length === 1 && p.textContent.trim() === title) {
+                p.style.display = "none";   // wrapper sirf title ke liye tha
+            } else {
+                h.style.display = "none";
+            }
+            break;
+        }
+    }
+
     function load(url, label) {
         if (!ensure()) { window.location.href = url; return Promise.resolve(); }
 
@@ -95,7 +113,9 @@
             .then(function (html) {
                 bodyEl.innerHTML = contentOf(html);
                 runScripts(bodyEl);
-                if (titleEl) titleEl.textContent = titleOf(html, (label && label.length < 40) ? label : "Form");
+                var title = titleOf(html, (label && label.length < 40) ? label : "Form");
+                if (titleEl) titleEl.textContent = title;
+                hideDuplicateTitle(title);
                 bodyEl.scrollTop = 0;
                 var dlg = modalEl.querySelector(".modal-dialog");
                 if (dlg) dlg.scrollTop = 0;

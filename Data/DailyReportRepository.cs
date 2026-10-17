@@ -77,57 +77,80 @@ public class DailyReportRepository
                 }
             }
 
-            // ---- SUMMARY GRID (user-wise) ----
-            // Ek row = ek SP user, SIRF jisne us din kuch kaam kiya (kuch na kiya ho to row hi nahi).
+            // ---- SUMMARY GRID (user + day wise) ----
+            // Ek row = ek user ka EK din (jis din usne kuch kaam kiya).
+            // Alag-alag din alag-alag rows me — koi din merge ya hat nahi hota.
             // Columns: Date, Assigned To, New Leads, Total Follow Up, Converted Leads.
-            DateTime dayFrom = (fromDate ?? DateTime.Today).Date;
-            DateTime dayTo = (toDate ?? dayFrom).Date;
-            if (dayTo < dayFrom) dayTo = dayFrom;
-            vm.SummaryDay = dayFrom;
+            // Date filter optional hai — From/To diye ho to hi range lagti hai, warna all-time (saare din).
+            DateTime? dFrom = fromDate?.Date;
+            DateTime? dTo = toDate?.Date;
+            if (dFrom.HasValue && dTo.HasValue && dTo.Value < dFrom.Value) dTo = dFrom;
+            vm.SummaryDay = (dFrom ?? DateTime.Today).Date;
             vm.IsUserSummary = true;
 
-            // Sirf wahi users jinke paas us din kam se kam ek activity ho (lead / follow-up / converted).
-            string activityFilter =
-                " AND (" +
-                "EXISTS (SELECT 1 FROM Leads l WHERE l.AssignedTo = u.UserId AND CAST(l.CreatedOn AS DATE) BETWEEN @DayFrom AND @DayTo)" +
-                " OR EXISTS (SELECT 1 FROM Leads l WHERE l.AssignedTo = u.UserId AND ISNULL(l.IsConverted,0) = 1 AND CAST(l.ConvertedOn AS DATE) BETWEEN @DayFrom AND @DayTo)";
-            if (HasFollowUp)
-                activityFilter += " OR EXISTS (SELECT 1 FROM DailyFollowUp f WHERE f.AssignedTo = u.UserId AND f.FollowUpDate BETWEEN @DayFrom AND @DayTo)";
-            activityFilter += ")";
-
-            string sumWhere = " WHERE ISNULL(u.IsActive,1) = 1";
-            if (assignedTo.HasValue) sumWhere += " AND u.UserId = @AssignedTo";
-            if (!string.IsNullOrWhiteSpace(search))
-                sumWhere += " AND ISNULL(NULLIF(u.FullName,''), u.Username) LIKE @Search";
-            sumWhere += activityFilter;
-
-            using (var countCmd = new SqlCommand("SELECT COUNT(*) FROM Users u" + sumWhere, con))
+            // Ek date column ke liye optional range condition (kuch nahi diya to all-time).
+            string DateCond(string dateExpr)
             {
-                countCmd.Parameters.AddWithValue("@DayFrom", dayFrom);
-                countCmd.Parameters.AddWithValue("@DayTo", dayTo);
+                var c = "";
+                if (dFrom.HasValue) c += $" AND {dateExpr} >= @DayFrom";
+                if (dTo.HasValue) c += $" AND {dateExpr} <= @DayTo";
+                return c;
+            }
+            void AddDateParams(SqlCommand c)
+            {
+                if (dFrom.HasValue) c.Parameters.AddWithValue("@DayFrom", dFrom.Value);
+                if (dTo.HasValue) c.Parameters.AddWithValue("@DayTo", dTo.Value);
+            }
+
+            // (user, day) level activity flags — teeno source tables se (leads / converted / follow-ups).
+            string activityCte =
+                "WITH Activity AS (" +
+                "SELECT l.AssignedTo AS UserId, CAST(l.CreatedOn AS DATE) AS D, 1 AS IsNew, 0 AS IsFollow, 0 AS IsConv " +
+                "FROM Leads l WHERE l.AssignedTo IS NOT NULL" + DateCond("CAST(l.CreatedOn AS DATE)") +
+                " UNION ALL " +
+                "SELECT l.AssignedTo, CAST(l.ConvertedOn AS DATE), 0, 0, 1 " +
+                "FROM Leads l WHERE l.AssignedTo IS NOT NULL AND ISNULL(l.IsConverted,0) = 1 AND l.ConvertedOn IS NOT NULL" + DateCond("CAST(l.ConvertedOn AS DATE)");
+            if (HasFollowUp)
+            {
+                activityCte +=
+                    " UNION ALL " +
+                    "SELECT f.AssignedTo, CAST(f.FollowUpDate AS DATE), 0, 1, 0 " +
+                    "FROM DailyFollowUp f WHERE f.AssignedTo IS NOT NULL" + DateCond("CAST(f.FollowUpDate AS DATE)");
+            }
+            activityCte += ") ";
+
+            string userWhere = " WHERE ISNULL(u.IsActive,1) = 1";
+            if (assignedTo.HasValue) userWhere += " AND a.UserId = @AssignedTo";
+            if (!string.IsNullOrWhiteSpace(search))
+                userWhere += " AND ISNULL(NULLIF(u.FullName,''), u.Username) LIKE @Search";
+
+            using (var countCmd = new SqlCommand(
+                activityCte +
+                "SELECT COUNT(*) FROM (SELECT a.UserId, a.D FROM Activity a " +
+                "INNER JOIN Users u ON u.UserId = a.UserId" + userWhere +
+                " GROUP BY a.UserId, a.D) t", con))
+            {
+                AddDateParams(countCmd);
                 if (assignedTo.HasValue) countCmd.Parameters.AddWithValue("@AssignedTo", assignedTo.Value);
                 if (!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search", "%" + search.Trim() + "%");
                 grid.TotalRecords = Convert.ToInt32(countCmd.ExecuteScalar());
             }
 
-            string followUpSum = HasFollowUp
-                ? "(SELECT COUNT(*) FROM DailyFollowUp f WHERE f.AssignedTo = u.UserId AND f.FollowUpDate BETWEEN @DayFrom AND @DayTo)"
-                : "0";
-
             string order = BuildSummaryOrder(sort, grid.SortDirection!);
             string sumSql =
-                "SELECT u.UserId AS [UserId], " +
-                "@DayFrom AS [ReportDate], " +
+                activityCte +
+                "SELECT a.UserId AS [UserId], a.D AS [ReportDate], " +
                 "ISNULL(NULLIF(u.FullName,''), u.Username) AS [AssignedName], " +
-                "(SELECT COUNT(*) FROM Leads l WHERE l.AssignedTo = u.UserId AND CAST(l.CreatedOn AS DATE) BETWEEN @DayFrom AND @DayTo) AS [NewLeads], " +
-                followUpSum + " AS [TotalFollowUp], " +
-                "(SELECT COUNT(*) FROM Leads l WHERE l.AssignedTo = u.UserId AND ISNULL(l.IsConverted,0) = 1 AND CAST(l.ConvertedOn AS DATE) BETWEEN @DayFrom AND @DayTo) AS [ConvertedLeads] " +
-                "FROM Users u" + sumWhere + order + " OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
+                "SUM(a.IsNew) AS [NewLeads], " +
+                "SUM(a.IsFollow) AS [TotalFollowUp], " +
+                "SUM(a.IsConv) AS [ConvertedLeads] " +
+                "FROM Activity a INNER JOIN Users u ON u.UserId = a.UserId" + userWhere +
+                " GROUP BY a.UserId, a.D, ISNULL(NULLIF(u.FullName,''), u.Username)" +
+                order + " OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
 
             using (var cmd = new SqlCommand(sumSql, con))
             {
-                cmd.Parameters.AddWithValue("@DayFrom", dayFrom);
-                cmd.Parameters.AddWithValue("@DayTo", dayTo);
+                AddDateParams(cmd);
                 if (assignedTo.HasValue) cmd.Parameters.AddWithValue("@AssignedTo", assignedTo.Value);
                 if (!string.IsNullOrWhiteSpace(search)) cmd.Parameters.AddWithValue("@Search", "%" + search.Trim() + "%");
                 cmd.Parameters.AddWithValue("@Skip", (page - 1) * pageSize);
@@ -338,22 +361,24 @@ public class DailyReportRepository
         }
     }
 
-    /// <summary>User-wise summary grid ka ORDER BY (columns: AssignedName / NewLeads / TotalFollowUp / ConvertedLeads).</summary>
+    /// <summary>User + day wise summary grid ka ORDER BY (columns: ReportDate / AssignedName / NewLeads / TotalFollowUp / ConvertedLeads).</summary>
     private static string BuildSummaryOrder(string? sort, string direction)
     {
         var dir = string.Equals(direction, "ASC", StringComparison.OrdinalIgnoreCase) ? "ASC" : "DESC";
         switch ((sort ?? "").Trim().ToLowerInvariant())
         {
+            case "reportdate":
+                return $" ORDER BY a.D {dir}, [AssignedName] ASC";
             case "newleads":
-                return $" ORDER BY (SELECT COUNT(*) FROM Leads l WHERE l.AssignedTo = u.UserId AND CAST(l.CreatedOn AS DATE) BETWEEN @DayFrom AND @DayTo) {dir}, ISNULL(NULLIF(u.FullName,''), u.Username) ASC";
+                return $" ORDER BY SUM(a.IsNew) {dir}, a.D DESC, [AssignedName] ASC";
             case "totalfollowup":
-                return $" ORDER BY (SELECT COUNT(*) FROM DailyFollowUp f WHERE f.AssignedTo = u.UserId AND f.FollowUpDate BETWEEN @DayFrom AND @DayTo) {dir}, ISNULL(NULLIF(u.FullName,''), u.Username) ASC";
+                return $" ORDER BY SUM(a.IsFollow) {dir}, a.D DESC, [AssignedName] ASC";
             case "convertedleads":
-                return $" ORDER BY (SELECT COUNT(*) FROM Leads l WHERE l.AssignedTo = u.UserId AND ISNULL(l.IsConverted,0) = 1 AND CAST(l.ConvertedOn AS DATE) BETWEEN @DayFrom AND @DayTo) {dir}, ISNULL(NULLIF(u.FullName,''), u.Username) ASC";
+                return $" ORDER BY SUM(a.IsConv) {dir}, a.D DESC, [AssignedName] ASC";
             case "assignedname":
-                return $" ORDER BY ISNULL(NULLIF(u.FullName,''), u.Username) {dir}";
+                return $" ORDER BY [AssignedName] {dir}, a.D DESC";
             default:
-                return " ORDER BY ISNULL(NULLIF(u.FullName,''), u.Username) ASC";
+                return " ORDER BY a.D DESC, [AssignedName] ASC";
         }
     }
 

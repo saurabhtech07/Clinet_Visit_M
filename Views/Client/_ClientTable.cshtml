@@ -5,67 +5,45 @@
 }
 
 <style>
-  .table-scroll-container {
-        max-height: 420px;
-        overflow-y: auto;
-        overflow-x: auto;
-        position: relative;
-    }
+  /* Koi inner scroll nahi — poora table page par fit hota hai (fixed layout) */
+  .table-scroll-container { position: relative; }
   .dss-table thead th {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        position: sticky; top: 0; z-index: 10;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
         color: #64748b; text-transform: uppercase;
-        background: #f8fafc!important; /* sticky ke liye background jaruri hai */
+        background: #f8fafc !important;
         border-bottom: 1px solid #e2e8f0;
-        padding: 12px 14px; white-space: nowrap;
-        box-shadow: 0 1px 0 #e2e8f0; /* header ke niche line */
+        padding: 7px 8px; white-space: normal; line-height: 1.15;
+        box-shadow: 0 1px 0 #e2e8f0;
     }
   .dss-table tbody td {
-        font-size: 13px; padding: 12px 14px;
+        font-size: 12.5px; padding: 5px 8px;
         border-bottom: 1px solid #f1f5f9; vertical-align: middle;
-        background: #fff;
+        background: #fff; overflow: hidden;
     }
-  .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
-  .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-  .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
-  .client-id-pill {
-        background: #1e293b; color: #fff;
-        padding: 3px 10px; border-radius: 6px;
-        font-size: 11px; font-weight: 600;
-    }
-  .action-edit {
-        width: 32px; height: 32px;
+  .client-grid-table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+  .cell-clip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+  .client-id-pill { background: #1e293b; color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+  .action-edit, .action-delete {
+        width: 24px; height: 24px;
         display: inline-flex; align-items: center; justify-content: center;
-        border-radius: 8px;
-        border: 1px solid #dbeafe;
-        background: #eff6ff;
-        color: #2563eb !important;
-        transition: all 0.2s;
+        border-radius: 7px; font-size: 12px; transition: all 0.2s;
     }
+  .action-edit { border: 1px solid #dbeafe; background: #eff6ff; color: #2563eb !important; }
   .action-edit:hover { background: #2563eb; color: #fff !important; }
-  .action-delete {
-        width: 32px; height: 32px;
-        display: inline-flex; align-items: center; justify-content: center;
-        border-radius: 8px;
-        border: 1px solid #fee2e2;
-        background: #fef2f2;
-        color: #dc2626 !important;
-        transition: all 0.2s;
-        margin-left: 6px;
-    }
+  .action-delete { border: 1px solid #fee2e2; background: #fef2f2; color: #dc2626 !important; margin-left: 5px; }
   .action-delete:hover { background: #dc2626; color: #fff !important; }
-  .table-sort-link { color: #475569 !important; }
+  .dss-table tbody td.actions-cell { white-space: nowrap; }
+  .table-sort-link { color: #475569 !important; text-decoration: none; }
   .table-sort-link:hover { color: #0f172a !important; }
   .sort-neutral { opacity: 0.4; }
 </style>
 
 <div class="table-scroll-container">
-    <table class="table mb-0 dss-table table-hover">
+    <table class="table mb-0 dss-table table-hover client-grid-table">
         <thead>
             <tr>
-                <th style="width:70px;">Sr.No</th>
+                <th style="width:44px;">Sr.No</th>
                 <th>
                     @{
                         var clientIdDirection = Model.SortColumn == "ClientId" && Model.SortDirection == "ASC" ? "DESC" : "ASC";
@@ -120,7 +98,7 @@
                 <th>Mobile</th>
                 <th>Email</th>
                 <th>Assigned To</th>
-                <th style="width:118px;">Actions</th>
+                <th class="actions-col" style="width:78px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -131,15 +109,15 @@
                     <tr>
                         <td class="serial-col" style="color:#64748b;">@start</td>
                         <td><span class="client-id-pill">@(row.ContainsKey("ClientId") ? row["ClientId"] : "")</span></td>
-                        <td class="fw-semibold" style="color:#0f172a;">@(row.ContainsKey("ClientName") ? row["ClientName"] : "")</td>
-                        <td>@(row.ContainsKey("ContactPerson") ? row["ContactPerson"] : "")</td>
-                        <td>@(row.ContainsKey("City") ? row["City"] : "")</td>
-                        <td>@(row.ContainsKey("StateName") ? row["StateName"] : "")</td>
-                        <td>@(row.ContainsKey("Pincode") ? row["Pincode"] : "")</td>
-                        <td class="fw-medium">@(row.ContainsKey("MobileNo") ? row["MobileNo"] : "")</td>
-                        <td style="color:#64748b;">@(row.ContainsKey("Email") ? row["Email"] : "")</td>
-                        <td>@(row.ContainsKey("AssignedToName") && row["AssignedToName"] != null ? row["AssignedToName"] : "—")</td>
-                        <td>
+                        <td class="fw-semibold" style="color:#0f172a;"><span class="cell-clip">@(row.ContainsKey("ClientName") ? row["ClientName"] : "")</span></td>
+                        <td><span class="cell-clip">@(row.ContainsKey("ContactPerson") ? row["ContactPerson"] : "")</span></td>
+                        <td><span class="cell-clip">@(row.ContainsKey("City") ? row["City"] : "")</span></td>
+                        <td><span class="cell-clip">@(row.ContainsKey("StateName") ? row["StateName"] : "")</span></td>
+                        <td><span class="cell-clip">@(row.ContainsKey("Pincode") ? row["Pincode"] : "")</span></td>
+                        <td class="fw-medium"><span class="cell-clip">@(row.ContainsKey("MobileNo") ? row["MobileNo"] : "")</span></td>
+                        <td style="color:#64748b;"><span class="cell-clip">@(row.ContainsKey("Email") ? row["Email"] : "")</span></td>
+                        <td><span class="cell-clip">@(row.ContainsKey("AssignedToName") && row["AssignedToName"] != null ? row["AssignedToName"] : "—")</span></td>
+                        <td class="actions-cell">
                             @if (row.ContainsKey("ClientId"))
                             {
                                 <a href="/Client/Edit/@row["ClientId"]" title="Edit" class="action-edit"><i class="bi bi-pencil"></i></a>
@@ -160,7 +138,7 @@
 </div>
 
 <!-- FOOTER - User Master jaisa (scroll nahi hoga) -->
-<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+<div class="d-flex justify-content-between align-items-center p-2 border-top bg-white" style="border-radius:0 0 14px 14px;">
     <div class="d-flex align-items-center gap-2">
         <select id="clientPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
             <option value="10" selected="@(Model.PageSize == 10)">10</option>

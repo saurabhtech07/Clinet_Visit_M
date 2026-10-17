@@ -61,29 +61,46 @@
         "Office" => "background:#fef9c3;color:#a16207;",
         _ => "background:#f1f5f9;color:#475569;"
     };
+
+    // Fixed column widths (table-layout: fixed) — horizontal scroll nahi aayega.
+    string ColWidth(string col) => col switch
+    {
+        "DailyFollowUpId" => "36px",
+        "ContactPerson" => "80px",
+        "Company" => "80px",
+        "Mobile" => "64px",
+        "City" => "54px",
+        "Discussion" => "78px",
+        "FollowUpDate" => "70px",
+        "NextFollowUpDate" => "70px",
+        "FollowUpType" => "70px",
+        "Priority" => "54px",
+        "Status" => "66px",
+        "CreatedOn" => "68px",
+        "AssignedName" => "70px",
+        _ => "72px"
+    };
 }
 
 <style>
-    .table-scroll-container { max-height: 440px; overflow-y: auto; overflow-x: auto; position: relative; }
+    /* Koi inner scroll nahi — poora table page par fit hota hai */
+    .table-scroll-container { position: relative; }
     .dfu-table thead th {
         position: sticky; top: 0; z-index: 10;
-        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
         color: #64748b; text-transform: uppercase;
         background: #f8fafc !important;
         border-bottom: 1px solid #e2e8f0;
-        padding: 12px 14px; white-space: nowrap;
+        padding: 7px 8px; white-space: normal; line-height: 1.15;
         box-shadow: 0 1px 0 #e2e8f0;
     }
-    .dfu-table tbody td { font-size: 13px; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; }
-    .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
-    .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
-    .dfu-id-pill { background: #1e293b; color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .dfu-table tbody td { font-size: 12.5px; padding: 5px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; overflow: hidden; }
+    .dfu-id-pill { background: #1e293b; color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; }
     .table-sort-link { color: #475569 !important; text-decoration: none; }
     .table-sort-link:hover { color: #0f172a !important; }
-    .dfu-grid-table { border-collapse: separate; border-spacing: 0; }
-    .cell-clip { display: inline-block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-    .act-btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; }
+    .dfu-grid-table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+    .cell-clip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    .act-btn { width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 12px; }
     .dfu-table tbody td.actions-cell { white-space: nowrap; }
 </style>
 
@@ -91,11 +108,11 @@
     <table class="table mb-0 dfu-table table-hover dfu-grid-table">
         <thead>
             <tr>
-                <th style="width:65px;">Sr.No</th>
+                <th style="width:36px;">Sr.No</th>
                 @foreach (var col in grid.Columns)
                 {
                     var nextDir = (grid.SortColumn == col && grid.SortDirection == "ASC") ? "DESC" : "ASC";
-                    <th>
+                    <th style="width:@ColWidth(col);">
                         <a class="table-sort-link ajax-dfu-link" href="@BuildUrl(1, grid.PageSize, col, nextDir)">
                             @DisplayName(col)
                             @if (grid.SortColumn == col)
@@ -109,7 +126,7 @@
                         </a>
                     </th>
                 }
-                <th style="width:130px;">Actions</th>
+                <th class="actions-col" style="width:104px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -136,7 +153,7 @@
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(st))
                                     {
-                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @StatusStyle(st)">@st</span>
+                                        <span style="padding:2px 8px; border-radius:20px; font-size:10px; font-weight:600; @StatusStyle(st)">@st</span>
                                     }
                                 </td>
                             }
@@ -146,7 +163,7 @@
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(pr))
                                     {
-                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @PriorityStyle(pr)">@pr</span>
+                                        <span style="padding:2px 8px; border-radius:20px; font-size:10px; font-weight:600; @PriorityStyle(pr)">@pr</span>
                                     }
                                 </td>
                             }
@@ -156,7 +173,7 @@
                                 <td>
                                     @if (!string.IsNullOrWhiteSpace(ft))
                                     {
-                                        <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; @TypeStyle(ft)">@ft</span>
+                                        <span style="padding:2px 8px; border-radius:20px; font-size:10px; font-weight:600; @TypeStyle(ft)">@ft</span>
                                     }
                                 </td>
                             }
@@ -180,7 +197,7 @@
                             }
                             else
                             {
-                                <span style="padding:3px 8px; border-radius:6px; font-size:10px; font-weight:700; background:#dcfce7; color:#15803d;" title="Done">
+                                <span style="padding:2px 7px; border-radius:6px; font-size:9.5px; font-weight:700; background:#dcfce7; color:#15803d;" title="Done">
                                     <i class="bi bi-check2-circle"></i> Done
                                 </span>
                             }
@@ -202,7 +219,7 @@
     </table>
 </div>
 
-<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+<div class="d-flex justify-content-between align-items-center p-2 border-top bg-white" style="border-radius:0 0 14px 14px;">
     <div class="d-flex align-items-center gap-2">
         <select id="dfuPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
             <option value="10" selected="@(grid.PageSize == 10)">10</option>

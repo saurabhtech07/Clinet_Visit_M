@@ -9,44 +9,35 @@
 }
 
 <style>
-  .table-scroll-container {
-        max-height: 420px; /* yahi se scroll ka height control hoga */
-        overflow-y: auto;
-        overflow-x: auto;
-        position: relative;
-    }
+  /* Koi inner scroll nahi — poora table page par fit hota hai (fixed layout) */
+  .table-scroll-container { position: relative; }
   .dss-table thead th {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        position: sticky; top: 0; z-index: 10;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
         color: #64748b; text-transform: uppercase;
-        background: #f8fafc!important; /* sticky ke liye background jaruri hai */
+        background: #f8fafc !important;
         border-bottom: 1px solid #e2e8f0;
-        padding: 12px 14px; white-space: nowrap;
-        box-shadow: 0 1px 0 #e2e8f0; /* header ke niche line */
+        padding: 7px 8px; white-space: normal; line-height: 1.15;
+        box-shadow: 0 1px 0 #e2e8f0;
     }
   .dss-table tbody td {
-        font-size: 13px; padding: 12px 14px;
+        font-size: 12.5px; padding: 5px 8px;
         border-bottom: 1px solid #f1f5f9; vertical-align: middle;
-        background: #fff;
+        background: #fff; overflow: hidden;
     }
-   /* Scrollbar thoda sundar DSS jaisa */
-  .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
-  .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-  .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
-  .user-id-pill {
-        background: #1e293b; color: #fff;
-        padding: 3px 10px; border-radius: 6px;
-        font-size: 11px; font-weight: 600;
-    }
+  .user-grid-table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+  .cell-clip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+  .dss-table tbody td.actions-cell { white-space: nowrap; }
+  .user-id-pill { background: #1e293b; color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+  .table-sort-link { color: #475569 !important; text-decoration: none; }
+  .table-sort-link:hover { color: #0f172a !important; }
 </style>
 
 <div class="table-scroll-container">
-    <table class="table mb-0 dss-table table-hover">
+    <table class="table mb-0 dss-table table-hover user-grid-table">
         <thead>
             <tr>
-                <th style="width:70px;">Sr.No</th>
+                <th style="width:44px;">Sr.No</th>
                 @foreach (var column in displayColumns)
                 {
                     var nextDirection = Model.SortColumn == column && Model.SortDirection == "ASC"? "DESC" : "ASC";
@@ -65,7 +56,7 @@
                         </a>
                     </th>
                 }
-                <th style="width:100px;">Actions</th>
+                <th class="actions-col" style="width:78px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -86,13 +77,13 @@
                                 else if (column.Equals("IsActive", StringComparison.OrdinalIgnoreCase))
                                 {
                                     bool active = value!= null && Convert.ToBoolean(value);
-                                    if (active) { <span class="badge rounded-pill" style="background:#dcfce7; color:#15803d; font-size:11px; padding:5px 10px;">Active</span> }
-                                    else { <span class="badge rounded-pill" style="background:#f1f5f9; color:#64748b; font-size:11px; padding:5px 10px;">Inactive</span> }
+                                    if (active) { <span class="badge rounded-pill" style="background:#dcfce7; color:#15803d; font-size:11px; padding:3px 9px;">Active</span> }
+                                    else { <span class="badge rounded-pill" style="background:#f1f5f9; color:#64748b; font-size:11px; padding:3px 9px;">Inactive</span> }
                                 }
-                                else { @(value?? "") }
+                                else { <span class="cell-clip">@(value?? "")</span> }
                             </td>
                         }
-                        <td>
+                        <td class="actions-cell">
                             @if (row.ContainsKey("UserId"))
                             {
                                 <a href="/User/Edit/@row["UserId"]" title="Edit" class="me-2"><i class="bi bi-pencil-square text-warning"></i></a>
@@ -115,7 +106,7 @@
 </div>
 
 <!-- FOOTER FIX RAHEGA - SCROLL NAHI HOGA -->
-<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+<div class="d-flex justify-content-between align-items-center p-2 border-top bg-white" style="border-radius:0 0 14px 14px;">
     <div class="d-flex align-items-center gap-2">
         <select id="userPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
             <option value="10" selected="@(Model.PageSize == 10)">10</option>

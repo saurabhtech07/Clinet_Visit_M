@@ -58,31 +58,29 @@
 }
 
 <style>
-    .table-scroll-container { max-height: 440px; overflow-y: auto; overflow-x: auto; position: relative; }
+    /* Koi inner scroll nahi — poora table page par fit hota hai */
+    .table-scroll-container { position: relative; }
     .drp-table thead th {
         position: sticky; top: 0; z-index: 10;
-        font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
+        font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
         color: #64748b; text-transform: uppercase;
         background: #f8fafc !important;
         border-bottom: 1px solid #e2e8f0;
-        padding: 12px 14px; white-space: nowrap;
+        padding: 7px 8px; white-space: normal; line-height: 1.15;
         box-shadow: 0 1px 0 #e2e8f0;
     }
-    .drp-table tbody td { font-size: 13px; padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; }
-    .table-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
-    .table-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .table-scroll-container::-webkit-scrollbar-track { background: #f8fafc; }
-    .drp-id-pill { background: #1e293b; color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .drp-table tbody td { font-size: 12.5px; padding: 5px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; overflow: hidden; }
+    .drp-id-pill { background: #1e293b; color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; }
     .table-sort-link { color: #475569 !important; text-decoration: none; }
     .table-sort-link:hover { color: #0f172a !important; }
-    .drp-grid-table { border-collapse: separate; border-spacing: 0; }
-    .cell-clip { display: inline-block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-    .num-pill { display:inline-block; min-width:34px; text-align:center; padding:3px 10px; border-radius:7px; font-size:12px; font-weight:700; }
-    .act-btn { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 13px; }
+    .drp-grid-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    .cell-clip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    .num-pill { display:inline-block; min-width:30px; text-align:center; padding:2px 8px; border-radius:7px; font-size:11.5px; font-weight:700; }
+    .act-btn { width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 12px; }
     .drp-table tbody td.actions-cell { white-space: nowrap; }
     .drp-table tfoot td {
         background: #f8fafc; border-top: 1px solid #e2e8f0;
-        font-size: 12.5px; padding: 10px 14px; position: sticky; bottom: 0; z-index: 9;
+        font-size: 12px; padding: 6px 10px; position: sticky; bottom: 0; z-index: 9;
         box-shadow: 0 -1px 0 #e2e8f0;
     }
 </style>
@@ -91,7 +89,7 @@
     <table class="table mb-0 drp-table table-hover drp-grid-table">
         <thead>
             <tr>
-                <th style="width:65px;">Sr.No</th>
+                <th style="width:46px;">Sr.No</th>
                 @foreach (var col in grid.Columns)
                 {
                     var nextDir = (grid.SortColumn == col && grid.SortDirection == "ASC") ? "DESC" : "ASC";
@@ -111,7 +109,7 @@
                 }
                 @if (showActions)
                 {
-                    <th style="width:90px;">Actions</th>
+                    <th class="actions-col" style="width:90px;">Actions</th>
                 }
             </tr>
         </thead>
@@ -153,7 +151,12 @@
                                 @if (Model.IsUserSummary)
                                 {
                                     var uid = row.ContainsKey("UserId") ? row["UserId"]?.ToString() : "";
-                                    var dayStr = Model.SummaryDay.ToString("yyyy-MM-dd");
+                                    var dayVal = row.ContainsKey("ReportDate") ? row["ReportDate"] : null;
+                                    var dayStr = dayVal is DateTime drow
+                                        ? drow.ToString("yyyy-MM-dd")
+                                        : (!string.IsNullOrWhiteSpace(dayVal?.ToString())
+                                            ? Convert.ToDateTime(dayVal).ToString("yyyy-MM-dd")
+                                            : Model.SummaryDay.ToString("yyyy-MM-dd"));
                                     var viewUrl = "/DailyReport/UserDetails?userId=" + uid + "&date=" + dayStr;
                                     <a href="@viewUrl" class="btn btn-light border act-btn dr-view-btn" data-url="@viewUrl" title="View"><i class="bi bi-eye"></i></a>
                                 }
@@ -175,7 +178,7 @@
     </table>
 </div>
 
-<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white" style="border-radius:0 0 14px 14px;">
+<div class="d-flex justify-content-between align-items-center p-2 border-top bg-white" style="border-radius:0 0 14px 14px;">
     <div class="d-flex align-items-center gap-2">
         <select id="drPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
             <option value="10" selected="@(grid.PageSize == 10)">10</option>

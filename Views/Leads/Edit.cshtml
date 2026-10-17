@@ -6,13 +6,15 @@
     var states = ((DynamicTableViewModel)ViewBag.States).Rows;
     var users = ViewBag.Users as List<User> ?? new List<User>();
     var statusOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    var priorityOptions = ViewBag.PriorityOptions as string[] ?? new string[0];
+    var sourceOptions = ViewBag.SourceOptions as string[] ?? new string[0];
     var clients = ViewBag.Clients as List<Client> ?? new List<Client>();
 
     bool isConverted = row.ContainsKey("IsConverted") && row["IsConverted"] != null && Convert.ToBoolean(row["IsConverted"]);
     var convertedClientId = row.ContainsKey("ConvertedClientId") && row["ConvertedClientId"] != null ? row["ConvertedClientId"]?.ToString() : null;
 
     var mainFields = new[] { "LeadPerson", "Company", "Mobile", "Email", "City", "StateId" };
-    var statusFields = new[] { "Status", "DealValue", "AssignedTo" };
+    var statusFields = new[] { "Status", "Priority", "LeadSource", "DealValue", "AssignedTo", "NextFollowUpDate" };
     var requirementFields = new[] { "Requirement" };
 
     // Ye columns khud se bhar jaate hain -> form me nahi dikhate
@@ -83,6 +85,29 @@
             }));
             input = $@"<select class=""form-select"" name=""Status""><option value="""">Select Status</option>{opts}</select>";
         }
+        else if (f.Name == "Priority")
+        {
+            var opts = string.Join("", priorityOptions.Select(s =>
+            {
+                var sel = s == v ? " selected" : "";
+                return $"<option value=\"{s}\"{sel}>{s}</option>";
+            }));
+            input = $@"<select class=""form-select"" name=""Priority""><option value="""">Select Priority</option>{opts}</select>";
+        }
+        else if (f.Name == "LeadSource")
+        {
+            var opts = string.Join("", sourceOptions.Select(s =>
+            {
+                var sel = s == v ? " selected" : "";
+                return $"<option value=\"{s}\"{sel}>{s}</option>";
+            }));
+            input = $@"<select class=""form-select"" name=""LeadSource""><option value="""">Select Source</option>{opts}</select>";
+        }
+        else if (f.Name == "NextFollowUpDate")
+        {
+            var dv = raw is DateTime dtv ? dtv.ToString("yyyy-MM-dd") : "";
+            input = $@"<input class=""form-control"" name=""NextFollowUpDate"" type=""date"" value=""{dv}"" />";
+        }
         else if (f.Name == "AssignedTo")
         {
             var opts = string.Join("", users.Select(u =>
@@ -95,7 +120,7 @@
         }
         else if (f.Name == "Requirement")
         {
-            input = $@"<textarea class=""form-control"" name=""Requirement"" rows=""3"" placeholder=""Enter customer requirement..."">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
+            input = $@"<textarea class=""form-control"" name=""Requirement"" rows=""2"" placeholder=""Enter customer requirement..."">{System.Net.WebUtility.HtmlEncode(v)}</textarea>";
         }
         else
         {
@@ -112,56 +137,63 @@
 }
 
 <style>
-    #leadForm .lf-title{font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #eef2f7;padding-bottom:8px;display:flex;align-items:center;gap:8px}
+    #leadForm .lf-title{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eef2f7;padding-bottom:6px;display:flex;align-items:center;gap:7px}
     #leadForm .lf-title i{color:#2563eb}
-    #leadForm .form-label{font-size:12px;font-weight:700;color:#334155}
-    #leadForm .form-control,#leadForm .form-select{height:40px;font-size:13.5px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
-    #leadForm textarea.form-control{height:auto}
+    #leadForm .form-label{font-size:11.5px;font-weight:700;color:#334155;margin-bottom:2px}
+    #leadForm .form-control,#leadForm .form-select{height:34px;font-size:12.5px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;min-width:0}
+    #leadForm textarea.form-control{height:auto;min-height:56px}
     #leadForm .form-control:focus,#leadForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+    #leadForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
+    /* Flex columns ko shrink karne do — warna lamba label/option horizontal scroll bana deta hai */
+    #leadForm [class*="col-"]{min-width:0}
+    #leadForm .ss-wrap,#leadForm .ss-input{max-width:100%}
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-2">
     <h4 class="fw-bold mb-0">Edit Lead @(leadId != null ? "#" + leadId : "")</h4>
-    @if (isConverted)
-    {
-        <span style="padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#dcfce7; color:#15803d;">
-            <i class="bi bi-check2-circle"></i> Converted to Client @(!string.IsNullOrEmpty(convertedClientId) ? "#" + convertedClientId : "")
-        </span>
-    }
+    <div class="d-flex align-items-center gap-2">
+        <a href="/Leads/Details/@leadId" class="btn btn-light border btn-sm"><i class="bi bi-clock-history me-1"></i> Activity &amp; Details</a>
+        @if (isConverted)
+        {
+            <span style="padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#dcfce7; color:#15803d;">
+                <i class="bi bi-check2-circle"></i> Converted to Client @(!string.IsNullOrEmpty(convertedClientId) ? "#" + convertedClientId : "")
+            </span>
+        }
+    </div>
 </div>
 
 <form method="post" id="leadForm">
     @Html.AntiForgeryToken()
     <input type="hidden" name="LeadId" value="@leadId" />
     <div class="card border-0 shadow-sm rounded-3">
-        <div class="card-body p-4">
+        <div class="card-body p-3">
 
             <div class="lf-title"><i class="bi bi-person-badge"></i> Lead Information</div>
-            <div class="row g-3 mt-1">
-                @foreach (var f in Model.Where(f => mainFields.Contains(f.Name))) { @RenderField(f, "col-md-6") }
+            <div class="row g-2 mt-2">
+                @foreach (var f in Model.Where(f => mainFields.Contains(f.Name))) { @RenderField(f, "col-md-4") }
             </div>
 
-            <div class="lf-title mt-4"><i class="bi bi-sliders"></i> Status &amp; Assignment</div>
-            <div class="row g-3 mt-1">
+            <div class="lf-title mt-3"><i class="bi bi-sliders"></i> Pipeline, Priority &amp; Assignment</div>
+            <div class="row g-2 mt-2">
                 @foreach (var f in Model.Where(f => statusFields.Contains(f.Name))) { @RenderField(f, "col-md-4") }
             </div>
 
-            <div class="lf-title mt-4"><i class="bi bi-card-text"></i> Requirement</div>
-            <div class="row g-3 mt-1">
+            <div class="lf-title mt-3"><i class="bi bi-card-text"></i> Requirement</div>
+            <div class="row g-2 mt-2">
                 @foreach (var f in Model.Where(f => requirementFields.Contains(f.Name))) { @RenderField(f, "col-md-12") }
             </div>
 
             @if (otherFields.Any())
             {
-                <div class="lf-title mt-4"><i class="bi bi-plus-square"></i> Additional Information</div>
-                <div class="row g-3 mt-1">
-                    @foreach (var f in otherFields) { @RenderField(f, "col-md-6") }
+                <div class="lf-title mt-3"><i class="bi bi-plus-square"></i> Additional Information</div>
+                <div class="row g-2 mt-2">
+                    @foreach (var f in otherFields) { @RenderField(f, "col-md-4") }
                 </div>
             }
         </div>
     </div>
 
-    <div class="d-flex justify-content-end align-items-center gap-2 mt-4">
+    <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
         @if (!isConverted)
         {
             <button type="button" id="convertLeadBtn" class="btn btn-success px-4"><i class="bi bi-arrow-left-right me-1"></i> Convert to Client</button>

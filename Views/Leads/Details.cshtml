@@ -1,0 +1,407 @@
+@model ClientVisitManagement.Models.LeadDetailViewModel
+@{
+    if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+    {
+        Layout = null;
+    }
+
+    var leadId = Model.LeadId;
+    var users = Model.Users;
+    var stageOptions = ViewBag.StatusOptions as string[] ?? new string[0];
+    var activityTypes = ViewBag.ActivityTypeOptions as string[] ?? new string[0];
+    var outcomes = ViewBag.OutcomeOptions as string[] ?? new string[0];
+
+    string Str(string col) => Model.Str(col);
+    object? Val(string col) => Model.Lead.ContainsKey(col) ? Model.Lead[col] : null;
+    bool IsConv = Val("IsConverted") != null && Convert.ToBoolean(Val("IsConverted")!);
+    string? ConvClientId = Val("ConvertedClientId")?.ToString();
+
+    string FmtDate(object? v) => v is DateTime dt ? dt.ToString("dd-MM-yyyy") : (v?.ToString() ?? "");
+    string FmtDateTime(object? v) => v is DateTime dt ? dt.ToString("dd-MM-yyyy hh:mm tt") : (v?.ToString() ?? "");
+
+    decimal dealValue = Val("DealValue") != null ? Convert.ToDecimal(Val("DealValue")!) : 0m;
+    var priority = Str("Priority");
+    var status = Str("Status");
+    var nextFollowUp = Val("NextFollowUpDate") is DateTime nfd ? (DateTime?)nfd : null;
+    bool overdue = nextFollowUp.HasValue && nextFollowUp.Value.Date < DateTime.Today && !IsConv;
+
+    string PriorityStyle(string p) => p switch
+    {
+        "Hot" => "background:#fee2e2;color:#b91c1c;",
+        "Warm" => "background:#fef3c7;color:#b45309;",
+        "Cold" => "background:#dbeafe;color:#1d4ed8;",
+        _ => "background:#f1f5f9;color:#475569;"
+    };
+    string StatusStyle(string s) => s switch
+    {
+        "New" => "background:#e2e8f0;color:#334155;",
+        "Contacted" => "background:#dbeafe;color:#1d4ed8;",
+        "Qualified" => "background:#ede9fe;color:#6d28d9;",
+        "Proposal Sent" => "background:#fef3c7;color:#b45309;",
+        "Negotiation" => "background:#ffedd5;color:#c2410c;",
+        "Won" => "background:#dcfce7;color:#15803d;",
+        "Lost" => "background:#fee2e2;color:#b91c1c;",
+        _ => "background:#f1f5f9;color:#475569;"
+    };
+    string ActivityIcon(string t) => t switch
+    {
+        "Call" => "bi-telephone-fill",
+        "Meeting" => "bi-people-fill",
+        "Email" => "bi-envelope-fill",
+        "Visit" => "bi-geo-alt-fill",
+        "WhatsApp" => "bi-whatsapp",
+        _ => "bi-sticky-fill"
+    };
+}
+
+<style>
+    .ld-card{background:#fff;border-radius:14px;border:1px solid #eef2f7;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .ld-info-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px}
+    .ld-info-value{font-size:13.5px;font-weight:600;color:#0f172a}
+    .ld-kpi{background:#fff;border-radius:12px;border:1px solid #eef2f7;padding:10px 12px;text-align:center}
+    .ld-kpi .v{font-size:20px;font-weight:800;color:#0f172a;line-height:1.1}
+    .ld-kpi .l{font-size:9.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px}
+    .ld-timeline{position:relative;padding-left:26px}
+    .ld-timeline::before{content:"";position:absolute;left:9px;top:4px;bottom:4px;width:2px;background:#e2e8f0}
+    .ld-tl-item{position:relative;padding:0 0 16px 0}
+    .ld-tl-dot{position:absolute;left:-24px;top:2px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px}
+    .ld-tl-card{background:#f8fafc;border:1px solid #eef2f7;border-radius:10px;padding:10px 12px}
+    #leadForm .form-control,#leadForm .form-select{height:38px;font-size:13px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <a href="/Leads" class="btn btn-light border btn-sm"><i class="bi bi-arrow-left"></i></a>
+        <div>
+            <h4 class="fw-bold mb-0">@Str("LeadPerson") <span class="text-muted" style="font-size:14px;font-weight:600;">@Str("Company")</span></h4>
+            <div class="text-muted" style="font-size:12px;">Lead #@leadId &nbsp;·&nbsp; Activity &amp; Details</div>
+        </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        @if (!IsConv)
+        {
+            <div class="d-flex align-items-center gap-1">
+                <span style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;">Stage</span>
+                <select id="leadStage" class="form-select form-select-sm" style="width:148px;" title="Pipeline stage">
+                    @foreach (var s in stageOptions)
+                    {
+                        if (string.Equals(s, status, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <option value="@s" selected>@s</option>
+                        }
+                        else
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    }
+                </select>
+                <button type="button" id="leadNextStage" class="btn btn-light border btn-sm" title="Move to next stage"><i class="bi bi-arrow-right"></i></button>
+            </div>
+        }
+        @if (IsConv)
+        {
+            <span style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#dcfce7; color:#15803d;">
+                <i class="bi bi-check2-circle"></i> Converted
+            </span>
+            @if (!string.IsNullOrEmpty(ConvClientId))
+            {
+                <a href="/Client/Edit/@ConvClientId" class="btn btn-light border btn-sm"><i class="bi bi-building me-1"></i> View Client</a>
+            }
+        }
+        else
+        {
+            <button type="button" id="convertLeadBtn" class="btn btn-success btn-sm"><i class="bi bi-arrow-left-right me-1"></i> Convert to Client</button>
+        }
+        <a href="/Leads/Edit/@leadId" class="btn btn-primary btn-sm"><i class="bi bi-pencil me-1"></i> Edit Lead</a>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<div class="row g-3">
+    <!-- LEFT : info + activity -->
+    <div class="col-lg-8">
+        <div class="ld-card p-3 mb-3">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-person-vcard text-primary"></i>
+                <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Lead Information</span>
+                @if (!string.IsNullOrWhiteSpace(status))
+                {
+                    <span class="ms-auto" style="padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;@StatusStyle(status)">@status</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(priority))
+                {
+                    <span style="padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;@PriorityStyle(priority)">@priority</span>
+                }
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4"><div class="ld-info-label">Mobile</div><div class="ld-info-value">@Str("Mobile")</div></div>
+                <div class="col-md-4"><div class="ld-info-label">Email</div><div class="ld-info-value">@Str("Email")</div></div>
+                <div class="col-md-4"><div class="ld-info-label">City / State</div><div class="ld-info-value">@Str("City") @(string.IsNullOrWhiteSpace(Str("StateName")) ? "" : ", " + Str("StateName"))</div></div>
+                <div class="col-md-4"><div class="ld-info-label">Source</div><div class="ld-info-value">@Str("LeadSource")</div></div>
+                <div class="col-md-4"><div class="ld-info-label">Deal Value</div><div class="ld-info-value">₹ @dealValue.ToString("N0")</div></div>
+                <div class="col-md-4"><div class="ld-info-label">Assigned To</div><div class="ld-info-value">@Str("AssignedToName")</div></div>
+                <div class="col-md-4">
+                    <div class="ld-info-label">Next Follow Up</div>
+                    <div class="ld-info-value" style="@(overdue ? "color:#dc2626;" : "")">
+                        @if (nextFollowUp.HasValue)
+                        {
+                            <text>@nextFollowUp.Value.ToString("dd-MM-yyyy")</text>
+                            if (overdue) { <span class="badge bg-danger ms-1">Overdue</span> }
+                        }
+                        else { <span class="text-muted">—</span> }
+                    </div>
+                </div>
+                <div class="col-md-4"><div class="ld-info-label">Created On</div><div class="ld-info-value">@FmtDateTime(Val("CreatedOn"))</div></div>
+                @if (!string.IsNullOrWhiteSpace(Str("Requirement")))
+                {
+                    <div class="col-12"><div class="ld-info-label">Requirement</div><div style="font-size:13px;color:#334155;">@Str("Requirement")</div></div>
+                }
+            </div>
+        </div>
+
+        <!-- Add activity -->
+        <div class="ld-card p-3 mb-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-plus-circle text-primary"></i>
+                <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Log New Activity</span>
+            </div>
+            <form id="leadForm" method="post" action="/Leads/AddActivity/@leadId">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Type</label>
+                        <select class="form-select" name="ActivityType">
+                            @foreach (var t in activityTypes) { <option value="@t">@t</option> }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Date &amp; Time</label>
+                        <input type="datetime-local" class="form-control" name="ActivityDate" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Outcome</label>
+                        <select class="form-select" name="Outcome">
+                            <option value="">— Select —</option>
+                            @foreach (var o in outcomes) { <option value="@o">@o</option> }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Next Follow Up</label>
+                        <input type="date" class="form-control" name="NextFollowUpDate" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Assigned To</label>
+                        <select class="form-select" name="AssignedTo">
+                            <option value="">— Select —</option>
+                            @foreach (var u in users)
+                            {
+                                var nm = string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName;
+                                <option value="@u.UserId">@nm</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-9">
+                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Summary / Notes</label>
+                        <input type="text" class="form-control" name="Summary" placeholder="Kya baat hui / next step..." />
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary btn-sm px-4"><i class="bi bi-plus-lg me-1"></i> Add Activity</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Activity timeline -->
+        <div class="ld-card p-3">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-clock-history text-primary"></i>
+                <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Activity History</span>
+                <span class="badge bg-secondary ms-1">@Model.ActivityCount</span>
+            </div>
+
+            @if (Model.Activities.Any())
+            {
+                <div class="ld-timeline">
+                    @foreach (var a in Model.Activities)
+                    {
+                        var aType = a.ContainsKey("ActivityType") ? a["ActivityType"]?.ToString() ?? "" : "";
+                        var aDate = a.ContainsKey("ActivityDate") ? a["ActivityDate"] : null;
+                        var aSummary = a.ContainsKey("Summary") ? a["Summary"]?.ToString() ?? "" : "";
+                        var aOutcome = a.ContainsKey("Outcome") ? a["Outcome"]?.ToString() ?? "" : "";
+                        var aNext = a.ContainsKey("NextFollowUpDate") ? a["NextFollowUpDate"] : null;
+                        var aAssigned = a.ContainsKey("AssignedName") ? a["AssignedName"]?.ToString() ?? "" : "";
+                        var aId = a.ContainsKey("ActivityId") ? a["ActivityId"]?.ToString() : "";
+                        <div class="ld-tl-item">
+                            <div class="ld-tl-dot" style="background:#2563eb;"><i class="bi @ActivityIcon(aType)"></i></div>
+                            <div class="ld-tl-card">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div style="font-size:12.5px;font-weight:700;color:#0f172a;">
+                                        @aType
+                                        @if (!string.IsNullOrWhiteSpace(aOutcome))
+                                        {
+                                            <span class="badge bg-light text-dark border ms-1" style="font-size:10px;">@aOutcome</span>
+                                        }
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span style="font-size:11px;color:#94a3b8;">@FmtDateTime(aDate)</span>
+                                        <button type="button" class="btn btn-sm btn-light border act-del-activity" data-id="@aId" title="Delete" style="width:26px;height:26px;padding:0;color:#dc2626;"><i class="bi bi-trash" style="font-size:11px;"></i></button>
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(aSummary))
+                                {
+                                    <div style="font-size:12.5px;color:#334155;margin-top:4px;">@aSummary</div>
+                                }
+                                <div class="d-flex gap-3 mt-1" style="font-size:11px;color:#64748b;">
+                                    @if (!string.IsNullOrWhiteSpace(aAssigned)) { <span><i class="bi bi-person me-1"></i>@aAssigned</span> }
+                                    @if (aNext != null && aNext is DateTime an) { <span><i class="bi bi-calendar-event me-1"></i>Next: @an.ToString("dd-MM-yyyy")</span> }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox" style="font-size:28px;opacity:.4;"></i>
+                    <div style="font-size:12.5px;">Abhi tak koi activity log nahi hui.</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- RIGHT : KPIs + follow-up history -->
+    <div class="col-lg-4">
+        <div class="row g-2 mb-3">
+            <div class="col-6"><div class="ld-kpi"><div class="v">@Model.ActivityCount</div><div class="l">Activities</div></div></div>
+            <div class="col-6"><div class="ld-kpi"><div class="v">@Model.FollowUpCount</div><div class="l">Follow Ups</div></div></div>
+            <div class="col-6"><div class="ld-kpi"><div class="v" style="font-size:15px;">₹ @dealValue.ToString("N0")</div><div class="l">Deal Value</div></div></div>
+            <div class="col-6"><div class="ld-kpi"><div class="v" style="font-size:15px;@(string.IsNullOrWhiteSpace(priority) ? "" : "color:#b45309;")">@(string.IsNullOrWhiteSpace(priority) ? "—" : priority)</div><div class="l">Priority</div></div></div>
+        </div>
+
+        <div class="ld-card p-3">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-calendar2-check text-primary"></i>
+                <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Follow Up History</span>
+            </div>
+            @if (Model.FollowUps.Any())
+            {
+                foreach (var f in Model.FollowUps)
+                {
+                    var fDate = f.ContainsKey("FollowUpDate") ? f["FollowUpDate"] : null;
+                    var fNext = f.ContainsKey("NextFollowUpDate") ? f["NextFollowUpDate"] : null;
+                    var fStatus = f.ContainsKey("Status") ? f["Status"]?.ToString() ?? "" : "";
+                    var fType = f.ContainsKey("FollowUpType") ? f["FollowUpType"]?.ToString() ?? "" : "";
+                    var fDisc = f.ContainsKey("Discussion") ? f["Discussion"]?.ToString() ?? "" : "";
+                    var done = string.Equals(fStatus, "Done", StringComparison.OrdinalIgnoreCase);
+                    <div style="border-bottom:1px solid #f1f5f9;padding:8px 0;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span style="font-size:12.5px;font-weight:600;color:#0f172a;">@FmtDate(fDate)</span>
+                            <span style="padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;@(done ? "background:#dcfce7;color:#15803d;" : "background:#fef3c7;color:#b45309;")">@fStatus</span>
+                        </div>
+                        <div style="font-size:11.5px;color:#64748b;">
+                            @if (!string.IsNullOrWhiteSpace(fType)) { <span><i class="bi bi-tag me-1"></i>@fType</span> }
+                            @if (fNext != null && fNext is DateTime fn) { <span class="ms-2"><i class="bi bi-arrow-right me-1"></i>@fn.ToString("dd-MM-yyyy")</span> }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(fDisc))
+                        {
+                            <div style="font-size:12px;color:#334155;margin-top:2px;">@fDisc</div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-3" style="font-size:12.5px;">
+                    <i class="bi bi-calendar-x" style="font-size:24px;opacity:.4;"></i>
+                    <div>Koi follow-up nahi.</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var form = document.getElementById("leadForm");
+        if (form) {
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                Ajax.submit({
+                    url: "/Leads/AddActivity/@leadId",
+                    form: form,
+                    successMessage: "Activity added.",
+                    onSuccess: function () {
+                        if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
+                        else window.location.href = "/Leads/Details/@leadId";
+                    }
+                });
+            });
+        }
+
+        // Delete activity
+        document.querySelectorAll(".act-del-activity").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                if (!confirm("Delete this activity?")) return;
+                var id = btn.getAttribute("data-id");
+                Ajax.post("/Leads/DeleteActivity?id=" + id + "&leadId=@leadId", new FormData())
+                    .then(function (d) {
+                        Ajax.toast(d.message || "Deleted.", "success");
+                        if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
+                        else window.location.href = "/Leads/Details/@leadId";
+                    })
+                    .catch(function (e) { Ajax.toast(e.message, "error"); });
+            });
+        });
+
+        var cbtn = document.getElementById("convertLeadBtn");
+        if (cbtn) {
+            cbtn.addEventListener("click", function () {
+                if (!confirm("Convert this lead to a Client?")) return;
+                cbtn.disabled = true;
+                Ajax.post("/Leads/Convert/@leadId", new FormData())
+                    .then(function (d) {
+                        Ajax.toast(d.message || "Converted.", "success");
+                        if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
+                        else window.location.href = "/Leads/Details/@leadId";
+                    })
+                    .catch(function (e) { cbtn.disabled = false; Ajax.toast(e.message, "error"); });
+            });
+        }
+
+        // ---- Pipeline stage change (Contacted -> Qualified -> ... -> Won) ----
+        function updateStage(newStage) {
+            Ajax.post("/Leads/UpdateStatus?id=@leadId&status=" + encodeURIComponent(newStage), new FormData())
+                .then(function (d) {
+                    Ajax.toast(d.message || "Stage updated.", "success");
+                    if (window.loadPage) window.loadPage("/Leads/Details/@leadId");
+                    else window.location.href = "/Leads/Details/@leadId";
+                })
+                .catch(function (e) { Ajax.toast(e.message, "error"); });
+        }
+
+        var stageSel = document.getElementById("leadStage");
+        if (stageSel) {
+            stageSel.addEventListener("change", function () {
+                stageSel.disabled = true;
+                updateStage(stageSel.value);
+            });
+        }
+
+        var nextBtn = document.getElementById("leadNextStage");
+        if (nextBtn) {
+            nextBtn.addEventListener("click", function () {
+                // Ordered deal flow (Lost alag se choose karna padta hai)
+                var flow = ["New", "Contacted", "Qualified", "Proposal Sent", "Negotiation", "Won"];
+                var current = stageSel ? stageSel.value : "";
+                var i = flow.indexOf(current);
+                if (i < 0 || i >= flow.length - 1) {
+                    Ajax.toast("Ye lead already aakhri stage par hai.", "info");
+                    return;
+                }
+                nextBtn.disabled = true;
+                updateStage(flow[i + 1]);
+            });
+        }
+    })();
+</script>
