@@ -160,57 +160,6 @@
             </div>
         </div>
 
-        <!-- Add activity -->
-        <div class="ld-card p-3 mb-3">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="bi bi-plus-circle text-primary"></i>
-                <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Log New Activity</span>
-            </div>
-            <form id="leadForm" method="post" action="/Leads/AddActivity/@leadId">
-                <div class="row g-2">
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Type</label>
-                        <select class="form-select" name="ActivityType">
-                            @foreach (var t in activityTypes) { <option value="@t">@t</option> }
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Date &amp; Time</label>
-                        <input type="datetime-local" class="form-control" name="ActivityDate" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Outcome</label>
-                        <select class="form-select" name="Outcome">
-                            <option value="">— Select —</option>
-                            @foreach (var o in outcomes) { <option value="@o">@o</option> }
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Next Follow Up</label>
-                        <input type="date" class="form-control" name="NextFollowUpDate" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Assigned To</label>
-                        <select class="form-select" name="AssignedTo">
-                            <option value="">— Select —</option>
-                            @foreach (var u in users)
-                            {
-                                var nm = string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName;
-                                <option value="@u.UserId">@nm</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-9">
-                        <label class="form-label mb-1" style="font-size:11px;font-weight:700;color:#475569;">Summary / Notes</label>
-                        <input type="text" class="form-control" name="Summary" placeholder="Kya baat hui / next step..." />
-                    </div>
-                    <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary btn-sm px-4"><i class="bi bi-plus-lg me-1"></i> Add Activity</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
         <!-- Activity timeline -->
         <div class="ld-card p-3">
             <div class="d-flex align-items-center gap-2 mb-3">
