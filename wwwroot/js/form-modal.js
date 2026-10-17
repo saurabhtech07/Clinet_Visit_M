@@ -30,6 +30,7 @@
         if (backBtn) backBtn.addEventListener("click", function () { hide(); });
         modalEl.addEventListener("hidden.bs.modal", function () {
             if (bodyEl) bodyEl.innerHTML = "";
+            setWide(false);   // normal form width par wapas aa jao
         });
         return true;
     }
@@ -96,10 +97,17 @@
         }
     }
 
-    function load(url, label) {
+    // Detail popups (Lead view) ke liye modal ko thoda chaura kar do
+    function setWide(on) {
+        var dlg = modalEl && modalEl.querySelector(".modal-dialog");
+        if (dlg) dlg.classList.toggle("app-modal-wide", !!on);
+    }
+
+    function load(url, label, opts) {
         if (!ensure()) { window.location.href = url; return Promise.resolve(); }
 
         lastUrl = url;
+        setWide(!!(opts && opts.wide));
         if (titleEl) titleEl.textContent = (label && label.length < 40) ? label : "Loading…";
         bodyEl.innerHTML = '<div class="text-center py-5 text-muted">' +
             '<div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';
@@ -127,7 +135,7 @@
             });
     }
 
-    function open(url, label) { return load(url, label); }
+    function open(url, label, opts) { return load(url, label, opts); }
 
     // Current list page ko main content area me wapas load karo (original loadPage se).
     function refreshCurrent() {

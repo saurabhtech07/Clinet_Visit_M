@@ -254,7 +254,9 @@
                 if (details) {
                     e.preventDefault();
                     var url = details.getAttribute("href");
-                    if (window.loadPage) window.loadPage(url, "Activity & Details");
+                    // Eye icon -> poora Details page na khole, popup me sab kuch dikhaye
+                    if (window.FormModal && window.FormModal.open) window.FormModal.open(url, "Lead Details", { wide: true });
+                    else if (window.loadPage) window.loadPage(url, "Activity & Details");
                     else window.location.href = url;
                     return;
                 }
