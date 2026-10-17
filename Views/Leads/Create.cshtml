@@ -12,10 +12,10 @@
     var statusFields = new[] { "Status", "Priority", "LeadSource", "DealValue", "AssignedTo", "NextFollowUpDate" };
     var requirementFields = new[] { "Requirement" };
 
-    // Ye columns khud se bhar jaate hain -> form me nahi dikhate
+    // These columns are auto-filled -> they are not shown in the form
     var autoFields = new[] { "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn", "ClientId" };
 
-    // Naya column DB me add karo (GSTNo, Source, etc.) -> yahan khud aa jaayega
+    // Add a new column in the DB (GSTNo, Source, etc.) -> it shows up here automatically
     var otherFields = Model.Where(f =>
         !mainFields.Contains(f.Name) &&
         !statusFields.Contains(f.Name) &&
@@ -131,7 +131,7 @@
     #leadForm textarea.form-control{height:auto;min-height:56px}
     #leadForm .form-control:focus,#leadForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
     #leadForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
-    /* Flex columns ko shrink karne do — warna lamba label/option horizontal scroll bana deta hai */
+    /* Let the flex columns shrink — otherwise a long label/option forces a horizontal scroll */
     #leadForm [class*="col-"]{min-width:0}
     #leadForm .ss-wrap,#leadForm .ss-input{max-width:100%}
 </style>

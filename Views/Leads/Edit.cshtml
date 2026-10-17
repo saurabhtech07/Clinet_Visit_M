@@ -17,7 +17,7 @@
     var statusFields = new[] { "Status", "Priority", "LeadSource", "DealValue", "AssignedTo", "NextFollowUpDate" };
     var requirementFields = new[] { "Requirement" };
 
-    // Ye columns khud se bhar jaate hain -> form me nahi dikhate
+    // These columns are auto-filled -> they are not shown in the form
     var autoFields = new[] { "CreatedOn", "EntryTime", "IsConverted", "ConvertedClientId", "ConvertedOn", "ClientId" };
 
     var otherFields = Model.Where(f =>
@@ -47,8 +47,8 @@
 
         if (f.Name == "Company")
         {
-            // Company Master (Client) ka searchable dropdown. Purane lead me ClientId na ho
-            // to Company naam se match karke preselect karte hain.
+            // Searchable dropdown from the Company (Client) master. Older leads may not
+            // have a ClientId, so we match by Company name and preselect it.
             var curClientId = row.ContainsKey("ClientId") ? row["ClientId"]?.ToString() : null;
             var curName = raw?.ToString();
             if (string.IsNullOrEmpty(curClientId) && !string.IsNullOrEmpty(curName))
@@ -144,7 +144,7 @@
     #leadForm textarea.form-control{height:auto;min-height:56px}
     #leadForm .form-control:focus,#leadForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
     #leadForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
-    /* Flex columns ko shrink karne do — warna lamba label/option horizontal scroll bana deta hai */
+    /* Let the flex columns shrink — otherwise a long label/option forces a horizontal scroll */
     #leadForm [class*="col-"]{min-width:0}
     #leadForm .ss-wrap,#leadForm .ss-input{max-width:100%}
 </style>
@@ -247,7 +247,7 @@
                 companySel.addEventListener("ss:addnew", function (e) {
                     openQuickCompany(e.detail ? e.detail.query : "");
                 });
-                // Edit: agar company pehle se selected hai to auto-fill + readonly laga do
+                // Edit: if a company is already selected, auto-fill it and make it readonly
                 if (companySel.value) applyCompany(companySel.value);
             }
 

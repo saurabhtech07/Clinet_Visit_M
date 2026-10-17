@@ -217,7 +217,7 @@
         // Expose for the shared delete handler + convert
         window.refreshCurrentTable = function () { loadLeadTable(buildLeadUrl(1)); };
 
-        // Convert hone par KPI cards bhi turant update karo (converted lead Total/Deal Value se hat jaye)
+        // Update the KPI cards right after conversion (converted lead leaves Total/Deal Value)
         function applyConvertedKpi(d) {
             if (!d || d.total === undefined) return;
             function set(id, val) { var n = document.getElementById(id); if (n) n.textContent = val; }

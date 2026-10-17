@@ -5,13 +5,6 @@
     {
         Layout = null;
     }
-    else
-    {
-        if (Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-        {
-            Layout = null;
-        }
-    }
 
     var leadId = Model.LeadId;
     var users = Model.Users;
@@ -79,7 +72,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="d-flex align-items-center gap-2">
-@if (!isModal)
+        @if (!isModal)
         {
             <a href="/Leads" class="btn btn-light border btn-sm"><i class="bi bi-arrow-left"></i></a>
         }
@@ -119,11 +112,11 @@
                 <a href="/Client/Edit/@ConvClientId" class="btn btn-light border btn-sm"><i class="bi bi-building me-1"></i> View Client</a>
             }
         }
-@if (!isModal)
+        @if (!isModal)
         {
             <button type="button" id="convertLeadBtn" class="btn btn-success btn-sm"><i class="bi bi-arrow-left-right me-1"></i> Convert to Client</button>
         }
-@if (!isModal)
+        @if (!isModal)
         {
             <a href="/Leads/Edit/@leadId" class="btn btn-primary btn-sm"><i class="bi bi-pencil me-1"></i> Edit Lead</a>
         }
@@ -179,10 +172,6 @@
                 <i class="bi bi-calendar2-check text-primary"></i>
                 <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Follow Up History</span>
             </div>
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-calendar2-check text-primary"></i>
-                <span style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">Follow Up History</span>
-            </div>
             @if (Model.FollowUps.Any())
             {
                 foreach (var f in Model.FollowUps)
@@ -213,7 +202,7 @@
             {
                 <div class="text-center text-muted py-3" style="font-size:12.5px;">
                     <i class="bi bi-calendar-x" style="font-size:24px;opacity:.4;"></i>
-                    <div>Koi follow-up nahi.</div>
+                    <div>No follow-ups yet.</div>
                 </div>
             }
         </div>
@@ -290,7 +279,7 @@
         var nextBtn = document.getElementById("leadNextStage");
         if (nextBtn) {
             nextBtn.addEventListener("click", function () {
-                // Ordered deal flow (Lost alag se choose karna padta hai)
+                // Ordered deal flow (Lost has to be chosen separately)
                 var flow = ["New", "Contacted", "Qualified", "Proposal Sent", "Negotiation", "Won"];
                 var current = stageSel ? stageSel.value : "";
                 var i = flow.indexOf(current);

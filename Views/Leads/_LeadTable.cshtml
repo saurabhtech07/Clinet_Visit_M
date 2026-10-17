@@ -81,7 +81,7 @@
         { "Email", "City", "StateName", "CreatedOn", "EntryTime", "Requirement", "Priority" };
     var gridCols = Model.Columns.Where(c => !gridHidden.Contains(c)).ToList();
 
-    // Har column ki fixed width (table-layout: fixed ke saath) — horizontal scroll nahi aayega.
+    // Fixed width per column (with table-layout: fixed) — so there is no horizontal scroll.
     string ColWidth(string col) => col switch
     {
         "LeadId" => "46px",
@@ -99,7 +99,7 @@
 }
 
 <style>
-    /* Koi inner scroll nahi — poora table page par fit hota hai (fixed layout) */
+    /* No inner scroll — the whole table fits on the page (fixed layout) */
     .table-scroll-container { position: relative; }
     .dss-table thead th {
         position: sticky; top: 0; z-index: 10;

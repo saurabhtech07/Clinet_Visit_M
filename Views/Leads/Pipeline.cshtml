@@ -9,7 +9,7 @@
 }
 
 <style>
-    /* Saari 7 columns screen me fit — koi horizontal scroll nahi */
+    /* All 7 columns fit on screen — no horizontal scroll */
     .pipe-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
     .pipe-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start}
     .pipe-col{background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:8px;min-width:0;display:flex;flex-direction:column}
@@ -99,7 +99,7 @@
             });
         }
 
-        // Card click -> wahi Lead View jo Leads page ke eye icon se khulti hai
+        // Card click -> open the lead view in a popup, same style as the Add Lead modal
         window.__pipeDragging = false;
         if (!window.__pipeNavClick) {
             window.__pipeNavClick = true;
@@ -109,7 +109,8 @@
                 var id = card.dataset.leadId;
                 if (!id) return;
                 var url = '/Leads/Details/' + id;
-                if (window.loadPage) window.loadPage(url, 'Activity & Details');
+                if (window.FormModal && window.FormModal.open) window.FormModal.open(url, 'Lead Details');
+                else if (window.loadPage) window.loadPage(url, 'Activity & Details');
                 else window.location.href = url;
             });
         }
@@ -134,7 +135,7 @@
                         var oldStatus = evt.from.closest('.pipe-col').dataset.status;
 
                         updateCounts();
-                        // drag ke turant baad aane wale click ko ignore karo
+                        // Ignore the click that fires right after a drag ends
                         setTimeout(function () { window.__pipeDragging = false; }, 80);
                         if (newStatus === oldStatus) return;
 
