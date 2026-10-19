@@ -85,6 +85,11 @@ public class DailyFollowUpController : Controller
 
         PopulateLookups();
         ViewBag.FollowUpDateDefault = DateTime.Now.ToString("yyyy-MM-dd");
+
+        // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
+        // #mainContentArea ke andar inject hokar toot jata tha.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView(fields);
         return View(fields);
     }
 
@@ -130,6 +135,10 @@ public class DailyFollowUpController : Controller
         ViewBag.RowData = data;
         ViewBag.FollowUpId = id;
         PopulateLookups();
+
+        // AJAX (loadPage) -> sirf form ka partial (Add Lead wala pattern)
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView(fields);
         return View(fields);
     }
 
@@ -230,7 +239,6 @@ public class DailyFollowUpController : Controller
         "NextFollowUpDate" => "Next Follow Up",
         "FollowUpType" => "Follow Up Type",
         "AssignedName" => "Assigned To",
-        "CreatedOn" => "Created On",
         _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
     };
 }

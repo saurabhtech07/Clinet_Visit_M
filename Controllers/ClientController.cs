@@ -58,6 +58,11 @@ public class ClientController : Controller
         ViewBag.States = statesTable;
         ViewBag.CompanyTypes = _dynamicRepo.GetTable("CompanyType");
         ViewBag.Users = _userRepo.GetAll();
+
+        // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
+        // #mainContentArea ke andar inject hokar toot jata tha.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView(fields);
         return View(fields);
     }
 
@@ -178,6 +183,10 @@ public class ClientController : Controller
         ViewBag.States = statesTable;
         ViewBag.CompanyTypes = _dynamicRepo.GetTable("CompanyType");
         ViewBag.Users = _userRepo.GetAll();
+
+        // AJAX (loadPage) -> sirf form ka partial (Add Lead wala pattern)
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView(fields);
         return View(fields);
     }
 

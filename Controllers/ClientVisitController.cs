@@ -201,6 +201,7 @@ using ClientVisitManagement.Data;
 using Microsoft.AspNetCore.Mvc;
 using ClosedXML.Excel;
 using System.Text;
+using Microsoft.Data.SqlClient;
 
 namespace ClientVisitManagement.Controllers;
 
@@ -209,12 +210,14 @@ public class ClientVisitController : Controller
     private readonly DynamicRepository _dynamicRepo;
     private readonly ClientRepository _clientRepo;
     private readonly FollowUpRepository _followUpRepo;
+    private readonly DBHelper _db;
 
-    public ClientVisitController(DynamicRepository dynamicRepo, ClientRepository clientRepo, FollowUpRepository followUpRepo)
+    public ClientVisitController(DynamicRepository dynamicRepo, ClientRepository clientRepo, FollowUpRepository followUpRepo, DBHelper db)
     {
         _dynamicRepo = dynamicRepo;
         _clientRepo = clientRepo;
         _followUpRepo = followUpRepo;
+        _db = db;
     }
 
     // INDEX - 100% DYNAMIC JAISA USER HAI
@@ -307,6 +310,10 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         ViewBag.CurrentTime = dt.CurrentTime;
         ViewBag.VisitTypes = _dynamicRepo.GetTable("VisitTypeMaster");
         ViewBag.Users = SafeUsers();
+
+        // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
+        // #mainContentArea ke andar inject hokar toot jata tha.
+        if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return PartialView(cols);
         return View(cols);
     }
 
@@ -345,7 +352,76 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     {
         var row = _dynamicRepo.GetById("ClientVisit", "VisitId", id);
         if(row == null) return NotFound();
+        ViewBag.VisitTypeMap = GetVisitTypeMap();
         return PartialView("_VisitDetails", row);
+    }
+
+    // VIEW MODAL DATA - Daily Support jaisa (Visit + Client + Visit History)
+    [HttpGet]
+    public IActionResult GetVisitDetails(int id)
+    {
+        using var con = _db.GetConnection(); con.Open();
+        Dictionary<string, object?>? visit = null;
+        Dictionary<string, object?>? client = null;
+        List<Dictionary<string, object?>> history = new();
+
+        try
+        {
+            using var cmd = new SqlCommand("SELECT * FROM ClientVisit WHERE VisitId=@Id", con);
+            cmd.Parameters.AddWithValue("@Id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                visit = new Dictionary<string, object?>();
+                for (int i = 0; i < r.FieldCount; i++) visit[r.GetName(i)] = r.IsDBNull(i) ? null : r.GetValue(i);
+            }
+        }
+        catch { }
+
+        if (visit != null && visit.ContainsKey("VisitTypeId") && visit["VisitTypeId"] != null)
+        {
+            // VisitTypeId -> naam (View modal me id ki jagh naam dikhe)
+            try
+            {
+                using var cmdVt = new SqlCommand("SELECT TOP 1 Name FROM VisitTypeMaster WHERE Id=@Vid", con);
+                cmdVt.Parameters.AddWithValue("@Vid", visit["VisitTypeId"]);
+                var vtName = cmdVt.ExecuteScalar();
+                if (vtName != null) visit["VisitTypeId"] = vtName.ToString();
+            }
+            catch { }
+        }
+
+        if (visit != null && visit.ContainsKey("ClientId") && visit["ClientId"] != null)
+        {
+            try
+            {
+                using var cmd2 = new SqlCommand("SELECT TOP 1 * FROM Client WHERE ClientId=@Cid", con);
+                cmd2.Parameters.AddWithValue("@Cid", visit["ClientId"]);
+                using var r2 = cmd2.ExecuteReader();
+                if (r2.Read())
+                {
+                    client = new Dictionary<string, object?>();
+                    for (int i = 0; i < r2.FieldCount; i++) client[r2.GetName(i)] = r2.IsDBNull(i) ? null : r2.GetValue(i);
+                }
+            }
+            catch { }
+
+            try
+            {
+                using var cmd3 = new SqlCommand("SELECT TOP 10 * FROM ClientVisit WHERE ClientId=@Cid ORDER BY VisitId DESC", con);
+                cmd3.Parameters.AddWithValue("@Cid", visit["ClientId"]);
+                using var r3 = cmd3.ExecuteReader();
+                while (r3.Read())
+                {
+                    var h = new Dictionary<string, object?>();
+                    for (int i = 0; i < r3.FieldCount; i++) h[r3.GetName(i)] = r3.IsDBNull(i) ? null : r3.GetValue(i);
+                    history.Add(h);
+                }
+            }
+            catch { }
+        }
+
+        return Json(new { visit, client, history });
     }
 
     // EDIT GET
@@ -362,6 +438,9 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
         var cols = _dynamicRepo.GetColumns("ClientVisit").Where(c=>c.Name!="VisitId" && c.Name!="UserId").ToList();
         ViewBag.VisitTypes = _dynamicRepo.GetTable("VisitTypeMaster");
         ViewBag.Users = SafeUsers();
+
+        // AJAX (loadPage) -> sirf form ka partial (Add Lead wala pattern)
+        if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return PartialView(cols);
         return View(cols);
     }
 

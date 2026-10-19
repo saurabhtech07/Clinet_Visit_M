@@ -3,6 +3,7 @@
     var grid = Model.Grid;
     int start = grid.TotalRecords == 0 ? 0 : ((grid.CurrentPage - 1) * grid.PageSize) + 1;
     int end = Math.Min(grid.CurrentPage * grid.PageSize, grid.TotalRecords);
+    int sr = start;
 
     string BuildUrl(int page, int pageSize, string? sort, string? dir)
     {
@@ -26,7 +27,6 @@
         "NextFollowUpDate" => "Next Follow Up",
         "FollowUpType" => "Follow Up Type",
         "AssignedName" => "Assigned To",
-        "CreatedOn" => "Created On",
         _ => System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2")
     };
 
@@ -76,7 +76,6 @@
         "FollowUpType" => "70px",
         "Priority" => "54px",
         "Status" => "66px",
-        "CreatedOn" => "68px",
         "AssignedName" => "70px",
         _ => "72px"
     };
@@ -139,7 +138,7 @@
                     bool isDone = status.Equals("Done", StringComparison.OrdinalIgnoreCase);
 
                     <tr>
-                        <td style="color:#64748b;">@start</td>
+                        <td style="color:#64748b;">@sr</td>
                         @foreach (var col in grid.Columns)
                         {
                             object? val = row.ContainsKey(col) ? row[col] : null;
@@ -201,14 +200,14 @@
                                     <i class="bi bi-check2-circle"></i> Done
                                 </span>
                             }
-                            <a href="/DailyFollowUp/Edit/@id" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <a href="/DailyFollowUp/Edit/@id" data-no-modal class="btn btn-light border act-btn ms-1" title="Edit" onclick="event.preventDefault(); window.loadPage('/DailyFollowUp/Edit/@id', 'Edit Follow Up');"><i class="bi bi-pencil"></i></a>
                             <form method="post" action="/DailyFollowUp/Delete/@id" onsubmit="return confirm('Delete this follow-up?');" style="display:inline" class="ms-1">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>
                     </tr>
-                    start++;
+                    sr++;
                 }
             }
             else

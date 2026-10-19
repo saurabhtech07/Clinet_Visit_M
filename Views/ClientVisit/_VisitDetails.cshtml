@@ -14,11 +14,18 @@
     <div class="row g-3">
         @foreach (var kv in Model)
         {
-            // UserId hide kar diya
-            if (kv.Key == "UserId") { continue; }
+            // UserId / Designation hide kar diya
+            if (kv.Key == "UserId" || kv.Key == "Designation") { continue; }
 
             var raw = kv.Value?.ToString() ?? "-";
             var displayVal = raw;
+
+            // VisitTypeId -> naam
+            if (kv.Key == "VisitTypeId")
+            {
+                var vmap = ViewBag.VisitTypeMap as Dictionary<string, string>;
+                if (vmap != null && vmap.TryGetValue(raw, out var vtn) && !string.IsNullOrEmpty(vtn)) displayVal = vtn;
+            }
 
             // Date format
             if (DateTime.TryParse(raw, out var d))
@@ -31,7 +38,7 @@
 
             <div class="@(isLongText ? "col-12" : "col-md-6")">
                 <label style="font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase; margin-bottom:5px; display:block;">
-                    @kv.Key
+                    @(kv.Key == "VisitTypeId" ? "Visit Type" : kv.Key)
                 </label>
 
                 @if (isStatus)

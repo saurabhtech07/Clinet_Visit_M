@@ -77,6 +77,9 @@ public class DailySupportController : Controller
         ViewBag.TicketNo=$"TKT-{DateTime.Now:ddMMyy}-{new Random().Next(10,99)}";
         try{ ViewBag.Customers=_dynamicRepo.GetTable("Client").Rows; }catch{ ViewBag.Customers=new List<Dictionary<string,object?>>(); }
         try{ ViewBag.Engineers=_dynamicRepo.GetTable("Users").Rows; }catch{ ViewBag.Engineers=new List<Dictionary<string,object?>>(); }
+        // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
+        // #mainContentArea ke andar inject hokar toot jata tha.
+        if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return PartialView(cols);
         return View(cols);
     }
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Create(IFormCollection form){
@@ -93,6 +96,8 @@ public class DailySupportController : Controller
         using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT * FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var reader=cmd.ExecuteReader(); if(!reader.Read()) return NotFound();
         var row=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i); reader.Close();
         ViewBag.RowData=row; try{ ViewBag.Customers=_dynamicRepo.GetTable("Client").Rows; }catch{ ViewBag.Customers=new List<Dictionary<string,object?>>(); } try{ ViewBag.Engineers=_dynamicRepo.GetTable("Users").Rows; }catch{ ViewBag.Engineers=new List<Dictionary<string,object?>>(); }
+        // AJAX (loadPage) -> sirf form ka partial (Add Lead wala pattern)
+        if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return PartialView(cols);
         return View(cols);
     }
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Edit(int id,IFormCollection form){

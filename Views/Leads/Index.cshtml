@@ -57,7 +57,7 @@
     </div>
     <div class="d-flex gap-2">
         <a href="/Leads/Pipeline" class="btn btn-light border"><i class="bi bi-kanban me-1"></i> Pipeline</a>
-        <a href="/Leads/Create" class="btn btn-dss-dark"><i class="bi bi-plus-circle me-1"></i> Add Lead</a>
+        <a href="/Leads/Create" data-no-modal class="btn btn-dss-dark" onclick="event.preventDefault(); window.loadPage('/Leads/Create', 'Add Lead');"><i class="bi bi-plus-circle me-1"></i> Add Lead</a>
     </div>
 </div>
 @Html.AntiForgeryToken()
@@ -93,7 +93,7 @@
     </div>
 </div>
 
-<!-- FILTER TOOLBAR (compact single row) -->
+<!-- FILTER TOOLBAR (row 1: search + dropdowns · row 2: date range + actions) -->
 <div class="dss-toolbar mb-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
         <div class="leads-search" style="flex:1 1 200px; min-width:170px;">
@@ -142,7 +142,10 @@
                 <option value="@sid" selected="@(fStateId.HasValue && fStateId.Value.ToString() == sid)">@s["StateName"]</option>
             }
         </select>
+    </div>
 
+    <!-- Second row: Created On date range + actions -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
         <div class="lead-date" title="Created On — From">
             <span>From</span>
             <input type="date" id="leadFrom" value="@fFrom" />
@@ -250,17 +253,6 @@
             window.__leadNav.delegates = true;
 
             document.addEventListener("click", function (e) {
-                var details = e.target.closest(".lead-details-link");
-                if (details) {
-                    e.preventDefault();
-                    var url = details.getAttribute("href");
-                    // Eye icon -> poora Details page na khole, popup me sab kuch dikhaye
-                    if (window.FormModal && window.FormModal.open) window.FormModal.open(url, "Lead Details", { wide: true });
-                    else if (window.loadPage) window.loadPage(url, "Activity & Details");
-                    else window.location.href = url;
-                    return;
-                }
-
                 var link = e.target.closest(".ajax-lead-link");
                 if (!link) return;
                 e.preventDefault();

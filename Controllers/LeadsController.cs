@@ -104,6 +104,11 @@ public class LeadsController : Controller
 
         PopulateLookups();
         ViewBag.Clients = _clientRepo.GetAll();
+
+        // AJAX (loadPage) -> sirf form ka partial bhejo, warna poora layout
+        // page #mainContentArea ke andar inject hokar toot jata tha.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView(fields);
         return View(fields);
     }
 
@@ -146,6 +151,11 @@ public class LeadsController : Controller
         ViewBag.LeadId = id;
         PopulateLookups();
         ViewBag.Clients = _clientRepo.GetAll();
+
+        // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
+        // #mainContentArea ke andar inject hokar toot jata tha.
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView(fields);
         return View(fields);
     }
 

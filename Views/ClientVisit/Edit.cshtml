@@ -31,7 +31,7 @@
                     <h6 class="fw-bold mb-3" style="color:#0d3b66;">VISIT DETAILS</h6>
                     <div class="row g-2">
                     @await Html.PartialAsync("_VisitedBy", row.ContainsKey("UserId") ? row["UserId"]?.ToString() ?? "" : "")
-                    @foreach (var f in Model.Where(f => f.Name!= "DiscussionRequirement" && f.Name!= "Remarks" && f.Name!= "UserId"))
+                    @foreach (var f in Model.Where(f => f.Name!= "DiscussionRequirement" && f.Name!= "Remarks" && f.Name!= "UserId" && f.Name!= "Designation"))
                     {
                         <div class="@(f.Name == "VisitDate" || f.Name == "VisitTime" || f.Name == "NextFollowUpDate" || f.Name == "FollowUpStatus" || f.Name == "VisitTypeId"? "col-6" : "col-12")">
                             <label class="form-label mt-2 mb-1 small fw-bold">@(f.Name == "VisitTypeId" ? "Visit Type" : f.Name) @(f.IsNullable? "" : " *")</label>
@@ -100,7 +100,7 @@
                     <textarea class="form-control" rows="4" name="Remarks">@(row.ContainsKey("Remarks")? row["Remarks"] : "")</textarea>
 
                     <div class="mt-auto pt-3 text-end border-top mt-3">
-                        <a href="/ClientVisit" class="btn btn-light border btn-sm">Back</a>
+                        <a href="/ClientVisit" class="btn btn-light border btn-sm" onclick="event.preventDefault(); window.loadPage('/ClientVisit');">Back</a>
                         <button type="submit" class="btn btn-success btn-sm px-4">Update Visit</button>
                     </div>
                 </div>

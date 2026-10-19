@@ -34,18 +34,18 @@
         if (f.Name == "StateId")
         {
             var opts = string.Join("", states.Select(s => $"<option value=\"{s["StateId"]}\">{s["StateName"]}</option>"));
-            input = $@"<select class=""form-select"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
+            input = $@"<select class=""form-select form-select-sm"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
         }
         else if (f.Name == "CompanyTypeId")
         {
             var opts = string.Join("", companyTypes.Select(s => $"<option value=\"{s["Id"]}\">{s["Name"]}</option>"));
-            input = $@"<select class=""form-select"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
+            input = $@"<select class=""form-select form-select-sm"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
         }
         else
         {
             var type = f.DataType.Contains("int") ? "number" : f.DataType.Contains("date") ? "date" : "text";
             var req = f.IsNullable ? "" : "required";
-            input = $@"<input class=""form-control"" name=""{f.Name}"" type=""{type}"" {req} />";
+            input = $@"<input class=""form-control form-control-sm"" name=""{f.Name}"" type=""{type}"" {req} />";
         }
         return new HtmlString(label + input);
     }
@@ -53,7 +53,7 @@
 
 <h4 class="mb-3">Create New Client</h4>
 <form method="post">
-    <div class="row g-4 align-items-stretch">
+    <div class="row g-2 align-items-stretch">
         <div class="col-md-6 d-flex">
             <div class="card-section w-100">
                 <h6>Company Information</h6>
@@ -63,7 +63,7 @@
                 }
             </div>
         </div>
-        <div class="col-md-6 d-flex flex-column gap-4">
+        <div class="col-md-6 d-flex flex-column gap-2">
             <div class="card-section w-100">
                 <h6>Contact Information</h6>
                 @foreach (var f in Model.Where(f => contactFields.Contains(f.Name)))
@@ -80,7 +80,7 @@
             </div>
         </div>
     </div>
-    <div class="text-end mt-4">
+    <div class="text-end mt-2">
         <button type="reset" class="btn btn-light border">Reset</button>
         <button type="submit" class="btn btn-primary">Save & Continue</button>
     </div>
@@ -112,12 +112,12 @@
         if (f.Name == "StateId")
         {
             var opts = string.Join("", states.Select(s => $"<option value=\"{s["StateId"]}\">{s["StateName"]}</option>"));
-            input = $@"<select class=""form-select"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
+            input = $@"<select class=""form-select form-select-sm"" name=""StateId"" required><option value="""">Select State</option>{opts}</select>";
         }
         else if (f.Name == "CompanyTypeId")
         {
             var opts = string.Join("", companyTypes.Select(s => $"<option value=\"{s["Id"]}\">{s["Name"]}</option>"));
-            input = $@"<select class=""form-select"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
+            input = $@"<select class=""form-select form-select-sm"" name=""CompanyTypeId"" required><option value="""">Select Company Type</option>{opts}</select>";
         }
         else if (f.Name == "AssignedTo")
         {
@@ -125,29 +125,44 @@
                 var nm = System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName);
                 return $"<option value=\"{u.UserId}\">{nm}</option>";
             }));
-            input = $@"<select class=""form-select"" name=""AssignedTo""><option value="""">Unassigned</option>{opts}</select>";
+            input = $@"<select class=""form-select form-select-sm"" name=""AssignedTo""><option value="""">Unassigned</option>{opts}</select>";
         }
         else
         {
             var type = f.DataType.Contains("int")? "number" : f.DataType.Contains("date")? "date" : "text";
             var req = f.IsNullable? "" : "required";
-            input = $@"<input class=""form-control"" name=""{f.Name}"" type=""{type}"" {req} placeholder=""Enter {f.Name}"" />";
+            input = $@"<input class=""form-control form-control-sm"" name=""{f.Name}"" type=""{type}"" {req} placeholder=""Enter {f.Name}"" />";
         }
-        return new HtmlString($"<div class='mb-3'>{label}{input}</div>");
+        return new HtmlString($"<div class='mb-2'>{label}{input}</div>");
     }
 }
 
-<h4 class="mb-3">Create New Client</h4>
+<style>
+    #clientForm h6{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eef2f7;padding-bottom:5px;margin-bottom:8px}
+    #clientForm .form-label{font-size:11px;font-weight:700;color:#334155;margin-bottom:2px}
+    #clientForm .form-control,#clientForm .form-select{height:30px;font-size:12.5px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0}
+    #clientForm .form-control:focus,#clientForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+    #clientForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
+    #clientForm [class*="col-"]{min-width:0}
+    #clientForm .card-section{border:1px solid #eef2f7!important;background:#fff}
+</style>
+
+<div class="d-flex align-items-center gap-2 mb-2">
+    <a href="/Client" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/Client');">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <h4 class="fw-bold mb-0" style="font-size:16px;">Create New Client</h4>
+</div>
 <form method="post" id="clientForm">
     @Html.AntiForgeryToken()
-    <div class="row g-4 align-items-stretch">
+    <div class="row g-2 align-items-stretch">
         <div class="col-md-6 d-flex">
             <div class="card-section w-100 p-3 border rounded bg-white">
                 <h6>Company Information</h6>
                 @foreach (var f in Model.Where(f => companyFields.Contains(f.Name))) { @RenderField(f) }
             </div>
         </div>
-        <div class="col-md-6 d-flex flex-column gap-4">
+        <div class="col-md-6 d-flex flex-column gap-2">
             <div class="card-section w-100 p-3 border rounded bg-white">
                 <h6>Contact Information</h6>
                 @foreach (var f in Model.Where(f => contactFields.Contains(f.Name))) { @RenderField(f) }
@@ -165,7 +180,7 @@
                 </div>
             </div>
         </div>
-    <div class="text-end mt-4">
+    <div class="text-end mt-2">
         <button type="reset" class="btn btn-light border">Reset</button>
         <button type="submit" class="btn btn-primary">Save &amp; Continue</button>
     </div>
@@ -181,7 +196,8 @@
                 url: "/Client/Create",
                 form: form,
                 onSuccess: function (data) {
-                    window.loadPage("/ClientVisit/Create?clientId=" + data.id);
+                    if (window.loadPage) window.loadPage("/ClientVisit/Create?clientId=" + data.id, "Add Visit");
+                    else window.location.href = "/ClientVisit/Create?clientId=" + data.id;
                 }
             });
         });

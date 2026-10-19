@@ -19,9 +19,9 @@ public class DailyFollowUpRepository
     private readonly DBHelper _db;
     public DailyFollowUpRepository(DBHelper db) => _db = db;
 
-    /// <summary>Ye columns grid me nahi dikhate (internal / join aliases).</summary>
+    /// <summary>Ye columns grid me nahi dikhate (internal / join aliases / non-essential).</summary>
     private static readonly HashSet<string> HiddenGridColumns =
-        new(StringComparer.OrdinalIgnoreCase) { "LeadId", "CreatedBy", "AssignedTo" };
+        new(StringComparer.OrdinalIgnoreCase) { "LeadId", "CreatedBy", "AssignedTo", "CreatedOn" };
 
     private const string FromJoin =
         " FROM DailyFollowUp d LEFT JOIN Users u ON d.AssignedTo = u.UserId" +

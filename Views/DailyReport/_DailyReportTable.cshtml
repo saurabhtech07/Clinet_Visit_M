@@ -4,6 +4,7 @@
     bool showActions = Model.IsUserSummary || grid.Columns.Contains("DailyReportId");
     int start = grid.TotalRecords == 0 ? 0 : ((grid.CurrentPage - 1) * grid.PageSize) + 1;
     int end = Math.Min(grid.CurrentPage * grid.PageSize, grid.TotalRecords);
+    int sr = start;
 
     string BuildUrl(int page, int pageSize, string? sort, string? dir)
     {
@@ -121,7 +122,7 @@
                     var id = row.ContainsKey("DailyReportId") ? row["DailyReportId"]?.ToString() : "";
 
                     <tr>
-                        <td style="color:#64748b;">@start</td>
+                        <td style="color:#64748b;">@sr</td>
                         @foreach (var col in grid.Columns)
                         {
                             object? val = row.ContainsKey(col) ? row[col] : null;
@@ -167,7 +168,7 @@
                             </td>
                         }
                     </tr>
-                    start++;
+                    sr++;
                 }
             }
             else

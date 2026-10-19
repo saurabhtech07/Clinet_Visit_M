@@ -99,21 +99,8 @@
             });
         }
 
-        // Card click -> open the lead view in a popup, same style as the Add Lead modal
+        // (Activity & Details popup hataya diya gaya — card ab sirf drag/drop ke liye)
         window.__pipeDragging = false;
-        if (!window.__pipeNavClick) {
-            window.__pipeNavClick = true;
-            document.addEventListener('click', function (e) {
-                var card = e.target.closest('.pipe-card');
-                if (!card || window.__pipeDragging) return;
-                var id = card.dataset.leadId;
-                if (!id) return;
-                var url = '/Leads/Details/' + id + '?mode=pipe';
-                if (window.FormModal && window.FormModal.open) window.FormModal.open(url, 'Lead Details', { wide: true });
-                else if (window.loadPage) window.loadPage(url, 'Activity & Details');
-                else window.location.href = url;
-            });
-        }
 
         function initSortable(attempt) {
             attempt = attempt || 0;

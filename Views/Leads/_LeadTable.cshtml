@@ -2,6 +2,7 @@
 @{
     int start = Model.TotalRecords == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
     int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords);
+    int sr = start;
 
     var fStatus = ViewBag.FilterStatus as string;
     var fPriority = ViewBag.FilterPriority as string;
@@ -158,7 +159,7 @@
                     var convClientId = row.ContainsKey("ConvertedClientId") && row["ConvertedClientId"] != null ? row["ConvertedClientId"]?.ToString() : null;
 
                     <tr>
-                        <td style="color:#64748b;">@start</td>
+                        <td style="color:#64748b;">@sr</td>
                         @foreach (var col in gridCols)
                         {
                             object? val = row.ContainsKey(col) ? row[col] : null;
@@ -207,11 +208,9 @@
                             else if (col == "ActivityCount")
                             {
                                 <td>
-                                    <a href="/Leads/Details/@leadId" class="lead-details-link" style="text-decoration:none;" title="View activity history">
-                                        <span style="padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; background:#eef2ff; color:#3730a3;">
-                                            <i class="bi bi-clock-history me-1"></i>@(val ?? 0)
-                                        </span>
-                                    </a>
+                                    <span style="padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; background:#eef2ff; color:#3730a3;" title="Total activities">
+                                        <i class="bi bi-clock-history me-1"></i>@(val ?? 0)
+                                    </span>
                                 </td>
                             }
                             else if (col == "LeadPerson" || col == "Company")
@@ -230,7 +229,7 @@
                             {
                                 @if (!string.IsNullOrEmpty(convClientId))
                                 {
-                                    <a href="/Client/Edit/@convClientId" class="conv-done" title="Converted to Client — View Client">
+                                    <a href="/Client/Edit/@convClientId" class="conv-done" title="Converted to Client — View Client" data-no-modal onclick="event.preventDefault(); window.loadPage('/Client/Edit/@convClientId', 'Client');">
                                         <i class="bi bi-check2-circle"></i> Done
                                     </a>
                                 }
@@ -247,15 +246,15 @@
                                     <i class="bi bi-arrow-left-right"></i>
                                 </button>
                             }
-                            <a href="/Leads/Details/@leadId" class="btn btn-light border act-btn lead-details-link ms-1" title="Activity &amp; Details"><i class="bi bi-eye"></i></a>
-                            <a href="/Leads/Edit/@leadId" class="btn btn-light border act-btn ms-1" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <a href="/Leads/Details/@leadId" class="btn btn-light border act-btn ms-1" title="View" onclick="event.preventDefault(); if (window.FormModal && window.FormModal.open) window.FormModal.open('/Leads/Details/@leadId', 'Lead Details', { wide: true }); else window.location.href = '/Leads/Details/@leadId';"><i class="bi bi-eye"></i></a>
+                            <a href="/Leads/Edit/@leadId" data-no-modal class="btn btn-light border act-btn ms-1" title="Edit" onclick="event.preventDefault(); window.loadPage('/Leads/Edit/@leadId', 'Edit Lead');"><i class="bi bi-pencil"></i></a>
                             <form method="post" action="/Leads/Delete/@leadId" onsubmit="return confirm('Delete this lead?');" style="display:inline" class="ms-1">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-light border act-btn" style="color:#dc2626;" title="Delete"><i class="bi bi-trash"></i></button>
                             </form>
                         </td>
                     </tr>
-                    start++;
+                    sr++;
                 }
             }
             else

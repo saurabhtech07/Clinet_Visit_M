@@ -656,38 +656,38 @@
     ViewData["Title"] = "Client Visit List";
 }
 <style>
-   .visit-page-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;}
-   .visit-page-header h4{font-weight:800; font-size:22px; margin:0;}
-   .visit-subtitle{font-size:13px; color:#6c757d; margin-top:2px;}
-   .add-visit-btn{border-radius:8px; height:38px; font-weight:600; font-size:13px; display:flex; align-items:center;}
-   .kpi-card-daily{ background:#fff; border:1px solid #eef0f2; border-radius:12px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; height:92px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
-   .kpi-title-daily{font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase;}
-   .kpi-value-daily{font-size:26px; font-weight:800; line-height:1.1; margin-top:4px;}
-   .kpi-sub-daily{font-size:11px; color:#6c757d; margin-top:3px;}
-   .kpi-icon-daily{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;}
-   .visit-filter-card-daily{background:#fff; border:1px solid #eef0f2; border-radius:12px; padding:14px 16px;}
-   .visit-filter-card-daily label{font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px; display:block;}
-   .visit-search-box{position:relative;}.visit-search-box i{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#888;}
-   .visit-search-box input{padding-left:38px; height:38px; border-radius:8px; background:#f8f9fa; border:1px solid #e9ecef;}
-   .date-filter{height:38px; border-radius:8px; background:#f8f9fa; border:1px solid #e9ecef;}
-   .visit-clear-btn{height:38px; border-radius:8px; border:1px solid #e9ecef; background:#fff; font-size:13px; font-weight:600; padding:0 16px;}
-   .export-main-btn{height:38px; border-radius:8px; background:#111; color:#fff; font-size:13px; font-weight:600; border:none;}
+   .visit-page-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+   .visit-page-header h4{font-weight:800; font-size:18px; margin:0;}
+   .visit-subtitle{font-size:11px; color:#6c757d; margin-top:2px;}
+   .add-visit-btn{border-radius:9px; height:32px; font-weight:600; font-size:12.5px; display:flex; align-items:center;}
+   .kpi-card-daily{ background:#fff; border:1px solid #eef0f2; border-radius:10px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; height:60px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+   .kpi-title-daily{font-size:9px; font-weight:700; color:#6c757d; letter-spacing:.4px; text-transform:uppercase;}
+   .kpi-value-daily{font-size:18px; font-weight:800; line-height:1; margin-top:1px;}
+   .kpi-sub-daily{font-size:9.5px; color:#6c757d; margin-top:1px;}
+   .kpi-icon-daily{width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;}
+   .visit-filter-card-daily{background:#fff; border:1px solid #eef0f2; border-radius:12px; padding:10px 12px;}
+   .visit-filter-card-daily label{font-size:10px; font-weight:700; color:#64748b; letter-spacing:.4px; text-transform:uppercase; margin-bottom:5px; display:block;}
+   .visit-search-box{position:relative;}.visit-search-box i{position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#888; font-size:13px;}
+   .visit-search-box input{padding-left:32px; height:32px; border-radius:9px; background:#f8f9fa; border:1px solid #e9ecef; font-size:12.5px;}
+   .date-filter{height:32px; border-radius:9px; background:#f8f9fa; border:1px solid #e9ecef; font-size:12.5px;}
+   .visit-clear-btn{height:32px; border-radius:9px; border:1px solid #e9ecef; background:#fff; font-size:12.5px; font-weight:600; padding:0 12px;}
+   .export-main-btn{height:32px; border-radius:9px; background:#111; color:#fff; font-size:12.5px; font-weight:600; border:none;}
    .visit-table-card{background:#fff; border:1px solid #eef0f2; border-radius:12px; overflow:hidden;}
 </style>
 
 <div class="visit-page-header">
     <div><h4>Client Visit List</h4><div class="visit-subtitle">Track and manage all client visits, follow-ups and field performance</div></div>
-    <a href="/ClientVisit/Create" class="btn btn-dark add-visit-btn"><i class="bi bi-plus-lg me-1"></i> Add Visit for Existing Client</a>
+    <a href="/ClientVisit/Create" data-no-modal class="btn btn-dark add-visit-btn" onclick="event.preventDefault(); window.loadPage('/ClientVisit/Create', 'Add Visit');"><i class="bi bi-plus-lg me-1"></i> Add Visit for Existing Client</a>
 </div>
 
-<div class="row g-3 mb-3">
+<div class="row g-2 mb-2">
     <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Total Clients Visited</div><div class="kpi-value-daily">@(ViewBag.TotalClientsVisited?? Model.TotalRecords)</div><div class="kpi-sub-daily">Total visits</div></div><div class="kpi-icon-daily" style="background:#ff9f1c;"><i class="bi bi-bar-chart-line-fill"></i></div></div></div>
     <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Visits This Month</div><div class="kpi-value-daily" style="color:#0d6efd;">@(ViewBag.VisitsThisMonth?? 0)</div><div class="kpi-sub-daily">This month</div></div><div class="kpi-icon-daily" style="background:#0d6efd;"><i class="bi bi-calendar-check-fill"></i></div></div></div>
     <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Today's Visits</div><div class="kpi-value-daily" style="color:#198754;">@(ViewBag.TodaysVisits?? 0)</div><div class="kpi-sub-daily">Done today</div></div><div class="kpi-icon-daily" style="background:#198754;"><i class="bi bi-check-circle-fill"></i></div></div></div>
     <div class="col-md-3"><div class="kpi-card-daily"><div><div class="kpi-title-daily">Pending Follow-ups</div><div class="kpi-value-daily" style="color:#6f42c1;">@(ViewBag.PendingFollowUps?? 0)</div><div class="kpi-sub-daily">In Progress</div></div><div class="kpi-icon-daily" style="background:#6f42c1;"><i class="bi bi-hourglass-split"></i></div></div></div>
 </div>
 
-<div class="visit-filter-card-daily mb-3">
+<div class="visit-filter-card-daily mb-2">
     <div class="row g-2 align-items-end">
         <div class="col-md-5">
             <label>SEARCH TICKET / CUSTOMER / MOBILE</label>
@@ -716,6 +716,33 @@
 </div>
 
 <div class="modal fade" id="detailsModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content" id="detailsModalContent"><div class="modal-body text-center py-5">Loading...</div></div></div></div>
+
+<!-- ===== Visit details popup (Daily Support jaisa View) ===== -->
+<div class="modal fade" id="cvViewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" style="max-width:980px;">
+    <div class="modal-content" style="border-radius:14px;overflow:hidden;">
+      <div class="modal-header" style="background:#0f172a;color:#fff;padding:10px 16px;">
+        <h6 class="modal-title mb-0" id="cvViewModalTitle" style="font-weight:700;font-size:13px;">Visit Details</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" id="cvViewModalBody">
+        <div class="text-center p-5"><div class="spinner-border text-dark"></div></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <a href="#" id="cvViewModalEdit" class="btn btn-sm" style="background:#0f172a;color:#fff;">Open Edit Form</a>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+ #cvViewModal .modal-body{background:#f8fafc;max-height:72vh;overflow-y:auto;}
+ #cvViewModal .modal-info{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;}
+ #cvViewModal .dss-modal-sec{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+ #cvViewModal .dss-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;font-size:12px;}
+ #cvViewModal .dss-row span:first-child{color:#6b7280;}
+ #cvViewModal .dss-row span:last-child{font-weight:500;text-align:right;}
+</style>
 <form id="deleteForm" method="post" style="display:none">@Html.AntiForgeryToken()</form>
 
 <script>
@@ -778,7 +805,64 @@
         if(pageLink){ e.preventDefault(); e.__visitNavHandled = true; loadVisitTable(pageLink.href); }
     });
     }
-    function viewDetails(id) { $.get("/ClientVisit/Details/" + id, function (html) { $("#detailsModalContent").html(html); new bootstrap.Modal(document.getElementById("detailsModal")).show(); }); }
+    function viewDetails(id) { openVisitDetails(id); }
+    function cvFmtLabel(k) { if (k === "VisitTypeId") return "Visit Type"; return String(k).replace(/([a-z])([A-Z])/g, "$1 $2"); }
+    function cvBuildRows(obj, skip) {
+        if (!obj) return '<div class="text-muted" style="font-size:12px;">No data</div>';
+        var html = "";
+        for (var k in obj) {
+            if (skip.indexOf(k) > -1) continue;
+            var v = obj[k]; if (v === null || v === undefined || v === "") v = "-";
+            if (String(k).toLowerCase().indexOf("date") > -1 && v !== "-") { try { v = new Date(v).toLocaleString(); } catch (err) { } }
+            html += '<div class="dss-row"><span>' + cvFmtLabel(k) + '</span><span>' + v + '</span></div>';
+        }
+        return html || '<div class="text-muted" style="font-size:12px;">No data</div>';
+    }
+    function openVisitDetails(id) {
+        var modalEl = document.getElementById("cvViewModal");
+        if (!modalEl || !id) return;
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        var titleEl = document.getElementById("cvViewModalTitle");
+        var bodyEl = document.getElementById("cvViewModalBody");
+        var editEl = document.getElementById("cvViewModalEdit");
+
+        titleEl.textContent = "Loading…";
+        bodyEl.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-dark"></div></div>';
+        if (editEl) editEl.href = "/ClientVisit/Edit/" + id;
+        modal.show();
+
+        fetch("/ClientVisit/GetVisitDetails?id=" + encodeURIComponent(id), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+            .then(function (data) {
+                var v = data.visit || {}, c = data.client || {}, h = data.history || [];
+                titleEl.textContent = (c.ClientName ? c.ClientName : "Visit") + (v.VisitDate ? " - " + new Date(v.VisitDate).toLocaleDateString() : "");
+                var skipV = ["UserId", "ClientId", "Designation"];
+                var hist = h.length
+                    ? h.map(function (row) {
+                        return "<tr><td><span style='background:#0f172a;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;'>#" + (row.VisitId || "") + "</span></td>" +
+                            "<td style='font-size:11px;'>" + (row.VisitDate ? new Date(row.VisitDate).toLocaleDateString() : "-") + "</td>" +
+                            "<td style='font-size:11px;'>" + (row.PersonMet || row.PersonName || "-") + "</td>" +
+                            "<td>" + (row.VisitType || row.PurposeOfVisit || "-") + "</td>" +
+                            "<td>" + (row.FollowUpStatus || "-") + "</td>" +
+                            "<td style='font-size:11px;'>" + (row.NextFollowUpDate ? new Date(row.NextFollowUpDate).toLocaleDateString() : "-") + "</td></tr>";
+                    }).join("")
+                    : "<tr><td colspan='6' class='text-center text-muted'>No visit history</td></tr>";
+
+                bodyEl.innerHTML =
+                    "<div class='p-3'>" +
+                        "<div class='row g-2 mb-2'>" +
+                            "<div class='col-md-6'><div class='modal-info h-100'><div class='dss-modal-sec'>Visit Info</div>" + cvBuildRows(v, skipV) + "</div></div>" +
+                            "<div class='col-md-6'><div class='modal-info h-100'><div class='dss-modal-sec'>Client Info</div>" + cvBuildRows(c, ["ClientId", "UserId", "StateId"]) + "</div></div>" +
+                        "</div>" +
+                        "<div class='modal-info'><div class='dss-modal-sec'>Visit History (Last 10 Visits)</div>" +
+                            "<table class='table table-sm mb-0' style='font-size:12px;'><thead><tr><th>Visit</th><th>Date</th><th>Person Met</th><th>Purpose</th><th>Status</th><th>Next Follow-up</th></tr></thead><tbody>" + hist + "</tbody></table>" +
+                        "</div>" +
+                    "</div>";
+            })
+            .catch(function (err) {
+                bodyEl.innerHTML = "<div class='p-4 text-danger text-center'>Failed to load: " + err.message + "</div>";
+            });
+    }
     function deleteVisit(id) {
         if (!confirm("Are you sure?")) return;
         Ajax.postSimple("/ClientVisit/Delete/" + id, null, function () { loadVisitTable(buildUrl(1)); });

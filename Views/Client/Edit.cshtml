@@ -21,7 +21,7 @@
     IHtmlContent RenderField(DynamicField f)
     {
         var displayName = f.Name == "CompanyTypeId" ? "Company Type" : f.Name == "StateId" ? "State" : f.Name == "AssignedTo" ? "Assigned To" : f.Name == "ContactPerson" ? "Contact Person" : f.Name;
-        var label = $"<label class=\"form-label mt-2 mb-1 small fw-bold\">{displayName}{(f.IsNullable ? "" : " *")}</label>";
+        var label = $"<label class=\"form-label mb-1\">{displayName}{(f.IsNullable ? "" : " *")}</label>";
         string input;
 
         if (f.Name == "StateId")
@@ -65,13 +65,28 @@
     }
 }
 
-<h4 class="mb-3">Edit Client</h4>
+<style>
+    #clientForm h6{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eef2f7;padding-bottom:5px;margin-bottom:8px}
+    #clientForm .form-label{font-size:11px;font-weight:700;color:#334155;margin-bottom:2px}
+    #clientForm .form-control,#clientForm .form-select{height:30px;font-size:12.5px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0}
+    #clientForm .form-control:focus,#clientForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+    #clientForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
+    #clientForm [class*="col-"]{min-width:0}
+    #clientForm .card-section{border:1px solid #eef2f7!important;background:#fff}
+</style>
+
+<div class="d-flex align-items-center gap-2 mb-2">
+    <a href="/Client" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/Client');">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <h4 class="fw-bold mb-0" style="font-size:16px;">Edit Client</h4>
+</div>
 
 <form method="post" id="clientForm">
     @Html.AntiForgeryToken()
     <input type="hidden" name="ClientId" value="@ViewBag.ClientId" />
 
-    <div class="row g-4 align-items-stretch">
+    <div class="row g-2 align-items-stretch">
 
         <!-- COMPANY -->
         <div class="col-md-6 d-flex">
@@ -85,7 +100,7 @@
         </div>
 
         <!-- CONTACT + BUSINESS -->
-        <div class="col-md-6 d-flex flex-column gap-4">
+        <div class="col-md-6 d-flex flex-column gap-2">
             <div class="card-section w-100 p-3 border rounded bg-white">
                 <h6 class="fw-bold">Contact Information</h6>
                 @foreach (var f in Model.Where(f => contactFields.Contains(f.Name)))
@@ -112,8 +127,7 @@
                 }
 
                 <!-- BUTTONS AB YAHAN -->
-                <div class="text-end mt-4 pt-3 border-top">
-                    <a href="/Client" class="btn btn-light border btn-sm px-3">Back</a>
+                <div class="text-end mt-2 pt-2 border-top">
                     <button type="submit" class="btn btn-primary btn-sm px-4">Update</button>
                 </div>
             </div>

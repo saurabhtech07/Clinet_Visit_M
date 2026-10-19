@@ -29,7 +29,7 @@
 
     <p class="text-muted mb-0">
         Client not in list?
-        <a href="/Client/Create">Create New Client</a>
+        <a href="/Client/Create" data-no-modal onclick="event.preventDefault(); window.loadPage('/Client/Create', 'New Client');">Create New Client</a>
     </p>
 
 </div>

@@ -1,24 +1,35 @@
 @model ClientVisitManagement.Models.DynamicTableViewModel
 @{
-    var displayCols = Model.Columns.Where(c => c!= "UserId").ToList();
+    var displayCols = Model.Columns.Where(c => c!= "UserId" && c!= "Designation").ToList();
     int startSr = (Model.CurrentPage - 1) * Model.PageSize + 1;
 
     // Visit Type ka naam dikhane ke liye lookup (VisitTypeId -> Name)
     var visitTypes = ViewBag.VisitTypeMap as Dictionary<string, string> ?? new Dictionary<string, string>();
 }
 <style>
-   .report-table-responsive{ max-height: 65vh; overflow:auto; }
+   .report-table-responsive{ max-height: 58vh; overflow:auto; }
    .report-table-responsive thead th{
         position: sticky;
         top: 0;
-        z-index: 10;
-        background: #f8f9fa!important;
-        box-shadow: 0 1px 0 #e9ecef;
+        z-index: 20;
+        background: #f8fafc!important;
+        color: #475569!important;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        white-space: normal;
+        line-height: 1.15;
+        padding: 7px 8px!important;
+        border-bottom: 1px solid #e2e8f0!important;
+        box-shadow: 0 1px 0 #e2e8f0;
     }
+   .report-table-responsive tbody td{ padding: 5px 8px; font-size: 12.5px; border-color: #f1f5f9; }
+   .report-table-responsive thead th:hover{ background: #f1f5f9!important; }
 </style>
 
 <div class="table-responsive report-table-responsive">
-<table class="table table-hover align-middle mb-0" style="font-size:13px;">
+<table class="table table-hover align-middle mb-0" style="font-size:12.5px;">
 <thead style="font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase;">
 <tr>
     <th style="width:50px;">Sr.No</th>

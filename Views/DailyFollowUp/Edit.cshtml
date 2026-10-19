@@ -112,7 +112,12 @@
     #dfuForm .ss-wrap,#dfuForm .ss-input{max-width:100%}
 </style>
 
-<h4 class="fw-bold mb-2">Edit Daily Follow Up @(followUpId != null ? "#" + followUpId : "")</h4>
+<div class="d-flex align-items-center gap-2 mb-2">
+    <a href="/DailyFollowUp" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/DailyFollowUp');">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <h4 class="fw-bold mb-0" style="font-size:16px;">Edit Daily Follow Up @(followUpId != null ? "#" + followUpId : "")</h4>
+</div>
 
 <form method="post" id="dfuForm">
     @Html.AntiForgeryToken()
@@ -155,7 +160,6 @@
     </div>
 
     <div class="d-flex justify-content-end gap-2 mt-3">
-        <a href="/DailyFollowUp" class="btn btn-light border px-4">Cancel</a>
         <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Update Follow Up</button>
     </div>
 </form>
