@@ -13,6 +13,8 @@ namespace ClientVisitManagement.Models
         public string FromDate { get; set; }
         public string ToDate { get; set; }
         public string FilterStatus { get; set; }
+        public string FilterUser { get; set; }
+        public List<Dictionary<string, object?>> Users { get; set; } = new();
         public DynamicTableViewModel TicketTable { get; set; } = new DynamicTableViewModel();
     }
 }

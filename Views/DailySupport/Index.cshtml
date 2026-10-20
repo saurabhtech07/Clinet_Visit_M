@@ -45,8 +45,8 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
  .stat-sub{font-size:9.5px;color:#6c757d;margin-top:1px;}
  .icon-box{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0;}
  .filter-card{border-radius:12px;border:0;box-shadow:0 3px 12px rgba(0,0,0,0.06);}
- .filter-card .form-label{margin-bottom:5px;}
- .search-box{border-radius:9px;height:32px;font-size:12.5px;}
+ .filter-card .form-label{margin-bottom:3px;}
+ .search-box{border-radius:8px;height:30px;font-size:12.5px;}
  .table-card{border-radius:12px;border:0;box-shadow:0 4px 20px rgba(0,0,0,0.06);overflow:visible;}
  /* SINGLE SCROLLER ONLY - DOUBLE HATA DIYA */
  #tableContainer{
@@ -95,14 +95,17 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
     <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Closed Today</div><div class="stat-value" style="color:#198754;">@Model.ClosedToday</div><div class="stat-sub" style="color:#198754;">Done today</div></div><div class="icon-box" style="background:#10b981;"><i class="bi bi-check-circle-fill"></i></div></div></div>
     <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Pending</div><div class="stat-value" style="color:#6f42c1;">@Model.PendingCalls</div><div class="stat-sub">In Progress</div></div><div class="icon-box" style="background:#8b5cf6;"><i class="bi bi-hourglass-split"></i></div></div></div>
 </div>
-<div class="card filter-card mb-2"><div class="card-body" style="padding:10px 12px;"><div class="row g-2 align-items-end"><div class="col-12 col-md-6 col-lg-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">SEARCH TICKET / CUSTOMER / MOBILE</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:9px 0 0 9px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, customer, mobile..." /></div></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">STATUS</label><select id="dssStatus" class="form-select search-box">
+<div class="card filter-card mb-2"><div class="card-body" style="padding:8px 10px;"><div class="row g-2 align-items-end"><div class="col-12 col-md-6 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">SEARCH</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;padding:4px 8px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, mobile..." /></div></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">STATUS</label><select id="dssStatus" class="form-select search-box">
 <option value="">All Status</option>
 @foreach(var st in new[]{"Open","In Progress","On Hold","Pending","Closed"}){<option value="@st" selected="@(string.Equals(Model.FilterStatus,st,System.StringComparison.OrdinalIgnoreCase))">@st</option>}
-</select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
-<div class="col-12 col-md-3 col-lg-3 d-flex justify-content-end gap-2 align-items-end">
-<a href="/DailySupport" class="btn btn-light border px-4" style="border-radius:9px;height:32px;font-size:12.5px;" onclick="event.preventDefault(); clearFilters();">Clear</a>
+</select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">USER</label><select id="dssUser" class="form-select search-box">
+<option value="">All Users</option>
+@foreach(var u in Model.Users){var uid=u.ContainsKey("UserId")?(u["UserId"]?.ToString()??""):"";var uname=u.ContainsKey("FullName")?(u["FullName"]?.ToString()??""):"";<option value="@uid" selected="@(uid==Model.FilterUser)">@uname</option>}
+</select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
+<div class="col-12 col-md-6 col-lg-2 d-flex justify-content-end gap-2 align-items-end" style="flex-wrap:nowrap;">
+<a href="/DailySupport" class="btn btn-light border px-2" style="border-radius:8px;height:30px;font-size:12px;" onclick="event.preventDefault(); clearFilters();">Clear</a>
 <div class="dropdown">
-<button class="btn btn-dark dropdown-toggle px-3" style="border-radius:9px;height:32px;font-size:12.5px;" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-download me-1"></i> Export</button>
+<button class="btn btn-dark dropdown-toggle px-2" style="border-radius:8px;height:30px;font-size:12px;" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-download me-1"></i> Export</button>
 <ul class="dropdown-menu dropdown-menu-end">
 <li><a class="dropdown-item" href="#" onclick="exportPrint()" style="font-size:12.5px"><i class="bi bi-printer me-2"></i>Print</a></li>
 <li><a class="dropdown-item" href="#" onclick="exportCSV()" style="font-size:12.5px"><i class="bi bi-filetype-csv me-2"></i>CSV</a></li>
@@ -118,11 +121,19 @@ function loadTable(){
   var f=document.getElementById('fromDate').value;
   var t=document.getElementById('toDate').value;
   var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:'';
+  var u=document.getElementById('dssUser')?document.getElementById('dssUser').value:'';
   var p=new URLSearchParams();
+  // Always send page/pageSize - the server returns the full page only when the
+  // query is empty (SPA loadPage). Without these, Clear would fetch the whole
+  // page and inject it into #tableContainer, breaking the layout in two parts.
+  currentPage=1;
+  p.append('page',currentPage);
+  p.append('pageSize',pageSizeCurrent);
   if(s) p.append('search',s);
   if(f) p.append('fromDate',f);
   if(t) p.append('toDate',t);
   if(st) p.append('status',st);
+  if(u) p.append('user',u);
   fetch('/DailySupport/Index?'+p.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}})
   .then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();})
   .then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager();})
@@ -133,14 +144,16 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
 document.getElementById('fromDate')?.addEventListener('change',loadTable);
 document.getElementById('toDate')?.addEventListener('change',loadTable);
 document.getElementById('dssStatus')?.addEventListener('change',loadTable);
+document.getElementById('dssUser')?.addEventListener('change',loadTable);
 function clearFilters(){
   var s=document.getElementById('dssSearch'); if(s) s.value='';
   var f=document.getElementById('fromDate'); if(f) f.value='';
   var t=document.getElementById('toDate'); if(t) t.value='';
   var st=document.getElementById('dssStatus'); if(st) st.value='';
+  var u=document.getElementById('dssUser'); if(u) u.value='';
   loadTable();
 }
-function goPage(p,ps){ currentPage=p||1; pageSizeCurrent=ps||10; var s=document.getElementById('dssSearch').value; var f=document.getElementById('fromDate').value; var t=document.getElementById('toDate').value; var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:''; var pp=new URLSearchParams(); if(s) pp.append('search',s); if(f) pp.append('fromDate',f); if(t) pp.append('toDate',t); if(st) pp.append('status',st); pp.append('page',currentPage); pp.append('pageSize',pageSizeCurrent); fetch('/DailySupport/Index?'+pp.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();}).then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager(); window.scrollTo({top:document.querySelector('.table-card')?.offsetTop-60,behavior:'smooth'});}).catch(e=>Ajax.toast(e.message,'error'));}
+function goPage(p,ps){ currentPage=p||1; pageSizeCurrent=ps||10; var s=document.getElementById('dssSearch').value; var f=document.getElementById('fromDate').value; var t=document.getElementById('toDate').value; var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:''; var u=document.getElementById('dssUser')?document.getElementById('dssUser').value:''; var pp=new URLSearchParams(); if(s) pp.append('search',s); if(f) pp.append('fromDate',f); if(t) pp.append('toDate',t); if(st) pp.append('status',st); if(u) pp.append('user',u); pp.append('page',currentPage); pp.append('pageSize',pageSizeCurrent); fetch('/DailySupport/Index?'+pp.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();}).then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager(); window.scrollTo({top:document.querySelector('.table-card')?.offsetTop-60,behavior:'smooth'});}).catch(e=>Ajax.toast(e.message,'error'));}
 function attachPager(){ document.querySelectorAll('.dss-page').forEach(a=>{a.onclick=function(e){e.preventDefault(); goPage(parseInt(this.getAttribute('data-page')), pageSizeCurrent);}}); document.querySelectorAll('.dss-page-size').forEach(sel=>{sel.onchange=function(){goPage(1, parseInt(this.value));}});}
 var sortState={};
 function attachSorting(){

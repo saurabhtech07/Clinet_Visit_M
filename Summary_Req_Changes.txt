@@ -1,7 +1,0 @@
-Changes:
-1. Leads: Added Requirement (nvarchar(1000)) to DB + DDL_Leads.sql. Create/Edit forms show a dedicated Requirement section (textarea). Excluded system fields (IsConverted/ConvertedClientId/ConvertedOn/CreatedOn/EntryTime) from "Additional Information". Removed top Back in Create (modal Back remains).
-2. Leads UI text: converted "Converted Client dekho"→View Client, "Client me convert karo"→Convert to Client, "Is lead ko delete karna hai?"→Delete this lead?, "Koi lead nahi mila"→No leads found, "Is lead ko Client me convert karna hai?"→Convert this lead to a Client?.
-3. Shared JS: searchable-select "Koi record nahi mila"→No records found; form-modal "Form load nahi hua."→Could not load the form.
-4. DailyReport/DailyFollowUp tables: Hinglish confirm/empty text → English.
-5. DailySupport/Create: improved "no client found" message.
-6. Build: succeeded.

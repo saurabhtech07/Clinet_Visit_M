@@ -13,10 +13,33 @@ public class DailySupportController : Controller
     private readonly DynamicRepository _dynamicRepo;
     public DailySupportController(DBHelper db, DynamicRepository dynamicRepo){ _db=db; _dynamicRepo=dynamicRepo; }
 
-    [HttpGet]
-    public IActionResult Index(string? search, string? fromDate, string? toDate, string? status, int page=1, int pageSize=10){
+    // Sequential per-day ticket number: TKT-ddMMyy-001, TKT-ddMMyy-002 ...
+    // (Random.Next se duplicate/skewed numbers aate the). Duplicate check ke saath
+    // taaki do log ek saath banayein to bhi number clash na ho.
+    private string GenerateTicketNo(){
+        string prefix=$"TKT-{DateTime.Now:ddMMyy}-";
         using var con=_db.GetConnection(); con.Open();
-        var vm=new DailySupportDashboardViewModel(); vm.SearchTerm=search; vm.FromDate=fromDate; vm.ToDate=toDate; vm.FilterStatus=status;
+        int seq;
+        using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE SupportDate>=@DayStart AND SupportDate<@DayEnd",con)){
+            cmd.Parameters.AddWithValue("@DayStart",DateTime.Today);
+            cmd.Parameters.AddWithValue("@DayEnd",DateTime.Today.AddDays(1));
+            seq=Convert.ToInt32(cmd.ExecuteScalar())+1;
+        }
+        string ticketNo;
+        using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE TicketNo=@T",con)){
+            cmd.Parameters.Add("@T",System.Data.SqlDbType.VarChar,40);
+            do{ ticketNo=$"{prefix}{seq:D3}"; cmd.Parameters["@T"].Value=ticketNo; seq++; }
+            while(Convert.ToInt32(cmd.ExecuteScalar())>0);
+        }
+        return ticketNo;
+    }
+
+    [HttpGet]
+    public IActionResult Index(string? search, string? fromDate, string? toDate, string? status, string? user, int page=1, int pageSize=10){
+        using var con=_db.GetConnection(); con.Open();
+        var vm=new DailySupportDashboardViewModel(); vm.SearchTerm=search; vm.FromDate=fromDate; vm.ToDate=toDate; vm.FilterStatus=status; vm.FilterUser=user;
+        // User filter dropdown ke liye active users
+        try{ using var ucmd=new SqlCommand("SELECT UserId, FullName FROM Users WHERE IsActive=1 ORDER BY FullName",con); using var ureader=ucmd.ExecuteReader(); while(ureader.Read()){ vm.Users.Add(new Dictionary<string,object?>{ ["UserId"]=ureader.GetInt32(0), ["FullName"]=ureader.IsDBNull(1)?ureader.GetInt32(0).ToString():ureader.GetString(1) }); } }catch{}
         string dateFilter=""; if(!string.IsNullOrWhiteSpace(fromDate)&&!string.IsNullOrWhiteSpace(toDate)) dateFilter=" AND CAST(SupportDate AS DATE) BETWEEN @FromDate AND @ToDate";
         try{
             using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport WHERE CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE) {dateFilter}",con)){ if(!string.IsNullOrWhiteSpace(fromDate)){cmd.Parameters.AddWithValue("@FromDate",fromDate);cmd.Parameters.AddWithValue("@ToDate",toDate);} vm.TodayCalls=(int)cmd.ExecuteScalar(); }
@@ -25,10 +48,10 @@ public class DailySupportController : Controller
             using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport WHERE Status='Closed' AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE) {dateFilter}",con)){ if(!string.IsNullOrWhiteSpace(fromDate)){cmd.Parameters.AddWithValue("@FromDate",fromDate);cmd.Parameters.AddWithValue("@ToDate",toDate);} vm.ClosedToday=(int)cmd.ExecuteScalar(); }
             using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport WHERE Status IN ('In Progress','Pending','On Hold') {dateFilter}",con)){ if(!string.IsNullOrWhiteSpace(fromDate)){cmd.Parameters.AddWithValue("@FromDate",fromDate);cmd.Parameters.AddWithValue("@ToDate",toDate);} vm.PendingCalls=(int)cmd.ExecuteScalar(); }
         }catch{}
-        string where=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)&&!string.IsNullOrWhiteSpace(toDate)) where+=" AND CAST(d.SupportDate AS DATE) BETWEEN @FromDate AND @ToDate "; if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status ";
-        using var countCmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId {where}",con); if(!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){countCmd.Parameters.AddWithValue("@FromDate",fromDate);countCmd.Parameters.AddWithValue("@ToDate",toDate);} if(!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status",status); int total=0; try{total=(int)countCmd.ExecuteScalar();}catch{}
+        string where=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)&&!string.IsNullOrWhiteSpace(toDate)) where+=" AND CAST(d.SupportDate AS DATE) BETWEEN @FromDate AND @ToDate "; if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(user)) where+=" AND d.AssignedTo = @UserId ";
+        using var countCmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId {where}",con); if(!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){countCmd.Parameters.AddWithValue("@FromDate",fromDate);countCmd.Parameters.AddWithValue("@ToDate",toDate);} if(!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) countCmd.Parameters.AddWithValue("@UserId",user); int total=0; try{total=(int)countCmd.ExecuteScalar();}catch{}
         string dataSql=$@"SELECT d.*, c.ClientName, c.ClientName as CompanyName, u.FullName as AssignedName FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId {where} ORDER BY d.SupportId DESC OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
-        using var dataCmd=new SqlCommand(dataSql,con); if(!string.IsNullOrWhiteSpace(search)) dataCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){dataCmd.Parameters.AddWithValue("@FromDate",fromDate);dataCmd.Parameters.AddWithValue("@ToDate",toDate);} if(!string.IsNullOrWhiteSpace(status)) dataCmd.Parameters.AddWithValue("@Status",status); dataCmd.Parameters.AddWithValue("@Skip",(page-1)*pageSize); dataCmd.Parameters.AddWithValue("@Take",pageSize);
+        using var dataCmd=new SqlCommand(dataSql,con); if(!string.IsNullOrWhiteSpace(search)) dataCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){dataCmd.Parameters.AddWithValue("@FromDate",fromDate);dataCmd.Parameters.AddWithValue("@ToDate",toDate);} if(!string.IsNullOrWhiteSpace(status)) dataCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) dataCmd.Parameters.AddWithValue("@UserId",user); dataCmd.Parameters.AddWithValue("@Skip",(page-1)*pageSize); dataCmd.Parameters.AddWithValue("@Take",pageSize);
         var table=new DynamicTableViewModel{CurrentPage=page,PageSize=pageSize,TotalRecords=total,SearchTerm=search};
         try{ using var reader=dataCmd.ExecuteReader(); for(int i=0;i<reader.FieldCount;i++) table.Columns.Add(reader.GetName(i)); while(reader.Read()){ var row=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i); table.Rows.Add(row);} }catch{}
         vm.TicketTable=table;
@@ -74,7 +97,7 @@ public class DailySupportController : Controller
 
     [HttpGet] public IActionResult Create(){
         var cols=_dynamicRepo.GetColumns("DailySupport");
-        ViewBag.TicketNo=$"TKT-{DateTime.Now:ddMMyy}-{new Random().Next(10,99)}";
+        ViewBag.TicketNo=GenerateTicketNo();
         try{ ViewBag.Customers=_dynamicRepo.GetTable("Client").Rows; }catch{ ViewBag.Customers=new List<Dictionary<string,object?>>(); }
         try{ ViewBag.Engineers=_dynamicRepo.GetTable("Users").Rows; }catch{ ViewBag.Engineers=new List<Dictionary<string,object?>>(); }
         // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
@@ -84,7 +107,12 @@ public class DailySupportController : Controller
     }
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Create(IFormCollection form){
         var values=form.Keys.Where(k=>k!="__RequestVerificationToken").ToDictionary(k=>k,k=>form[k].ToString());
-        if(!values.ContainsKey("TicketNo")||string.IsNullOrWhiteSpace(values["TicketNo"])) values["TicketNo"]=$"TKT-{DateTime.Now:ddMMyy}-{new Random().Next(10,99)}";
+        if(!values.ContainsKey("TicketNo")||string.IsNullOrWhiteSpace(values["TicketNo"])) values["TicketNo"]=GenerateTicketNo();
+        else{
+            // Form ka preview number kabhi-doosre-tab se already save ho chuka ho to duplicate na ban jaye
+            using var con=_db.GetConnection(); con.Open(); using var chk=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE TicketNo=@T",con); chk.Parameters.AddWithValue("@T",values["TicketNo"]);
+            if(Convert.ToInt32(chk.ExecuteScalar())>0) values["TicketNo"]=GenerateTicketNo();
+        }
         if(!values.ContainsKey("SupportDate")) values["SupportDate"]=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         try{ _dynamicRepo.Insert("DailySupport",values);
             if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,message="Call entry saved successfully."});

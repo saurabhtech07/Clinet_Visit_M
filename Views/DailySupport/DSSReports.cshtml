@@ -348,8 +348,8 @@ function loadData(page){
         const html = await r.text();
         document.getElementById('tableBody').innerHTML = html;
         currentPage = parseInt(cPage);
-        document.getElementById('infoPage').innerText = cPage;
-        document.getElementById('infoTotalPages').innerText = tPages;
+        // NOTE: sirf tableInfo update karo - iske andar ke #infoPage/#infoTotalPages
+        // purane elements delete ho jate hain, alag se set karne par doosri baar null error aata tha
         document.getElementById('tableInfo').innerHTML = `Total: <b>${total}</b> | Page <b>${cPage}</b> of <b>${tPages}</b>`;
         document.getElementById('showingInfo').innerText = `Showing ${from} to ${to} of ${total}`;
         const div = document.getElementById('pageNumbers');
