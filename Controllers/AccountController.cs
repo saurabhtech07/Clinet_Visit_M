@@ -1,74 +1,3 @@
-// using Microsoft.AspNetCore.Mvc;
-// using ClientVisitManagement.Data;
-// using ClientVisitManagement.Models;
-
-// namespace ClientVisitManagement.Controllers;
-
-// public class AccountController : Controller
-// {
-//     private readonly UserRepository _userRepo;
-
-//     public AccountController(UserRepository userRepo)
-//     {
-//         _userRepo = userRepo;
-//     }
-
-//     [HttpGet]
-//     public IActionResult Login()
-//     {
-//         return View();
-//     }
-
-//     [HttpGet]
-//     public IActionResult GenerateHash(string pwd)
-//     {
-//         if (string.IsNullOrWhiteSpace(pwd))
-//             return BadRequest("Password is required.");
-
-//         return Content(BCrypt.Net.BCrypt.HashPassword(pwd));
-//     }
-
-
-// //LOGIN POST
-
-
-//     [HttpPost]
-//     public IActionResult Login(LoginViewModel model)
-//     {
-//         var user = _userRepo.GetByUsername(model.Username);
-
-//         if (user == null ||
-//             !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
-//         {
-//             ViewBag.Error = "Invalid username or password.";
-//             return View(model);
-//         }
-
-//         HttpContext.Session.SetInt32(
-//             "UserId",
-//             user.UserId
-//         );
-
-//         HttpContext.Session.SetString(
-//             "FullName",
-//             user.FullName
-//         );
-
-//         HttpContext.Session.SetString(
-//             "Role",
-//             user.RoleName ?? ""
-//         );
-
-//         return RedirectToAction("Index", "User");
-//     }
-
-//     public IActionResult Logout()
-//     {
-//         HttpContext.Session.Clear();
-
-//         return RedirectToAction(nameof(Login));
-//     }
-// }
 
 
 using Microsoft.AspNetCore.Mvc;
@@ -100,21 +29,13 @@ public class AccountController : Controller
         return View();
     }
 
-    [HttpGet]
-    public IActionResult GenerateHash(string pwd)
-    {
-        if (string.IsNullOrWhiteSpace(pwd))
-            return BadRequest("Password is required.");
-        return Content(BCrypt.Net.BCrypt.HashPassword(pwd));
-    }
-
-    // LOGIN POST - FIXED
+    // LOGIN POST - FIXED (plain password system, no hashing)
     [HttpPost]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         var user = _userRepo.GetByUsername(model.Username);
 
-        if (user == null ||!BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+        if (user == null || string.IsNullOrEmpty(model.Password) || user.PasswordHash != model.Password)
         {
             ViewBag.Error = "Invalid username or password.";
             return View(model);

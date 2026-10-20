@@ -40,9 +40,9 @@ public class AuthFilter : IAuthorizationFilter
         var controller = context.RouteData.Values["controller"]?.ToString();
         var action = context.RouteData.Values["action"]?.ToString();
 
-        // FIX: Login, Logout, GenerateHash ko allow karo warna infinite loop hoga
+        // FIX: Login, Logout ko allow karo warna infinite loop hoga
         if (controller == "Account" && 
-           (action == "Login" || action == "Logout" || action == "GenerateHash"))
+           (action == "Login" || action == "Logout"))
         {
             return;
         }
