@@ -293,6 +293,23 @@
                 var text = label ? "Loading " + label + "\u2026" : "Loading\u2026";
                 PageLoader.show(text);
 
+                // FIX: modal ke andar se Edit/jaisi navigation karne par modal
+                // khula reh jata tha aur Bootstrap ka dark backdrop poore page
+                // ko dark bana deta tha. Yaha saare open modals + backdrop hata dete hain.
+                document.querySelectorAll(".modal.show").forEach(function (m) {
+                    var inst = (window.bootstrap && bootstrap.Modal.getInstance) ? bootstrap.Modal.getInstance(m) : null;
+                    if (inst) { try { inst.hide(); } catch (e) { } try { inst.dispose(); } catch (e) { } }
+                    m.classList.remove("show");
+                    m.classList.remove("fade");
+                    m.style.display = "none";
+                    m.setAttribute("aria-hidden", "true");
+                    m.removeAttribute("aria-modal");
+                });
+                document.querySelectorAll(".modal-backdrop").forEach(function (b) { b.remove(); });
+                document.body.classList.remove("modal-open");
+                document.body.style.removeProperty("overflow");
+                document.body.style.removeProperty("padding-right");
+
                 return fetch(url, {
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 })
@@ -354,7 +371,7 @@
             var clone = table.cloneNode(true);
 
             // Actions column (view/edit/delete buttons) print nahi honi chahiye
-            clone.querySelectorAll(".actions-col, .actions-cell").forEach(function (n) { n.remove(); });
+            clone.querySelectorAll(".actions-col, .actions-cell, .no-print").forEach(function (n) { n.remove(); });
             clone.querySelectorAll("button, select, .dropdown, .pagination, .records-per-page").forEach(function (n) { n.remove(); });
 
             // Fixed widths hata do taaki table poori width me fit ho
@@ -372,14 +389,22 @@
             var w = window.open("", "", "width=1100,height=800");
             if (!w) { window.print(); return; }
 
+            // COMPACT PRINT - chhota font, kam padding, landscape (bade grid bhi ek page me)
             var css =
                 "<style>" +
-                "body{font-family:'Segoe UI',Arial,sans-serif;padding:18px;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
-                "h4{margin:0 0 12px;font-size:16px;font-weight:700}" +
-                "table{width:100%;border-collapse:collapse;font-size:12px}" +
-                "thead th{background:#eef2f7;border:1px solid #cbd5e1;padding:6px 8px;text-align:left;font-weight:700;white-space:nowrap}" +
-                "tbody td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;vertical-align:top}" +
+                "@@page{size:landscape;margin:8mm}" +
+                "body{font-family:'Segoe UI',Arial,sans-serif;padding:10px;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+                "h4{margin:0 0 8px;font-size:14px;font-weight:700}" +
+                "table{width:100%;border-collapse:collapse;font-size:10.5px}" +
+                "thead th{background:#eef2f7;border:1px solid #cbd5e1;padding:4px 6px;text-align:left;font-weight:700;white-space:nowrap}" +
+                "tbody td{border:1px solid #dfe6ee;padding:3px 6px;text-align:left;vertical-align:middle;white-space:normal!important;word-break:break-word}" +
                 "tbody tr:nth-child(even){background:#f8fafc}" +
+                "tbody tr{page-break-inside:avoid}" +
+                // DSS report ke priority badges print me bhi rang me dikhein
+                ".badge-pri-Urgent{background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:5px;font-size:10px;padding:1px 5px;font-weight:600}" +
+                ".badge-pri-High{background:#ffedd5;color:#ea580c;border:1px solid #fed7aa;border-radius:5px;font-size:10px;padding:1px 5px;font-weight:600}" +
+                ".badge-pri-Medium{background:#fef3c7;color:#d97706;border:1px solid #fde68a;border-radius:5px;font-size:10px;padding:1px 5px;font-weight:600}" +
+                ".badge-pri-Low{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;border-radius:5px;font-size:10px;padding:1px 5px;font-weight:600}" +
                 "</style>";
 
             w.document.write(
@@ -424,7 +449,7 @@
     <!-- =====================================================
          FORM MODAL (Add / Edit forms popup)
          ===================================================== -->
-    <script src="~/js/form-modal.js"></script>
+    <script src="~/js/form-modal.js" asp-append-version="true"></script>
 
 </body>
 </html>

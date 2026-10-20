@@ -14,6 +14,8 @@ public class DynamicTableViewModel
 
     public string? SearchTerm { get; set; }
 
+    public string? FilterStatus { get; set; }
+
     public string? SortColumn { get; set; }
 
     public string SortDirection { get; set; } = "DESC";

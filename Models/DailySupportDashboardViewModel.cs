@@ -12,6 +12,7 @@ namespace ClientVisitManagement.Models
         public string SearchTerm { get; set; }
         public string FromDate { get; set; }
         public string ToDate { get; set; }
+        public string FilterStatus { get; set; }
         public DynamicTableViewModel TicketTable { get; set; } = new DynamicTableViewModel();
     }
 }

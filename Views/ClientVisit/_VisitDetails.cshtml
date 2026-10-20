@@ -61,7 +61,7 @@
 </div>
 
 <div class="modal-footer" style="background:#f8f9fa; border-top:1px solid #eef0f2;">
-    <a href="/ClientVisit/Edit/@visitId" class="btn btn-dark btn-sm" style="border-radius:8px; padding:6px 16px;">
+    <a href="/ClientVisit/Edit/@visitId" data-no-modal class="btn btn-dark btn-sm" style="border-radius:8px; padding:6px 16px;" onclick="event.preventDefault(); window.loadPage('/ClientVisit/Edit/@visitId', 'Edit Visit');">
         <i class="bi bi-pencil me-1"></i> Edit
     </a>
     <button type="button" class="btn btn-light border btn-sm" data-bs-dismiss="modal" style="border-radius:8px; padding:6px 16px;">

@@ -689,20 +689,27 @@
 
 <div class="visit-filter-card-daily mb-2">
     <div class="row g-2 align-items-end">
-        <div class="col-md-5">
+        <div class="col-12 col-md-6 col-lg-3">
             <label>SEARCH TICKET / CUSTOMER / MOBILE</label>
             <div class="visit-search-box"><i class="bi bi-search"></i><input id="visitSearch" type="text" value="@Model.SearchTerm" placeholder="Ticket, customer, mobile..." autocomplete="off" /></div>
         </div>
-        <div class="col-md-2"><label>FROM DATE</label><input id="fromDate" class="form-control date-filter" type="date" /></div>
-        <div class="col-md-2"><label>TO DATE</label><input id="toDate" class="form-control date-filter" type="date" /></div>
-        <div class="col-md-3 d-flex gap-2 justify-content-end">
+        <div class="col-6 col-md-3 col-lg-2">
+            <label>STATUS</label>
+            <select id="visitStatus" class="form-select date-filter">
+                <option value="">All Status</option>
+                @foreach(var st in new[]{"Pending","Done","Overdue"}){<option value="@st" selected="@(string.Equals(Model.FilterStatus,st,System.StringComparison.OrdinalIgnoreCase))">@st</option>}
+            </select>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2"><label>FROM DATE</label><input id="fromDate" class="form-control date-filter" type="date" /></div>
+        <div class="col-6 col-md-3 col-lg-2"><label>TO DATE</label><input id="toDate" class="form-control date-filter" type="date" /></div>
+        <div class="col-12 col-md-3 col-lg-3 d-flex gap-2 justify-content-end">
             <button type="button" id="clearVisitFilter" class="visit-clear-btn"><i class="bi bi-x"></i> Clear</button>
             <div class="dropdown export-dropdown">
                 <button class="btn export-main-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-download me-1"></i> Export</button>
                 <ul class="dropdown-menu">
                     <li><a id="visitExportExcel" class="dropdown-item" href="/ClientVisit/ExportExcel?search=@Model.SearchTerm"><i class="bi bi-file-earmark-excel text-success"></i> Excel</a></li>
                     <li><a class="dropdown-item" href="javascript:void(0);" onclick="exportVisitCsv();"><i class="bi bi-filetype-csv text-info"></i> CSV</a></li>
-                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.print();"><i class="bi bi-printer text-primary"></i> Print</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="window.printTable('visitTable','Client Visit List');"><i class="bi bi-printer text-primary"></i> Print</a></li>
                 </ul>
             </div>
         </div>
@@ -730,7 +737,8 @@
       </div>
       <div class="modal-footer py-2">
         <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <a href="#" id="cvViewModalEdit" class="btn btn-sm" style="background:#0f172a;color:#fff;">Open Edit Form</a>
+        <button type="button" class="btn btn-sm btn-light border" onclick="printVisitDetails()"><i class="bi bi-printer me-1"></i>Print</button>
+        <a href="#" id="cvViewModalEdit" data-no-modal class="btn btn-sm" style="background:#0f172a;color:#fff;" onclick="event.preventDefault(); var h=this.getAttribute('href'); if(h && h!=='#') window.loadPage(h, 'Edit Visit');">Open Edit Form</a>
       </div>
     </div>
   </div>
@@ -750,6 +758,7 @@
     var currentSort = "@Model.SortColumn";
     var currentDir = "@Model.SortDirection";
     var searchInput = document.getElementById("visitSearch");
+    var statusSelect = document.getElementById("visitStatus");
     var fromDate = document.getElementById("fromDate");
     var toDate = document.getElementById("toDate");
     var visitTable = document.getElementById("visitTable");
@@ -758,6 +767,7 @@
     function buildUrl(page = 1) {
         const p = new URLSearchParams();
         if (searchInput.value.trim()) p.append("term", searchInput.value.trim());
+        if (statusSelect.value) p.append("status", statusSelect.value);
         if (fromDate.value) p.append("fromDate", fromDate.value);
         if (toDate.value) p.append("toDate", toDate.value);
         if(currentSort) p.append("sort", currentSort);
@@ -776,11 +786,12 @@
        .then(r => r.text()).then(html => { visitTable.innerHTML = html; updateExportUrl(); });
     }
     searchInput.addEventListener("input", function () { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadVisitTable(buildUrl(1)), 300); });
+    statusSelect.addEventListener("change", () => loadVisitTable(buildUrl(1)));
     fromDate.addEventListener("change", () => loadVisitTable(buildUrl(1)));
     toDate.addEventListener("change", () => loadVisitTable(buildUrl(1)));
     document.addEventListener("change", function (e) { if (e.target.id === "visitPageSize") loadVisitTable(buildUrl(1)); });
     document.getElementById("clearVisitFilter").addEventListener("click", function () {
-        searchInput.value = ""; fromDate.value = ""; toDate.value = "";
+        searchInput.value = ""; statusSelect.value = ""; fromDate.value = ""; toDate.value = "";
         const size = document.getElementById("visitPageSize"); if (size) size.value = "10";
         currentSort=""; currentDir="DESC";
         loadVisitTable(buildUrl(1));
@@ -806,6 +817,32 @@
     });
     }
     function viewDetails(id) { openVisitDetails(id); }
+    // Visit details ka clean print (sirf details + history, page ke baaki sab nahi)
+    function printVisitDetails() {
+        var body = document.getElementById("cvViewModalBody");
+        if (!body) return;
+        var titleEl = document.getElementById("cvViewModalTitle");
+        var title = (titleEl && titleEl.textContent) ? titleEl.textContent : "Visit Details";
+        var w = window.open("", "", "width=950,height=800");
+        if (!w) { window.print(); return; }
+        var css = "<style>" +
+            "body{font-family:'Segoe UI',Arial,sans-serif;padding:18px;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+            "h4{margin:0 0 12px;font-size:16px;font-weight:700}" +
+            ".dss-modal-sec{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px}" +
+            ".modal-info{border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;margin-bottom:10px}" +
+            ".dss-row{display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:3px 0;border-bottom:1px dashed #e2e8f0}" +
+            ".dss-row span:first-child{color:#64748b}" +
+            ".dss-row span:last-child{font-weight:600;text-align:right}" +
+            "table{width:100%;border-collapse:collapse;font-size:12px}" +
+            "thead th{background:#eef2f7;border:1px solid #cbd5e1;padding:6px 8px;text-align:left;white-space:nowrap}" +
+            "tbody td{border:1px solid #cbd5e1;padding:6px 8px;vertical-align:top}" +
+            "tbody tr:nth-child(even){background:#f8fafc}" +
+            "</style>";
+        w.document.write("<html><head><meta charset='utf-8'><title>" + title + "</title>" + css + "</head><body>" +
+            "<h4>" + title + "</h4>" + body.innerHTML + "</body></html>");
+        w.document.close(); w.focus();
+        setTimeout(function () { w.print(); w.close(); }, 400);
+    }
     function cvFmtLabel(k) { if (k === "VisitTypeId") return "Visit Type"; return String(k).replace(/([a-z])([A-Z])/g, "$1 $2"); }
     function cvBuildRows(obj, skip) {
         if (!obj) return '<div class="text-muted" style="font-size:12px;">No data</div>';

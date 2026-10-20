@@ -79,20 +79,24 @@ where = @" WHERE CAST(c.ClientId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName 
         return ReadTable(cmd, page, pageSize, total, search, sort, orderDir);
     }
 
-    public DynamicTableViewModel GetClientVisitTable(int page, int pageSize, string? search, string? sort, string direction = "DESC")
+    public DynamicTableViewModel GetClientVisitTable(int page, int pageSize, string? search, string? sort, string direction = "DESC", string? status = null)
     {
         ValidateTable("ClientVisit");
         page = Math.Max(1, page);
         pageSize = pageSize is 10 or 20 or 50 or 100? pageSize : 10;
         string orderDir = string.Equals(direction, "ASC", StringComparison.OrdinalIgnoreCase)? "ASC" : "DESC";
         string orderColumn =!string.IsNullOrWhiteSpace(sort)? sort : "VisitId";
-        string where =!string.IsNullOrWhiteSpace(search)? " WHERE CAST(cv.VisitId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName LIKE @Search" : "";
+        var conditions = new List<string>();
+        if (!string.IsNullOrWhiteSpace(search)) conditions.Add("(CAST(cv.VisitId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName LIKE @Search)");
+        if (!string.IsNullOrWhiteSpace(status)) conditions.Add("cv.FollowUpStatus = @Status");
+        string where = conditions.Count > 0? " WHERE " + string.Join(" AND ", conditions) : "";
 
         using var con = _db.GetConnection();
         con.Open();
 
         using var countCmd = new SqlCommand($"SELECT COUNT(*) FROM ClientVisit cv LEFT JOIN Client c ON cv.ClientId = c.ClientId {where}", con);
         AddSearch(countCmd, search);
+        if (!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status", status);
         int total = Convert.ToInt32(countCmd.ExecuteScalar());
 
         using var cmd = new SqlCommand($"""
@@ -103,6 +107,7 @@ where = @" WHERE CAST(c.ClientId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName 
             {where} ORDER BY [{orderColumn}] {orderDir} OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY
             """, con);
         AddSearch(cmd, search);
+        if (!string.IsNullOrWhiteSpace(status)) cmd.Parameters.AddWithValue("@Status", status);
         cmd.Parameters.AddWithValue("@Skip", (page - 1) * pageSize);
         cmd.Parameters.AddWithValue("@Take", pageSize);
         return ReadTable(cmd, page, pageSize, total, search, sort, orderDir);

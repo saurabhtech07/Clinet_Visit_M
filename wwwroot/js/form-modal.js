@@ -150,17 +150,14 @@
         else window.location.reload();
     }
 
-    // loadPage ko wrap karo: modal khula ho to form usi modal me load ho,
-    // normal page (list/report) ho to modal band karke main area me jaaye.
+    // loadPage ko wrap karo: Add/Edit forms HAMESHA full-page (main content area)
+    // me khulte hain - modal khula ho to pehle band kar do. SIRF View popups
+    // (FormModal.open) modal me khulte hain, loadPage kabhi popup me nahi.
     function wrapLoadPage() {
         if (typeof window.loadPage !== "function" || window.loadPage.__fmWrapped) return;
         var orig = window.loadPage;
         var wrapped = function (url, label) {
-            if (isOpen()) {
-                var path = String(url || "").split("?")[0];
-                if (FORM_LINK.test(path)) return load(url, label);
-                hide();
-            }
+            if (isOpen()) hide();
             return orig.apply(this, arguments);
         };
         wrapped.__fmWrapped = true;

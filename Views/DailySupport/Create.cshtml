@@ -69,7 +69,7 @@
     </div>
 
     <hr style="opacity:0.1;" />
-    <p class="mb-3" style="font-size:11px;font-weight:700;color:#2563eb;letter-spacing:0.5px;">CUSTOMER DETAILS - CLIENT TABLE</p>
+    <p class="mb-2" style="font-size:11px;font-weight:700;color:#2563eb;letter-spacing:0.5px;">CUSTOMER DETAILS - CLIENT TABLE</p>
 
     <!-- ROW 2 - SEARCH MOBILE + SELECT CLIENT WITH SEARCH -->
     <div class="row g-3 mb-3">
@@ -298,130 +298,182 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
 
 @model List<DynamicField>
 @{
-    Layout="~/Views/Shared/_Layout.cshtml"; ViewData["Title"]="Add New Call";
+    ViewData["Title"]="Add New Call";
+    // loadPage (XHR) ke waqt sirf form ka partial return ho, warna #mainContentArea me
+    // poora page (sidebar/header) inject hokar layout toot jata tha.
+    Layout = Context.Request.Headers["X-Requested-With"]=="XMLHttpRequest" ? null : "~/Views/Shared/_Layout.cshtml";
     var customers=ViewBag.Customers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>();
     var engineers=ViewBag.Engineers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>();
     var known=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"SupportId","TicketNo","Status","Priority","SupportDate","ClientId","CustomerID","Mobile","Channel","CallType","Category","AssignedTo","Issue","Description","CreatedOn","UserId","VisitTypeId","Solution","CallerName"};
     var extra=Model.Where(f=>!known.Contains(f.Name)).ToList();
 }
-<style>.form-card{border-radius:14px;border:0;box-shadow:0 4px 20px rgba(0,0,0,0.06);}.suggestion-box{position:absolute;top:100%;left:0;right:0;z-index:1050;background:white;border:1px solid #e2e8f0;border-radius:8px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:none;}.suggestion-item{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;}.suggestion-item:hover{background:#f8fafc;}.client-select-wrapper{position:relative;}#clientSearchInput{border-radius:8px;height:38px;}.select-dropdown{position:absolute;top:100%;left:0;right:0;z-index:1040;background:white;border:1px solid #e2e8f0;border-radius:8px;max-height:250px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.12);}.select-option{padding:9px 12px;cursor:pointer;font-size:13px;}.select-option:hover{background:#f1f5f9;}.form-card .card-body{padding:12px 14px !important;}.form-card .form-label{font-size:10px !important;font-weight:700;color:#64748b;margin-bottom:4px !important;}.form-card .form-control,.form-card .form-select{height:32px !important;font-size:12.5px !important;border-radius:9px !important;}.form-card textarea.form-control{height:auto !important;}.form-card .input-group .btn{height:32px !important;}.form-card .btn{font-size:12.5px !important;border-radius:9px !important;}.form-card hr{margin:.6rem 0;}.form-card .card-body > p{margin-bottom:.5rem !important;}</style>
-<div class="d-flex justify-content-between align-items-center mb-2"><div><h4 class="fw-bold mb-0">Daily Support - Add Call</h4><small class="text-muted"></small></div><a href="/DailySupport" class="btn btn-light border" style="border-radius:8px;" onclick="event.preventDefault(); window.loadPage('/DailySupport');">← Back</a></div>
-<form method="post" id="addCallForm">@Html.AntiForgeryToken()
-<input type="hidden" name="TicketNo" value="@ViewBag.TicketNo" /><input type="hidden" name="ClientId" id="hiddenClientId" /><input type="hidden" name="CustomerID" id="hiddenCustomerID" />
-<div class="card form-card"><div class="card-body p-3">
-<div class="row g-2 mb-2">
-<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">TICKET NO</label><input type="text" class="form-control" value="@ViewBag.TicketNo" readonly style="background:#f8fafc;border-radius:8px;height:38px;font-size:13px;font-weight:600;" /></div>
-<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">STATUS</label><select name="Status" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option selected>Open</option><option>In Progress</option><option>On Hold</option><option>Pending</option><option>Closed</option></select></div>
-<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">PRIORITY</label><select name="Priority" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
-<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CALL DATE</label><input type="text" value="@DateTime.Now.ToString("dd-MM-yyyy")" readonly class="form-control" style="border-radius:8px;height:38px;font-size:13px;" /><input type="hidden" name="SupportDate" value="@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" /></div>
-</div><hr style="opacity:0.1;" /><p class="mb-3" style="font-size:11px;font-weight:700;color:#2563eb;letter-spacing:0.5px;">CUSTOMER DETAILS - CLIENT TABLE</p>
-<div class="row g-2 mb-2">
-<div class="col-md-3" style="position:relative;"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SEARCH MOBILE NO</label><div class="input-group"><input type="text" id="searchMobileInput" placeholder="Enter mobile number..." class="form-control" style="border-radius:8px 0 0 8px;height:38px;font-size:13px;" autocomplete="off" /><button class="btn btn-dark" type="button" id="searchBtn" style="border-radius:0 8px 8px 0;height:38px;"><i class="bi bi-search"></i></button></div><div id="mobileSuggestionBox" class="suggestion-box"></div></div>
-<div class="col-md-4"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">SELECT CLIENT *</label><div class="client-select-wrapper"><input type="text" id="clientSearchInput" placeholder="-- Select Client -- Type to search..." class="form-control" style="border-radius:8px;height:38px;font-size:13px;" autocomplete="off" /><div id="clientDropdown" class="select-dropdown"></div><select id="customerSelect" style="display:none;"><option value="">-- Select Client --</option>@foreach(var c in customers){var id=c.ContainsKey("ClientId")?c["ClientId"]:c.ContainsKey("CustomerID")?c["CustomerID"]:"";var name=c.ContainsKey("ClientName")?c["ClientName"]:c.ContainsKey("CompanyName")?c["CompanyName"]:"";var mobile=c.ContainsKey("MobileNo")?c["MobileNo"]:c.ContainsKey("Mobile1")?c["Mobile1"]:c.ContainsKey("PhoneNo")?c["PhoneNo"]:"";<option value="@id" data-name="@name" data-mobile="@mobile">@name - @mobile</option>}</select></div></div>
-<div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">MOBILE</label><input type="text" id="mobileDisplay" name="Mobile" placeholder="Auto" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" /></div>
+<style>
+    /* Client Master jaisa responsive form - chhoti screen par cards stack ho jate hain */
+    #addCallForm h6{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eef2f7;padding-bottom:5px;margin-bottom:8px}
+    #addCallForm .form-label{font-size:11px;font-weight:700;color:#334155;margin-bottom:2px}
+    #addCallForm .form-control,#addCallForm .form-select{height:30px;font-size:12.5px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0}
+    #addCallForm .form-control:focus,#addCallForm .form-select:focus{background:#fff;border-color:#94a3b8;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+    #addCallForm .row{--bs-gutter-x:.6rem;--bs-gutter-y:.6rem}
+    #addCallForm [class*="col-"]{min-width:0}
+    #addCallForm .card-section{border:1px solid #eef2f7!important;background:#fff}
+    #addCallForm textarea.form-control{height:auto}
+    .cvt-strip{background:#e8f4ff;border:1px solid #b6d7ff;border-radius:8px;padding:6px 10px;font-size:12px}
+</style>
 
-<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CHANNEL</label><select name="Channel" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option>Phone</option><option>WhatsApp</option><option>Email</option><option>Walk-in / Service</option></select></div>
+<div class="d-flex align-items-center gap-2 mb-2">
+    <a href="/DailySupport" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/DailySupport');">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <h4 class="fw-bold mb-0" style="font-size:16px;">Daily Support - New Call Entry</h4>
 </div>
-<div class="row g-2 mb-2">
-<div class="col-md-4"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CALL TYPE</label><select name="CallType" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option selected>Inquiry</option><option>Complaint</option><option>Service</option><option>New Requirement</option></select></div>
-<div class="col-md-4"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CATEGORY</label><select name="Category" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option selected>Hardware</option><option>Software</option><option>Networking</option><option>Billing</option><option>Printer</option></select></div>
-<div class="col-md-4"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">ASSIGN TO (USERS)</label><select name="AssignedTo" class="form-select" style="border-radius:8px;height:38px;font-size:13px;"><option value="">-- Select User --</option>@foreach(var u in engineers){var uid=u.ContainsKey("UserId")?u["UserId"]:u.ContainsKey("EngineerID")?u["EngineerID"]:"";var uname=u.ContainsKey("FullName")?u["FullName"]:u.ContainsKey("EngineerName")?u["EngineerName"]:u.ContainsKey("UserName")?u["UserName"]:"";<option value="@uid">@uname</option>}</select></div>
 
-</div>
-<div class="mb-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">ISSUE</label><textarea name="Issue" rows="3" placeholder="Printer Not Printing - describe the reported issue..." class="form-control" style="border-radius:9px;font-size:12.5px;"></textarea></div>
-@if(extra.Any()){
-@* <hr style="opacity:0.1;" /><p class="mb-3" style="font-size:11px;font-weight:700;color:#8b5cf6;">DYNAMIC FIELDS - DB SE AUTO</p> *@
-<div class="row g-2 mb-2">@foreach(var f in extra){<div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">@f.Name.ToUpper()</label>@if(f.DataType.Contains("date")){<input type="date" name="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}else if(f.DataType.Contains("int")||f.DataType.Contains("decimal")||f.DataType.Contains("numeric")){<input type="number" name="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}else{<input type="text" name="@f.Name" placeholder="@f.Name" class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />}</div>}</div>
-}
-<div class="text-end d-flex justify-content-end gap-2"><button type="button" class="btn btn-light border px-4" id="clearFormBtn" style="border-radius:8px;height:38px;font-size:13px;">Clear</button><button type="submit" class="btn btn-dark px-4" style="border-radius:8px;height:38px;font-size:13px;">Save Call</button></div>
-</div></div></form>
+<form method="post" id="addCallForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="TicketNo" value="@ViewBag.TicketNo" />
+    <input type="hidden" name="ClientId" id="hiddenClientId" />
+    <input type="hidden" name="CustomerID" id="hiddenCustomerID" />
+    <input type="hidden" name="SupportDate" value="@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" />
+    <div class="row g-2 align-items-stretch">
+        <!-- SELECT CLIENT -->
+        <div class="col-12">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6>Select Client *</h6>
+                <div class="row g-2">
+                    <div class="col-12 col-md-5">
+                        <input type="text" list="dssClientList" id="clientSearchBox" class="form-control" placeholder="Search by client ID or name..." autocomplete="off" />
+                        <datalist id="dssClientList">
+                            @foreach(var c in customers){
+                                var id=c.ContainsKey("ClientId")?c["ClientId"]:c.ContainsKey("CustomerID")?c["CustomerID"]:"";
+                                var name=c.ContainsKey("ClientName")?c["ClientName"]:c.ContainsKey("CompanyName")?c["CompanyName"]:"";
+                                <option value="@id - @name"></option>
+                            }
+                        </datalist>
+                    </div>
+                    <div class="col-12 col-md-7">
+                        <select class="form-select" id="clientDropdown" onchange="onClientChange(this.value)">
+                            <option value="">-- Select Client --</option>
+                            @foreach(var c in customers){
+                                var id=c.ContainsKey("ClientId")?c["ClientId"]:c.ContainsKey("CustomerID")?c["CustomerID"]:"";
+                                var name=c.ContainsKey("ClientName")?c["ClientName"]:c.ContainsKey("CompanyName")?c["CompanyName"]:"";
+                                var mobile=c.ContainsKey("MobileNo")?c["MobileNo"]:c.ContainsKey("Mobile1")?c["Mobile1"]:c.ContainsKey("PhoneNo")?c["PhoneNo"]:"";
+                                <option value="@id" data-search="@id - @name (@mobile)" data-name="@name" data-mobile="@mobile">@name - @mobile (@id)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-2 p-2 rounded cvt-strip" id="clientStrip" style="display:none;">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-4"><strong>Company:</strong> <span id="stripName">-</span></div>
+                        <div class="col-12 col-md-4"><strong>Mobile:</strong> <span id="stripMobile">-</span></div>
+                        <div class="col-12 col-md-4"><strong>Client ID:</strong> <span id="stripId">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- LEFT - CALL DETAILS -->
+        <div class="col-md-6 d-flex">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6>Call Details</h6>
+                <div class="mb-2"><label class="form-label">Ticket No</label><input type="text" class="form-control" value="@ViewBag.TicketNo" readonly style="background:#f1f5f9;" /></div>
+                <div class="mb-2"><label class="form-label">Call Date</label><input type="text" class="form-control" value="@DateTime.Now.ToString("dd-MM-yyyy")" readonly style="background:#f1f5f9;" /></div>
+                <div class="mb-2"><label class="form-label">Status</label><select name="Status" class="form-select"><option selected>Open</option><option>In Progress</option><option>On Hold</option><option>Pending</option><option>Closed</option></select></div>
+                <div class="mb-2"><label class="form-label">Priority</label><select name="Priority" class="form-select"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
+                <div class="mb-2"><label class="form-label">Channel</label><select name="Channel" class="form-select"><option>Phone</option><option>WhatsApp</option><option>Email</option><option>Walk-in / Service</option></select></div>
+                <div class="mb-2"><label class="form-label">Call Type</label><select name="CallType" class="form-select"><option selected>Inquiry</option><option>Complaint</option><option>Service</option><option>New Requirement</option></select></div>
+                <div class="mb-2"><label class="form-label">Category</label><select name="Category" class="form-select"><option selected>Hardware</option><option>Software</option><option>Networking</option><option>Billing</option><option>Printer</option></select></div>
+                <div class="mb-2"><label class="form-label">Assign To (Users)</label><select name="AssignedTo" class="form-select"><option value="">-- Select User --</option>@foreach(var u in engineers){var uid=u.ContainsKey("UserId")?u["UserId"]:u.ContainsKey("EngineerID")?u["EngineerID"]:"";var uname=u.ContainsKey("FullName")?u["FullName"]:u.ContainsKey("EngineerName")?u["EngineerName"]:u.ContainsKey("UserName")?u["UserName"]:"";<option value="@uid">@uname</option>}</select></div>
+                @if(extra.Any()){
+                    <hr />
+                    <h6>Additional Information - Auto Added</h6>
+                    @foreach(var f in extra){<div class="mb-2"><label class="form-label">@f.Name</label>@if(f.DataType.Contains("date")){<input type="date" name="@f.Name" class="form-control" />}else if(f.DataType.Contains("int")||f.DataType.Contains("decimal")||f.DataType.Contains("numeric")){<input type="number" name="@f.Name" class="form-control" />}else{<input type="text" name="@f.Name" placeholder="@f.Name" class="form-control" />}</div>}
+                }
+            </div>
+        </div>
+
+        <!-- RIGHT - MOBILE + ISSUE -->
+        <div class="col-md-6 d-flex flex-column gap-2">
+            <div class="card-section w-100 p-3 border rounded bg-white">
+                <h6>Customer Mobile</h6>
+                <input type="text" name="Mobile" id="mobileDisplay" class="form-control" placeholder="Auto from client (editable)" />
+            </div>
+            <div class="card-section w-100 p-3 border rounded bg-white d-flex flex-column">
+                <h6>Issue</h6>
+                <textarea name="Issue" id="issueBox" rows="6" class="form-control" placeholder="Printer Not Printing - describe the reported issue..."></textarea>
+                <div class="mt-2 d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleDictation()" id="dictationBtn">🎤 Speak</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('issueBox').value=''">Clear Text</button>
+                </div>
+                <div class="text-end mt-2 pt-2 border-top">
+                    <button type="button" class="btn btn-light border btn-sm px-3" onclick="clearAll()">Clear</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">Save Call</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 <script>
-const allClients=Array.from(document.querySelectorAll('#customerSelect option')).filter(o=>o.value).map(o=>({id:o.value,name:o.dataset.name||o.textContent.split(' - ')[0],mobile:o.dataset.mobile||'',fullText:o.textContent}));
-const clientSearchInput=document.getElementById('clientSearchInput');const clientDropdown=document.getElementById('clientDropdown');const hiddenClientId=document.getElementById('hiddenClientId');const hiddenCustomerID=document.getElementById('hiddenCustomerID');const mobileDisplay=document.getElementById('mobileDisplay');
-function renderClientOptions(filter=''){
-    const f=filter.toLowerCase();
-    const filtered=allClients.filter(c=>c.name.toLowerCase().includes(f)||c.mobile.toLowerCase().includes(f)||c.fullText.toLowerCase().includes(f)).slice(0,50);
-    clientDropdown.innerHTML='';
-    if(filtered.length===0){
-        clientDropdown.innerHTML='<div class="select-option text-muted">No client found - New customer: "'+filter+'", will be set in Caller Name</div>';
-        hiddenClientId.value='';hiddenCustomerID.value='';
-        
-    }else{
-        filtered.forEach(c=>{
-            const div=document.createElement('div');
-            div.className='select-option';
-            div.innerHTML=`<b>${c.name}</b> <small class="text-muted">- ${c.mobile}</small>`;
-            div.onclick=()=>selectClient(c);
-            clientDropdown.appendChild(div);
-        });
-    }
-    clientDropdown.style.display='block';
-}
-function selectClient(c){
-    clientSearchInput.value=c.name;
-    hiddenClientId.value=c.id;
-    hiddenCustomerID.value=c.id;
-    mobileDisplay.value=c.mobile;
-    
-    clientDropdown.style.display='none';
-    document.getElementById('searchMobileInput').value=c.mobile;
-}
-clientSearchInput.addEventListener('focus',()=>renderClientOptions(clientSearchInput.value));
-clientSearchInput.addEventListener('input',(e)=>renderClientOptions(e.target.value));
-document.addEventListener('click',(e)=>{
-    if(!e.target.closest('.client-select-wrapper')) clientDropdown.style.display='none';
-    if(!e.target.closest('#searchMobileInput')&&!e.target.closest('#mobileSuggestionBox')&&!e.target.closest('#searchBtn')) document.getElementById('mobileSuggestionBox').style.display='none';
-});
-const searchMobileInput=document.getElementById('searchMobileInput');const mobileSuggestionBox=document.getElementById('mobileSuggestionBox');const searchBtn=document.getElementById('searchBtn');let debounceTimer;
-function searchByMobile(mobile){
-    if(!mobile||mobile.length<3){mobileSuggestionBox.style.display='none';return;}
-    const localMatches=allClients.filter(c=>c.mobile.includes(mobile)).slice(0,5);
-    if(localMatches.length>0){
-        mobileSuggestionBox.innerHTML='';
-        localMatches.forEach(c=>{
-            const div=document.createElement('div');
-            div.className='suggestion-item';
-            div.innerHTML=`<b>${c.name}</b><br><small>${c.mobile}</small>`;
-            div.onclick=()=>{selectClient(c);mobileSuggestionBox.style.display='none';};
-            mobileSuggestionBox.appendChild(div);
-        });
-        mobileSuggestionBox.style.display='block';
-    }
-    fetch(`/DailySupport/SearchClientByMobile?mobile=${encodeURIComponent(mobile)}`).then(r=>r.json()).then(data=>{
-        if(data&&data.ClientId){
-            const c={id:data.ClientId,name:data.ClientName,mobile:data.MobileNo,fullText:data.ClientName+' - '+data.MobileNo};
-            if(!localMatches.find(x=>x.id==c.id)){
-                const div=document.createElement('div');
-                div.className='suggestion-item';div.style.background='#f0f9ff';
-                div.innerHTML=`<b>${c.name}</b> <span class="badge bg-primary">Server</span><br><small>${c.mobile}</small>`;
-                div.onclick=()=>{selectClient(c);mobileSuggestionBox.style.display='none';};
-                mobileSuggestionBox.appendChild(div);mobileSuggestionBox.style.display='block';
-            }
-            if(mobile.length>=10){selectClient(c);mobileSuggestionBox.style.display='none';}
+    // Client Visit Create jaisa: search box + native dropdown (sare client load hote hain)
+    function onClientChange(id){
+        var sel=document.getElementById('clientDropdown');
+        var opt=(sel&&sel.selectedIndex>-1)?sel.options[sel.selectedIndex]:null;
+        var has=!!(id&&opt&&opt.value);
+        document.getElementById('hiddenClientId').value=has?id:'';
+        document.getElementById('hiddenCustomerID').value=has?id:'';
+        var name=has?(opt.getAttribute('data-name')||opt.textContent):'';
+        var mobile=has?(opt.getAttribute('data-mobile')||''):'';
+        document.getElementById('mobileDisplay').value=mobile;
+        var strip=document.getElementById('clientStrip');
+        if(strip){
+            if(has){
+                document.getElementById('stripName').textContent=name;
+                document.getElementById('stripMobile').textContent=mobile;
+                document.getElementById('stripId').textContent=id;
+                strip.style.display='';
+            }else{ strip.style.display='none'; }
         }
-    }).catch(()=>{});
-}
-searchMobileInput.addEventListener('input',(e)=>{clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>searchByMobile(e.target.value.trim()),300);if(e.target.value.trim().length>=5) mobileDisplay.value=e.target.value.trim();});
-searchBtn.addEventListener('click',()=>searchByMobile(searchMobileInput.value.trim()));
-searchMobileInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();searchByMobile(searchMobileInput.value.trim());}});
-document.getElementById('clearFormBtn').addEventListener('click',function(){
-    document.getElementById('addCallForm').reset();
-    document.getElementById('hiddenClientId').value='';
-    document.getElementById('hiddenCustomerID').value='';
-    document.getElementById('clientSearchInput').value='';
-    document.getElementById('searchMobileInput').value='';
-    document.getElementById('mobileDisplay').value='';
-    
-    document.getElementById('clientDropdown').style.display='none';
-    document.getElementById('mobileSuggestionBox').style.display='none';
-});
-(function(){
-    var f=document.getElementById('addCallForm');
-    if(!f) return;
-    f.addEventListener('submit',function(e){
-        e.preventDefault();
-        Ajax.submit({url:'/DailySupport/Create',form:f,onSuccess:function(){ window.loadPage('/DailySupport'); }});
-    });
-})();
-// Mobile field ko readonly se editable kar diya hai taaki naya number type kar sake
+    }
+    var searchBox=document.getElementById('clientSearchBox');
+    var dropdown=document.getElementById('clientDropdown');
+    if(searchBox&&dropdown){
+        searchBox.addEventListener('input',function(){
+            var val=this.value.toLowerCase().trim();
+            var idPart=val.split('-')[0].trim();
+            for(var i=0;i<dropdown.options.length;i++){
+                var opt=dropdown.options[i];
+                if(i==0){opt.style.display='';continue;}
+                var txt=(opt.getAttribute('data-search')||'').toLowerCase();
+                var match=txt.includes(val)||txt.includes(idPart);
+                opt.style.display=match?'':'none';
+            }
+        });
+        searchBox.addEventListener('change',function(){
+            var val=this.value.toLowerCase();var id=val.split('-')[0].trim();
+            for(var i=0;i<dropdown.options.length;i++){
+                var opt=dropdown.options[i];var search=(opt.getAttribute('data-search')||'').toLowerCase();
+                if(search.includes(id)&&id!==''){dropdown.value=opt.value;onClientChange(opt.value);break;}
+            }
+        });
+        searchBox.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();return false;}});
+    }
+    function clearAll(){ window.loadPage('/DailySupport/Create','New Call Entry'); }
+    // Issue box me bolkar likhne ke liye (Client Visit ke Discussion jaisa)
+    var rec=null, listening=false;
+    function toggleDictation(){
+        var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+        if(!SR){ alert("Voice not supported"); return; }
+        var btn=document.getElementById('dictationBtn');
+        if(!listening){
+            rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.lang="en-IN";
+            rec.onresult=function(e){ var tr=""; for(var i=e.resultIndex;i<e.results.length;i++) if(e.results[i].isFinal) tr+=e.results[i][0].transcript; if(tr) document.getElementById('issueBox').value+=(document.getElementById('issueBox').value?" ":"")+tr; };
+            rec.start(); listening=true; btn.innerText="⏸ Pause";
+        } else { rec.stop(); listening=false; btn.innerText="🎤 Speak"; }
+    }
+    (function(){
+        var f=document.getElementById('addCallForm');
+        if(!f) return;
+        f.addEventListener('submit',function(e){
+            e.preventDefault();
+            Ajax.submit({url:'/DailySupport/Create',form:f,onSuccess:function(){ window.loadPage('/DailySupport'); }});
+        });
+    })();
 </script>

@@ -222,12 +222,12 @@ public class ClientVisitController : Controller
 
     // INDEX - 100% DYNAMIC JAISA USER HAI
     [HttpGet]
-    public IActionResult Index(int page = 1, int pageSize = 10, string? term = null, string? sort = null, string direction = "DESC", DateTime? fromDate = null, DateTime? toDate = null)
+    public IActionResult Index(int page = 1, int pageSize = 10, string? term = null, string? sort = null, string direction = "DESC", DateTime? fromDate = null, DateTime? toDate = null, string? status = null)
     {
         var allowed = new[] {10,20,50,100};
         if(!allowed.Contains(pageSize)) pageSize = 10;
 
-        var data = _dynamicRepo.GetClientVisitTable(page, pageSize, term, sort, direction);
+        var data = _dynamicRepo.GetClientVisitTable(page, pageSize, term, sort, direction, status);
 
         if(fromDate.HasValue || toDate.HasValue)
         {
@@ -248,6 +248,7 @@ public class ClientVisitController : Controller
         data.SearchTerm = term;
         data.SortColumn = sort;
         data.SortDirection = direction;
+        data.FilterStatus = status;
         ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
         ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
 

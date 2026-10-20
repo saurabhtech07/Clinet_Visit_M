@@ -192,10 +192,10 @@ document.addEventListener('DOMContentLoaded',function(){
     .page-size-select{height:34px;border-radius:8px;font-size:13px;padding:5px 12px;border:1px solid #e5e7eb;background:#fff;min-width:75px;cursor:pointer;}
     .table-wrapper{border:1px solid #e5e7f0;border-top:0;border-radius:0 0 12px 12px;background:#fff;overflow:hidden;position:relative;}
     .table-scroll{height:calc(100vh - 340px);min-height:400px;max-height:600px;overflow:auto;}
-    .table-dss{width:100%;min-width:1150px;border-collapse:collapse;margin:0;}
-    .table-dss thead th{font-size:11px;text-transform:uppercase;color:#6b7280;background:#f9fafb !important;font-weight:700;padding:12px 10px;white-space:nowrap;border-bottom:2px solid #e5e7eb;position:sticky;top:0;z-index:10;}
-    .table-dss tbody td{font-size:13px;padding:11px 10px;border-bottom:1px solid #f3f4f6;background:#fff;white-space:nowrap;vertical-align:middle;}
-    .table-dss tbody td.issue-col{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .table-dss{width:100%;border-collapse:collapse;margin:0;table-layout:auto;}
+    .table-dss thead th{font-size:11px;text-transform:uppercase;color:#6b7280;background:#f9fafb !important;font-weight:700;padding:8px 8px;white-space:nowrap;border-bottom:2px solid #e5e7eb;position:sticky;top:0;z-index:10;}
+    .table-dss tbody td{font-size:12.5px;padding:6px 8px;border-bottom:1px solid #f3f4f6;background:#fff;white-space:normal;overflow-wrap:anywhere;vertical-align:middle;max-width:190px;}
+    .table-dss tbody td.issue-col{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .page-btn{width:34px;height:34px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;}
     .page-btn.active{background:#111827;color:#fff;border-color:#111827;}
     .page-btn:disabled{opacity:.35;cursor:not-allowed;}
@@ -244,16 +244,16 @@ document.addEventListener('DOMContentLoaded',function(){
                 <table class="table table-dss mb-0" id="reportTable">
                     <thead>
                         <tr>
-                            <th style="width:135px;">Ticket No</th>
-                            <th style="width:155px;">Date & Time</th>
-                            <th style="width:165px;">Customer</th>
-                            <th style="width:115px;">Mobile</th>
-                            <th style="width:220px;">Issue</th>
-                            <th style="width:85px;">Priority</th>
-                            <th style="width:95px;">Status</th>
-                            <th style="width:115px;">Assigned</th>
-                            <th style="width:65px;">Age</th>
-                            <th style="width:70px;">Action</th>
+                            <th>Ticket No</th>
+                            <th>Date & Time</th>
+                            <th>Customer</th>
+                            <th>Mobile</th>
+                            <th>Issue</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned</th>
+                            <th>Age</th>
+                            <th class="actions-col no-print" style="width:70px;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded',function(){
                                 <td><span class="badge bg-light border text-dark" style="border-radius:20px;font-size:11px;">@status</span></td>
                                 <td style="font-size:12px;">@assigned</td>
                                 <td>@(ageing==0 ? "Today" : ageing+"d")</td>
-                                <td>
+                                <td class="actions-cell no-print">
                                     <button type="button" class="btn btn-sm border bg-white view-btn" data-id="@callId" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
                                         <i class="bi bi-eye" style="font-size:13px;"></i>
                                     </button>
@@ -402,10 +402,19 @@ function openDetailModal(id){
     document.addEventListener('click', ()=>exportMenu.classList.remove('show'));
     document.getElementById('printBtn').addEventListener('click', e=>{
         e.preventDefault(); exportMenu.classList.remove('show');
-        const content=document.getElementById('printArea').innerHTML;
-        const w=window.open('', '_blank','width=1200,height=800');
-        w.document.write(`<html><head><title>Print</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{padding:20px;} .no-print{display:none;}</style></head><body><h3>DSS Reports - Printed: ${new Date().toLocaleString()}</h3>${content}<script>window.onload=function(){window.print();}<\/script></body></html>`);
-        w.document.close();
+        // CLEAN PRINT - sirf grid print ho (pagination / action column nahi),
+        // title me active filters chalein taaki print identify ho sake
+        const parts=[];
+        const sd=document.getElementById('fromDate').value, ed=document.getElementById('toDate').value,
+              st=document.getElementById('status').value, pr=document.getElementById('priority').value,
+              sq=document.getElementById('search').value.trim();
+        if(sd||ed) parts.push('Date: '+(sd||'...')+' to '+(ed||'...'));
+        if(st) parts.push('Status: '+st);
+        if(pr) parts.push('Priority: '+pr);
+        if(sq) parts.push('Search: '+sq);
+        const info=document.getElementById('showingInfo');
+        if(info) parts.push(info.innerText.trim());
+        window.printTable('printArea', 'DSS Reports'+(parts.length? ' ('+parts.join(' | ')+')' : ''));
     });
     document.querySelectorAll('.auto-filter').forEach(el=>el.addEventListener('change',()=>{currentPage=1;loadData(1);}));
     const s=document.getElementById('search'); let t; if(s){ s.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(()=>{currentPage=1;loadData(1);},500); }); }

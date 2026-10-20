@@ -8,14 +8,27 @@
     var row = (Dictionary<string, object?>)ViewBag.RowData;
 }
 
-<h4 class="mb-3 fw-bold">EDIT CLIENT VISIT</h4>
+<style>
+    /* Compact visit form - Daily Support jaisa (scroll na lage) */
+    .cvt-title{font-size:15px;font-weight:800;margin:0 0 8px;}
+    .card{border-radius:10px;}
+    .card-body{padding:10px 12px !important;}
+    .card-body h6{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px !important;color:#0d3b66;}
+    .form-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+    .form-control,.form-select{height:30px;font-size:12.5px;border-radius:8px;padding:4px 9px;}
+    textarea.form-control{height:auto;font-size:12.5px;border-radius:8px;padding:6px 9px;}
+    .row{--bs-gutter-y:.5rem;--bs-gutter-x:.5rem;}
+    .mb-3{margin-bottom:.6rem !important;}
+    .mt-3{margin-top:.5rem !important;}
+    .cvt-strip{background:#e8f4ff;border:1px solid #b6d7ff;border-radius:8px;padding:6px 10px;}
+</style>
 
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-body p-3 d-flex gap-4 small">
-        <div><strong>Client ID:</strong> @client.ClientId</div>
-        <div><strong>Company:</strong> @client.ClientName</div>
-        <div><strong>City:</strong> @client.City (@client.CompanyTypeName)</div>
-    </div>
+<h5 class="cvt-title">EDIT CLIENT VISIT</h5>
+
+<div class="cvt-strip small mb-2 d-flex gap-4 flex-wrap">
+    <div><strong>Client ID:</strong> @client.ClientId</div>
+    <div><strong>Company:</strong> @client.ClientName</div>
+    <div><strong>City:</strong> @client.City (@client.CompanyTypeName)</div>
 </div>
 
 <form method="post" id="visitForm">
@@ -23,7 +36,7 @@
     <input type="hidden" name="VisitId" value="@row["VisitId"]" />
     <input type="hidden" name="ClientId" value="@client.ClientId" />
 
-    <div class="row g-3 align-items-stretch">
+    <div class="row g-2 align-items-stretch">
         <!-- LEFT -->
         <div class="col-lg-6 d-flex">
             <div class="card border-0 shadow-sm w-100">
@@ -34,7 +47,7 @@
                     @foreach (var f in Model.Where(f => f.Name!= "DiscussionRequirement" && f.Name!= "Remarks" && f.Name!= "UserId" && f.Name!= "Designation"))
                     {
                         <div class="@(f.Name == "VisitDate" || f.Name == "VisitTime" || f.Name == "NextFollowUpDate" || f.Name == "FollowUpStatus" || f.Name == "VisitTypeId"? "col-6" : "col-12")">
-                            <label class="form-label mt-2 mb-1 small fw-bold">@(f.Name == "VisitTypeId" ? "Visit Type" : f.Name) @(f.IsNullable? "" : " *")</label>
+                            <label class="form-label mb-1">@(f.Name == "VisitTypeId" ? "Visit Type" : f.Name) @(f.IsNullable? "" : " *")</label>
                             @if (f.Name == "PersonMet")
                             {
                                 <select class="form-select form-select-sm" name="PersonMet" required>
@@ -88,18 +101,18 @@
                 <div class="card-body p-3 d-flex flex-column">
                     <h6 class="fw-bold mb-3" style="color:#0d3b66;">DISCUSSION</h6>
 
-                    <label class="form-label small fw-bold">Discussion / Requirement *</label>
-                    <textarea class="form-control flex-grow-1" rows="7" name="DiscussionRequirement" id="discussionBox" required>@(row.ContainsKey("DiscussionRequirement")? row["DiscussionRequirement"] : "")</textarea>
+                    <label class="form-label">Discussion / Requirement *</label>
+                    <textarea class="form-control flex-grow-1" rows="6" name="DiscussionRequirement" id="discussionBox" required>@(row.ContainsKey("DiscussionRequirement")? row["DiscussionRequirement"] : "")</textarea>
 
-                    <div class="mt-2">
+                    <div class="mt-1">
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleDictation()" id="dictationBtn">🎤 Speak</button>
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('discussionBox').value=''">Clear</button>
                     </div>
 
-                    <label class="form-label mt-3 small fw-bold">Remarks</label>
-                    <textarea class="form-control" rows="4" name="Remarks">@(row.ContainsKey("Remarks")? row["Remarks"] : "")</textarea>
+                    <label class="form-label mt-2">Remarks</label>
+                    <textarea class="form-control" rows="3" name="Remarks">@(row.ContainsKey("Remarks")? row["Remarks"] : "")</textarea>
 
-                    <div class="mt-auto pt-3 text-end border-top mt-3">
+                    <div class="mt-auto pt-2 text-end border-top">
                         <a href="/ClientVisit" class="btn btn-light border btn-sm" onclick="event.preventDefault(); window.loadPage('/ClientVisit');">Back</a>
                         <button type="submit" class="btn btn-success btn-sm px-4">Update Visit</button>
                     </div>

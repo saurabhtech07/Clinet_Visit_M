@@ -95,9 +95,12 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
     <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Closed Today</div><div class="stat-value" style="color:#198754;">@Model.ClosedToday</div><div class="stat-sub" style="color:#198754;">Done today</div></div><div class="icon-box" style="background:#10b981;"><i class="bi bi-check-circle-fill"></i></div></div></div>
     <div class="col-md-3"><div class="stat-card"><div><div class="stat-label">Pending</div><div class="stat-value" style="color:#6f42c1;">@Model.PendingCalls</div><div class="stat-sub">In Progress</div></div><div class="icon-box" style="background:#8b5cf6;"><i class="bi bi-hourglass-split"></i></div></div></div>
 </div>
-<div class="card filter-card mb-2"><div class="card-body" style="padding:10px 12px;"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">SEARCH TICKET / CUSTOMER / MOBILE</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:9px 0 0 9px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, customer, mobile..." /></div></div><div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
-<div class="col-md-3 d-flex justify-content-end gap-2 align-items-end">
-<a href="/DailySupport" class="btn btn-light border px-4" style="border-radius:9px;height:32px;font-size:12.5px;">Clear</a>
+<div class="card filter-card mb-2"><div class="card-body" style="padding:10px 12px;"><div class="row g-2 align-items-end"><div class="col-12 col-md-6 col-lg-3"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">SEARCH TICKET / CUSTOMER / MOBILE</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:9px 0 0 9px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, customer, mobile..." /></div></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">STATUS</label><select id="dssStatus" class="form-select search-box">
+<option value="">All Status</option>
+@foreach(var st in new[]{"Open","In Progress","On Hold","Pending","Closed"}){<option value="@st" selected="@(string.Equals(Model.FilterStatus,st,System.StringComparison.OrdinalIgnoreCase))">@st</option>}
+</select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:5px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
+<div class="col-12 col-md-3 col-lg-3 d-flex justify-content-end gap-2 align-items-end">
+<a href="/DailySupport" class="btn btn-light border px-4" style="border-radius:9px;height:32px;font-size:12.5px;" onclick="event.preventDefault(); clearFilters();">Clear</a>
 <div class="dropdown">
 <button class="btn btn-dark dropdown-toggle px-3" style="border-radius:9px;height:32px;font-size:12.5px;" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-download me-1"></i> Export</button>
 <ul class="dropdown-menu dropdown-menu-end">
@@ -114,10 +117,12 @@ function loadTable(){
   var s=document.getElementById('dssSearch').value;
   var f=document.getElementById('fromDate').value;
   var t=document.getElementById('toDate').value;
+  var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:'';
   var p=new URLSearchParams();
   if(s) p.append('search',s);
   if(f) p.append('fromDate',f);
   if(t) p.append('toDate',t);
+  if(st) p.append('status',st);
   fetch('/DailySupport/Index?'+p.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}})
   .then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();})
   .then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager();})
@@ -127,7 +132,15 @@ var pageSizeCurrent=10; var currentPage=1;
 document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
 document.getElementById('fromDate')?.addEventListener('change',loadTable);
 document.getElementById('toDate')?.addEventListener('change',loadTable);
-function goPage(p,ps){ currentPage=p||1; pageSizeCurrent=ps||10; var s=document.getElementById('dssSearch').value; var f=document.getElementById('fromDate').value; var t=document.getElementById('toDate').value; var pp=new URLSearchParams(); if(s) pp.append('search',s); if(f) pp.append('fromDate',f); if(t) pp.append('toDate',t); pp.append('page',currentPage); pp.append('pageSize',pageSizeCurrent); fetch('/DailySupport/Index?'+pp.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();}).then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager(); window.scrollTo({top:document.querySelector('.table-card')?.offsetTop-60,behavior:'smooth'});}).catch(e=>Ajax.toast(e.message,'error'));}
+document.getElementById('dssStatus')?.addEventListener('change',loadTable);
+function clearFilters(){
+  var s=document.getElementById('dssSearch'); if(s) s.value='';
+  var f=document.getElementById('fromDate'); if(f) f.value='';
+  var t=document.getElementById('toDate'); if(t) t.value='';
+  var st=document.getElementById('dssStatus'); if(st) st.value='';
+  loadTable();
+}
+function goPage(p,ps){ currentPage=p||1; pageSizeCurrent=ps||10; var s=document.getElementById('dssSearch').value; var f=document.getElementById('fromDate').value; var t=document.getElementById('toDate').value; var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:''; var pp=new URLSearchParams(); if(s) pp.append('search',s); if(f) pp.append('fromDate',f); if(t) pp.append('toDate',t); if(st) pp.append('status',st); pp.append('page',currentPage); pp.append('pageSize',pageSizeCurrent); fetch('/DailySupport/Index?'+pp.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();}).then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager(); window.scrollTo({top:document.querySelector('.table-card')?.offsetTop-60,behavior:'smooth'});}).catch(e=>Ajax.toast(e.message,'error'));}
 function attachPager(){ document.querySelectorAll('.dss-page').forEach(a=>{a.onclick=function(e){e.preventDefault(); goPage(parseInt(this.getAttribute('data-page')), pageSizeCurrent);}}); document.querySelectorAll('.dss-page-size').forEach(sel=>{sel.onchange=function(){goPage(1, parseInt(this.value));}});}
 var sortState={};
 function attachSorting(){
@@ -173,7 +186,7 @@ function exportPrint(){let table=getTable(); if(!table) return; let w=window.ope
       </div>
       <div class="modal-footer py-2">
         <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <a href="#" id="dssTicketModalEdit" class="btn btn-sm" style="background:#0f172a;color:#fff;">Open Edit Form</a>
+        <a href="#" id="dssTicketModalEdit" data-no-modal class="btn btn-sm" style="background:#0f172a;color:#fff;" onclick="event.preventDefault(); var h=this.getAttribute('href'); if(h && h!=='#') window.loadPage(h, 'Edit Call');">Open Edit Form</a>
       </div>
     </div>
   </div>

@@ -6,8 +6,8 @@
 }
 
 <style>
-  /* Koi inner scroll nahi — poora table page par fit hota hai (fixed layout) */
-  .table-scroll-container { position: relative; }
+  /* Grid ke andar hi scroll (Daily Support / Client Visit jaisa) */
+  .table-scroll-container { position: relative; max-height: 58vh; overflow: auto; }
   .dss-table thead th {
         position: sticky; top: 0; z-index: 10;
         font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
@@ -22,7 +22,7 @@
         border-bottom: 1px solid #f1f5f9; vertical-align: middle;
         background: #fff; overflow: hidden;
     }
-  .client-grid-table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+  .client-grid-table { border-collapse: separate; border-spacing: 0; width: 100%; }
   .cell-clip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
   .client-id-pill { background: #1e293b; color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; }
   .action-edit, .action-delete {
@@ -113,7 +113,8 @@
                         <td class="fw-semibold" style="color:#0f172a;"><span class="cell-clip">@(row.ContainsKey("ClientName") ? row["ClientName"] : "")</span></td>
                         <td><span class="cell-clip">@(row.ContainsKey("ContactPerson") ? row["ContactPerson"] : "")</span></td>
                         <td><span class="cell-clip">@(row.ContainsKey("City") ? row["City"] : "")</span></td>
-                        <td><span class="cell-clip">@(row.ContainsKey("StateName") ? row["StateName"] : "")</span></td>
+                        @* State match nahi hua (StateId NULL) to "Unknown" dikhao - khali cell nahi *@
+                        <td><span class="cell-clip">@(row.ContainsKey("StateName") && !string.IsNullOrWhiteSpace(row["StateName"]?.ToString()) ? row["StateName"]?.ToString() : "Unknown")</span></td>
                         <td><span class="cell-clip">@(row.ContainsKey("Pincode") ? row["Pincode"] : "")</span></td>
                         <td class="fw-medium"><span class="cell-clip">@(row.ContainsKey("MobileNo") ? row["MobileNo"] : "")</span></td>
                         <td style="color:#64748b;"><span class="cell-clip">@(row.ContainsKey("Email") ? row["Email"] : "")</span></td>

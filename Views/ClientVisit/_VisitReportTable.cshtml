@@ -8,6 +8,7 @@
 }
 <style>
    .report-table-responsive{ max-height: 58vh; overflow:auto; }
+   .report-table-responsive table{ width:100%; table-layout:fixed; }
    .report-table-responsive thead th{
         position: sticky;
         top: 0;
@@ -20,16 +21,17 @@
         letter-spacing: .3px;
         white-space: normal;
         line-height: 1.15;
-        padding: 7px 8px!important;
+        padding: 6px 6px!important;
         border-bottom: 1px solid #e2e8f0!important;
         box-shadow: 0 1px 0 #e2e8f0;
     }
-   .report-table-responsive tbody td{ padding: 5px 8px; font-size: 12.5px; border-color: #f1f5f9; }
+   /* Wrap + compact: horizontal scroll ki jarurat nahi padti */
+   .report-table-responsive tbody td{ padding: 4px 6px; font-size: 11.5px; border-color: #f1f5f9; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
    .report-table-responsive thead th:hover{ background: #f1f5f9!important; }
 </style>
 
 <div class="table-responsive report-table-responsive">
-<table class="table table-hover align-middle mb-0" style="font-size:12.5px;">
+<table class="table table-hover align-middle mb-0" style="font-size:11.5px;">
 <thead style="font-size:10px; font-weight:700; color:#6c757d; letter-spacing:.5px; text-transform:uppercase;">
 <tr>
     <th style="width:50px;">Sr.No</th>
@@ -39,11 +41,11 @@
         var arrow = isSorted? (Model.SortDirection=="ASC"?"▲":"▼") : "↕";
         <th style="white-space:nowrap;">
             <a href="javascript:void(0)" class="sort-link text-decoration-none d-flex align-items-center gap-1" style="color:#6c757d;" data-sort="@col">
-                @(col == "VisitTypeId" ? "Visit Type" : col) <span style="@(isSorted?"color:#111;font-weight:900;":"color:#bbb;")">@arrow</span>
+                @(col == "VisitTypeId" ? "Visit Type" : col) <span class="no-print" style="@(isSorted?"color:#111;font-weight:900;":"color:#bbb;")">@arrow</span>
             </a>
         </th>
     }
-    <th style="width:70px; text-align:center;">ACTION</th>
+    <th class="actions-col no-print" style="width:70px; text-align:center;">ACTION</th>
 </tr>
 </thead>
 <tbody>
@@ -73,9 +75,9 @@ else
             {
                 str = d.ToString("dd-MM-yyyy hh:mm");
             }
-            <td title="@str" style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@str</td>
+            <td title="@str">@str</td>
         }
-        <td style="text-align:center;">
+        <td class="actions-cell no-print" style="text-align:center;">
             <button type="button" class="btn btn-sm btn-outline-primary" style="width:28px; height:28px; padding:0; border-radius:6px;" onclick="viewReportDetails('@visitId')" title="View">
                 <i class="bi bi-eye"></i>
             </button>
