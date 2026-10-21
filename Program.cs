@@ -78,6 +78,7 @@
 
 using ClientVisitManagement.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -98,6 +99,17 @@ builder.Services.AddScoped<DailyFollowUpRepository>();
 builder.Services.AddScoped<DailyReportRepository>();
 
 builder.Services.AddDistributedMemoryCache();
+
+/* Data Protection keys ko fixed jagah rakho aur app name fix karo.
+   Isse session/auth cookies app restart, rebuild ya different launch folder
+   (VS se run ya bin\Debug se direct run) ke baad bhi valid rehte hain.
+   Warna "Error unprotecting the session cookie" warning aati hai. */
+builder.Services.AddDataProtection()
+    .SetApplicationName("ClientVisitManagement")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "ClientVisitManagement",
+        "DataProtectionKeys")));
 
 builder.Services.AddSession(options =>
 {

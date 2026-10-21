@@ -110,14 +110,50 @@
         <div class="col-md-6 d-flex flex-column gap-2">
             <div class="card-section w-100 p-3 border rounded bg-white d-flex flex-column">
                 <h6>Issue</h6>
-                <textarea name="Issue" rows="6" class="form-control flex-grow-1">@row["Issue"]</textarea>
-                <div class="text-end mt-2 pt-2 border-top">
-                    <button type="submit" class="btn btn-primary btn-sm px-4">Update Ticket</button>
+                <textarea name="Issue" id="issueBox" rows="6" class="form-control flex-grow-1">@row["Issue"]</textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleDictation()" id="dictationBtn">🎤 Speak</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-warning" id="editReassignBtn"><i class="bi bi-arrow-left-right me-1"></i>Re-Assign</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4">Update Ticket</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </form>
+
+<!-- ===== Re-Assign popup (Edit form se bhi kaam kisi aur ko de sakein) ===== -->
+<div class="modal fade" id="editReassignModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:470px;">
+    <form id="editReassignForm" class="modal-content" style="border-radius:14px;overflow:hidden;">
+      <input type="hidden" name="id" id="editReassignId" value="@row["SupportId"]" />
+      <div class="modal-header" style="background:#0f172a;color:#fff;padding:10px 16px;">
+        <h6 class="modal-title mb-0" style="font-weight:700;font-size:13px;"><i class="bi bi-arrow-left-right me-1"></i> Re-Assign Ticket</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3" style="background:#f8fafc;">
+        <div class="mb-2">
+          <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">KISKO ASSIGN KARNA HAI *</label>
+          <select class="form-select form-select-sm" id="editReassignUser" name="assignedTo" required style="border-radius:8px;height:34px;font-size:12.5px;">
+            <option value="">— User select karein —</option>
+            @foreach(var e in engineers){var eId=e.ContainsKey("UserId")?e["UserId"]?.ToString():"";var eName=e.ContainsKey("FullName")?e["FullName"]?.ToString():"";<option value="@eId">@eName</option>}
+          </select>
+        </div>
+        <div class="mb-0">
+          <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">REASON (optional)</label>
+          <textarea class="form-control form-control-sm" id="editReassignReason" name="reason" rows="2" maxlength="300" placeholder="Jaise: main busy hoon / chutti par hoon..." style="border-radius:8px;font-size:12.5px;"></textarea>
+        </div>
+        <div class="form-text" style="font-size:10.5px;">Ticket us user ko mil jayegi. Reason history me record hoga.</div>
+      </div>
+      <div class="modal-footer py-2 bg-white">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#0f172a;color:#fff;" id="editReassignSave">Confirm Re-Assign</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 (function(){
     var f=document.getElementById('editCallForm');
@@ -125,6 +161,46 @@
     f.addEventListener('submit',function(e){
         e.preventDefault();
         Ajax.submit({url:'/DailySupport/Edit/@row["SupportId"]',form:f,onSuccess:function(){ window.loadPage('/DailySupport'); }});
+    });
+
+    // ---- Issue box me bolkar likhne ke liye (Create form jaisa) ----
+    var rec=null, listening=false;
+    window.toggleDictation=function(){
+        var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+        if(!SR){ Ajax.toast("Is browser me voice input support nahi hai. Chrome/Edge use karein.","error"); return; }
+        var btn=document.getElementById('dictationBtn');
+        if(listening){ try{ rec.stop(); }catch(e){} return; }
+        rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.lang="en-IN";
+        rec.onresult=function(e){ var tr=""; for(var i=e.resultIndex;i<e.results.length;i++) if(e.results[i].isFinal) tr+=e.results[i][0].transcript; if(tr){ var box=document.getElementById('issueBox'); box.value+=(box.value?" ":"")+tr.trim(); box.focus(); } };
+        rec.onerror=function(e){ Ajax.toast("Voice error: "+e.error,"error"); };
+        rec.onend=function(){ listening=false; if(btn) btn.innerText="🎤 Speak"; };
+        rec.start(); listening=true; if(btn) btn.innerText="⏸ Pause";
+    };
+
+    // ---- Re-Assign (Edit form se) ----
+    var rBtn=document.getElementById('editReassignBtn');
+    if(rBtn) rBtn.addEventListener('click',function(){
+        document.getElementById('editReassignUser').value='';
+        document.getElementById('editReassignReason').value='';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('editReassignModal')).show();
+    });
+    var rForm=document.getElementById('editReassignForm');
+    if(rForm) rForm.addEventListener('submit',function(e){
+        e.preventDefault();
+        var sel=document.getElementById('editReassignUser');
+        if(!sel.value){ Ajax.toast('Pehle user select karein.','error'); return; }
+        var btn=document.getElementById('editReassignSave'); btn.disabled=true; btn.textContent='Saving…';
+        Ajax.post('/DailySupport/Reassign',new FormData(rForm)).then(function(data){
+            btn.disabled=false; btn.textContent='Confirm Re-Assign';
+            if(data && data.success===false){ Ajax.toast(data.message||'Re-assign fail.','error'); return; }
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editReassignModal')).hide();
+            Ajax.toast(data.message||'Ticket re-assign ho gaya.','success');
+            var asel=document.querySelector('#editCallForm select[name="AssignedTo"]');
+            if(asel) asel.value=sel.value;
+        }).catch(function(err){
+            btn.disabled=false; btn.textContent='Confirm Re-Assign';
+            Ajax.toast(err.message||'Re-assign fail.','error');
+        });
     });
 })();
 </script>

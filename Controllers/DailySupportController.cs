@@ -98,18 +98,32 @@ public class DailySupportController : Controller
     // ---- Audit history (DailySupportHistory) --------------------------------
     // Har create/edit ka record: kisne, kya badla, purana->naya value, kab.
     private static string? Trunc200(string? s)=> s!=null&&s.Length>200 ? s.Substring(0,200) : s;
-    private void LogTicketHistory(int supportId,string action,string? field,string? oldVal,string? newVal){
+    private static string? Trunc300(string? s)=> s!=null&&s.Length>300 ? s.Substring(0,300) : s;
+    private void LogTicketHistory(int supportId,string action,string? field,string? oldVal,string? newVal,string? reason=null){
         try{ using var con=_db.GetConnection(); con.Open();
-            using var cmd=new SqlCommand(@"INSERT INTO dbo.DailySupportHistory(SupportId,Action,FieldName,OldValue,NewValue,ChangedBy,ChangedByName)
+            // Pehle Reason column ke saath try; purana DB (column nahi) to bina Reason ke insert
+            try{ using var cmd=new SqlCommand(@"INSERT INTO dbo.DailySupportHistory(SupportId,Action,FieldName,OldValue,NewValue,ChangedBy,ChangedByName,Reason)
+                                           VALUES(@Sid,@Act,@F,@O,@N,@By,@ByName,@Reason)",con);
+                cmd.Parameters.AddWithValue("@Sid",supportId);
+                cmd.Parameters.AddWithValue("@Act",action);
+                cmd.Parameters.AddWithValue("@F",(object?)field??DBNull.Value);
+                cmd.Parameters.AddWithValue("@O",(object?)Trunc200(oldVal)??DBNull.Value);
+                cmd.Parameters.AddWithValue("@N",(object?)Trunc200(newVal)??DBNull.Value);
+                cmd.Parameters.AddWithValue("@By",(object?)HttpContext.Session.GetInt32("UserId")??DBNull.Value);
+                cmd.Parameters.AddWithValue("@ByName",(object?)HttpContext.Session.GetString("FullName")??DBNull.Value);
+                cmd.Parameters.AddWithValue("@Reason",(object?)Trunc300(reason)??DBNull.Value);
+                cmd.ExecuteNonQuery();
+            }catch{ using var cmd2=new SqlCommand(@"INSERT INTO dbo.DailySupportHistory(SupportId,Action,FieldName,OldValue,NewValue,ChangedBy,ChangedByName)
                                            VALUES(@Sid,@Act,@F,@O,@N,@By,@ByName)",con);
-            cmd.Parameters.AddWithValue("@Sid",supportId);
-            cmd.Parameters.AddWithValue("@Act",action);
-            cmd.Parameters.AddWithValue("@F",(object?)field??DBNull.Value);
-            cmd.Parameters.AddWithValue("@O",(object?)Trunc200(oldVal)??DBNull.Value);
-            cmd.Parameters.AddWithValue("@N",(object?)Trunc200(newVal)??DBNull.Value);
-            cmd.Parameters.AddWithValue("@By",(object?)HttpContext.Session.GetInt32("UserId")??DBNull.Value);
-            cmd.Parameters.AddWithValue("@ByName",(object?)HttpContext.Session.GetString("FullName")??DBNull.Value);
-            cmd.ExecuteNonQuery();
+                cmd2.Parameters.AddWithValue("@Sid",supportId);
+                cmd2.Parameters.AddWithValue("@Act",action);
+                cmd2.Parameters.AddWithValue("@F",(object?)field??DBNull.Value);
+                cmd2.Parameters.AddWithValue("@O",(object?)Trunc200(oldVal)??DBNull.Value);
+                cmd2.Parameters.AddWithValue("@N",(object?)Trunc200(newVal)??DBNull.Value);
+                cmd2.Parameters.AddWithValue("@By",(object?)HttpContext.Session.GetInt32("UserId")??DBNull.Value);
+                cmd2.Parameters.AddWithValue("@ByName",(object?)HttpContext.Session.GetString("FullName")??DBNull.Value);
+                cmd2.ExecuteNonQuery();
+            }
         }catch{ /* history fail ho to save/update na ruke */ }
     }
     private string ResolveUserName(string? id){
@@ -193,8 +207,37 @@ public class DailySupportController : Controller
             }catch{} }
         // Audit trail (sirf Index View ke liye): kaun banaya, kisne kya kab edit kiya
         List<Dictionary<string,object?>> audit=new();
-        if(single){ try{ using var cmd4=new SqlCommand("SELECT Action, FieldName, OldValue, NewValue, ChangedByName, ChangedOn FROM DailySupportHistory WHERE SupportId=@Id ORDER BY HistoryId",con); cmd4.Parameters.AddWithValue("@Id",id); using var r4=cmd4.ExecuteReader(); while(r4.Read()){ var r=new Dictionary<string,object?>(); for(int i=0;i<r4.FieldCount;i++) r[r4.GetName(i)]=r4.IsDBNull(i)?null:r4.GetValue(i); audit.Add(r);} }catch{} }
+        if(single){ try{
+            // Pehle Reason column ke saath try karo; column na ho (purana DB) to bina Reason ke dikhao
+            try{ using var cmd4=new SqlCommand("SELECT Action, FieldName, OldValue, NewValue, ChangedByName, ChangedOn, Reason FROM DailySupportHistory WHERE SupportId=@Id ORDER BY HistoryId",con); cmd4.Parameters.AddWithValue("@Id",id); using var r4=cmd4.ExecuteReader(); while(r4.Read()){ var r=new Dictionary<string,object?>(); for(int i=0;i<r4.FieldCount;i++) r[r4.GetName(i)]=r4.IsDBNull(i)?null:r4.GetValue(i); audit.Add(r);} }
+            catch{ audit.Clear(); using var cmd4b=new SqlCommand("SELECT Action, FieldName, OldValue, NewValue, ChangedByName, ChangedOn FROM DailySupportHistory WHERE SupportId=@Id ORDER BY HistoryId",con); cmd4b.Parameters.AddWithValue("@Id",id); using var r4b=cmd4b.ExecuteReader(); while(r4b.Read()){ var r=new Dictionary<string,object?>(); for(int i=0;i<r4b.FieldCount;i++) r[r4b.GetName(i)]=r4b.IsDBNull(i)?null:r4b.GetValue(i); audit.Add(r);} }
+        }catch{} }
         return Json(new{ticket,customer,history,audit});
+    }
+    // ---- Re-Assign: jab aap khud kaam na kar pao to ticket kisi aur user ko de do ----
+    // Users ki list (modal ke dropdown ke liye)
+    [HttpGet] public IActionResult GetEngineers(){
+        var list=new List<object>();
+        try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT UserId, FullName FROM Users ORDER BY FullName",con); using var r=cmd.ExecuteReader();
+            while(r.Read()) list.Add(new{ id=r.GetInt32(0), name=r.IsDBNull(1)||string.IsNullOrWhiteSpace(r.GetString(1)) ? "User #"+r.GetInt32(0) : r.GetString(1) });
+        }catch{}
+        return Json(list);
+    }
+    // Ticket ka AssignedTo badal + history me "Reassigned" log (reason ke saath)
+    [HttpPost][ValidateAntiForgeryToken] public IActionResult Reassign(int id,int assignedTo,string? reason){
+        if(id<=0||assignedTo<=0) return Json(new{success=false,message="Ticket ya user sahi nahi hai."});
+        int oldAssigned=0; string ticketNo="";
+        try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT AssignedTo, TicketNo FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var r=cmd.ExecuteReader();
+            if(r.Read()){ oldAssigned=r.IsDBNull(0)?0:Convert.ToInt32(r.GetValue(0)); ticketNo=r.IsDBNull(1)?"":r.GetValue(1)?.ToString()??""; }
+        }catch{}
+        if(string.IsNullOrWhiteSpace(ticketNo)) return Json(new{success=false,message="Ticket nahi mila."});
+        if(oldAssigned==assignedTo) return Json(new{success=false,message="Ye ticket pehle se usi user ko assigned hai."});
+        string newName=ResolveUserName(assignedTo.ToString());
+        try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("UPDATE DailySupport SET AssignedTo=@A WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@A",assignedTo); cmd.Parameters.AddWithValue("@Id",id); cmd.ExecuteNonQuery(); }
+        catch(Exception ex){ return Json(new{success=false,message="Re-assign fail: "+ex.Message}); }
+        // History: AssignedTo old->new naam ke saath + reason
+        LogTicketHistory(id,"Reassigned","AssignedTo",ResolveUserName(oldAssigned>0?oldAssigned.ToString():null),newName,reason);
+        return Json(new{success=true,message=ticketNo+" ab "+newName+" ko assign ho gaya."});
     }
     [HttpGet] public IActionResult SearchClientByMobile(string mobile){
         if(string.IsNullOrWhiteSpace(mobile)) return Json(null); using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT TOP 1 * FROM Client WHERE MobileNo LIKE @M OR PhoneNo LIKE @M",con); cmd.Parameters.AddWithValue("@M","%"+mobile+"%"); using var reader=cmd.ExecuteReader(); if(!reader.Read()) return Json(null);

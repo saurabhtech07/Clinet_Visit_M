@@ -5,16 +5,21 @@ BEGIN
     CREATE TABLE dbo.DailySupportHistory(
         HistoryId      INT IDENTITY(1,1) PRIMARY KEY,
         SupportId      INT            NOT NULL,   -- -> DailySupport.SupportId
-        Action         VARCHAR(20)    NOT NULL,   -- Created / Edited
+        Action         VARCHAR(20)    NOT NULL,   -- Created / Edited / Reassigned
         FieldName      VARCHAR(50)    NULL,       -- AssignedTo, Status, Issue ...
         OldValue       NVARCHAR(200)  NULL,
         NewValue       NVARCHAR(200)  NULL,
         ChangedBy      INT            NULL,       -- -> Users.UserId
         ChangedByName  NVARCHAR(100)  NULL,       -- us waqt ka naam (snapshot)
-        ChangedOn      DATETIME       NOT NULL DEFAULT GETDATE()
+        ChangedOn      DATETIME       NOT NULL DEFAULT GETDATE(),
+        Reason         NVARCHAR(300)  NULL        -- optional: re-assign ya special change ka kaaran
     );
     CREATE INDEX IX_DSH_SupportId ON dbo.DailySupportHistory(SupportId);
 END
+
+-- Purane databases ke liye (table pehle se bana hai to sirf column add hoga)
+IF COL_LENGTH('dbo.DailySupportHistory','Reason') IS NULL
+    ALTER TABLE dbo.DailySupportHistory ADD Reason NVARCHAR(300) NULL;
 
 -- Backfill: purane tickets ka "Created" record (creator pata nahi isliye
 -- AssignedTo ko creator maana, ChangedOn = CreatedOn).

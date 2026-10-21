@@ -205,6 +205,37 @@ function exportPrint(){let table=getTable(); if(!table) return; let w=window.ope
   </div>
 </div>
 
+<!-- ===== Re-Assign popup (kaam na kar pao to kisi aur user ko do) ===== -->
+<div class="modal fade" id="dssReassignModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:470px;">
+    <form id="dssReassignForm" class="modal-content" style="border-radius:14px;overflow:hidden;">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="id" id="dssReassignId" value="" />
+      <div class="modal-header" style="background:#0f172a;color:#fff;padding:10px 16px;">
+        <h6 class="modal-title mb-0" style="font-weight:700;font-size:13px;"><i class="bi bi-arrow-left-right me-1"></i> Re-Assign Ticket</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3" style="background:#f8fafc;">
+        <div class="mb-2">
+          <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">KISKO ASSIGN KARNA HAI *</label>
+          <select class="form-select form-select-sm" id="dssReassignUser" name="assignedTo" required style="border-radius:8px;height:34px;font-size:12.5px;">
+            <option value="">— User select karein —</option>
+          </select>
+        </div>
+        <div class="mb-0">
+          <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">REASON (optional)</label>
+          <textarea class="form-control form-control-sm" id="dssReassignReason" name="reason" rows="2" maxlength="300" placeholder="Jaise: main busy hoon / chutti par hoon..." style="border-radius:8px;font-size:12.5px;"></textarea>
+        </div>
+        <div class="form-text" style="font-size:10.5px;">Ticket us user ko mil jayegi. Reason history me record hoga.</div>
+      </div>
+      <div class="modal-footer py-2 bg-white">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#0f172a;color:#fff;" id="dssReassignSave">Confirm Re-Assign</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 (function () {
   if (window.__dssTicketModalBound) return;
@@ -214,6 +245,63 @@ function exportPrint(){let table=getTable(); if(!table) return; let w=window.ope
     if (!btn) return;
     e.preventDefault();
     if (typeof window.openTicketDetails === "function") window.openTicketDetails(btn.getAttribute("data-id"));
+  });
+})();
+
+// ---- Re-Assign: button click -> user dropdown -> confirm ----
+(function () {
+  if (window.__dssReassignBound) return;
+  window.__dssReassignBound = true;
+  var usersCache = null;
+
+  function fillUsers(sel) {
+    var keep = sel.querySelector('option[value=""]');
+    sel.innerHTML = "";
+    if (keep) sel.appendChild(keep);
+    (usersCache || []).forEach(function (u) {
+      var o = document.createElement("option");
+      o.value = u.id; o.textContent = u.name;
+      sel.appendChild(o);
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".ticket-reassign-btn");
+    if (!btn) return;
+    e.preventDefault();
+    var id = btn.getAttribute("data-id");
+    document.getElementById("dssReassignId").value = id;
+    document.getElementById("dssReassignReason").value = "";
+    var sel = document.getElementById("dssReassignUser");
+    sel.value = "";
+    if (usersCache) { fillUsers(sel); }
+    else {
+      fetch("/DailySupport/GetEngineers", { headers: { "X-Requested-With": "XMLHttpRequest" } })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (list) { usersCache = list || []; fillUsers(sel); })
+        .catch(function () { Ajax.toast("Users ki list load nahi hui.", "error"); });
+    }
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("dssReassignModal")).show();
+  });
+
+  document.getElementById("dssReassignForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var sel = document.getElementById("dssReassignUser");
+    if (!sel.value) { Ajax.toast("Pehle user select karein.", "error"); return; }
+    var btn = document.getElementById("dssReassignSave");
+    btn.disabled = true; btn.textContent = "Saving…";
+    Ajax.post("/DailySupport/Reassign", new FormData(this))
+      .then(function (data) {
+        btn.disabled = false; btn.textContent = "Confirm Re-Assign";
+        if (data && data.success === false) { Ajax.toast(data.message || "Re-assign fail.", "error"); return; }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("dssReassignModal")).hide();
+        Ajax.toast(data.message || "Ticket re-assign ho gaya.", "success");
+        if (typeof loadTable === "function") loadTable();
+      })
+      .catch(function (err) {
+        btn.disabled = false; btn.textContent = "Confirm Re-Assign";
+        Ajax.toast(err.message || "Re-assign fail.", "error");
+      });
   });
 })();
 
@@ -255,24 +343,58 @@ window.openTicketDetails = function (id) {
       var fieldLabels = { AssignedTo: "Assigned To", ClientId: "Customer", Status: "Status", Priority: "Priority", Issue: "Issue", Description: "Description", Solution: "Solution", Mobile: "Mobile", CallerName: "Caller Name", Category: "Category", Channel: "Channel", CallType: "Call Type" };
 
       // Audit trail: kaun banaya / kisne kya kab edit kiya (time + naam ke saath)
-      var auditHtml = audit.length
-        ? audit.map(function (a) {
-            var when = a.ChangedOn ? new Date(a.ChangedOn).toLocaleString() : "-";
-            var who = a.ChangedByName || "-";
-            if (a.Action === "Created") {
+      // NOTE: Ek save par saare changed fields ki alag-alag rows banti hain (same user + same time).
+      // Re-assign + edit bhi same time par ho to sab EK hi row me dikhte hain.
+      var auditGroups = [];
+      function isChangeAction(x) { return x === "Edited" || x === "Reassigned"; }
+      audit.forEach(function (a) {
+        var t = a.ChangedOn ? new Date(a.ChangedOn).getTime() : 0;
+        var last = auditGroups.length ? auditGroups[auditGroups.length - 1] : null;
+        // Same user + lagbhag same time (2 sec andar) + dono change actions = ek hi row
+        if (last && isChangeAction(a.Action) && isChangeAction(last.action) &&
+            (last.who || "") === (a.ChangedByName || "") &&
+            Math.abs(t - last.firstTime) <= 2000) {
+          last.items.push(a);
+          if (t > last.lastTime) last.lastTime = t;
+        } else {
+          auditGroups.push({ action: a.Action, who: a.ChangedByName, firstTime: t, lastTime: t, items: [a] });
+        }
+      });
+
+      var auditHtml = auditGroups.length
+        ? auditGroups.map(function (g) {
+            var when = g.firstTime ? new Date(g.lastTime).toLocaleString() : "-";
+            var who = g.who || "-";
+            if (g.action === "Created") {
               return "<tr><td style='white-space:nowrap;font-size:11px;'>" + when + "</td>" +
                 "<td style='white-space:nowrap;font-size:11px;'><b>" + esc(who) + "</b></td>" +
-                "<td style='font-size:11px;'><span class='badge' style='background:#dcfce7;color:#166534;'>Created</span> New ticket created</td></tr>";
+                "<td style='font-size:11px;'><span class='badge' style='background:#dcfce7;color:#166534;'>Created</span> New ticket created</td>" +
+                "<td style='font-size:11px;color:#94a3b8;'>-</td></tr>";
             }
-            var label = fieldLabels[a.FieldName] || a.FieldName || "Field";
-            var change = "<b>" + esc(label) + "</b>: " +
-              (a.OldValue ? "<span class='text-danger text-decoration-line-through'>" + esc(a.OldValue) + "</span> → " : "") +
-              "<span class='text-success'>" + esc(a.NewValue || "-") + "</span>";
+            // Ek hi row me: Re-Assign + Edited (jo bhi us time par hua) ke saare changes
+            var hasReassign = false, hasEdit = false, gReason = "";
+            for (var gi = 0; gi < g.items.length; gi++) {
+              if (g.items[gi].Action === "Reassigned") hasReassign = true; else hasEdit = true;
+              if (!gReason && g.items[gi].Reason) gReason = g.items[gi].Reason;
+            }
+            var changes = g.items.map(function (a) {
+              var label = fieldLabels[a.FieldName] || a.FieldName || "Field";
+              return "<b>" + esc(label) + "</b>: " +
+                (a.OldValue ? "<span class='text-danger text-decoration-line-through'>" + esc(a.OldValue) + "</span> → " : "") +
+                "<span class='text-success'>" + esc(a.NewValue || "-") + "</span>";
+            }).join("<br>");
+            var badgeText = hasReassign && hasEdit
+              ? "Re-Assigned + Edited"
+              : (hasReassign ? "Re-Assigned" : (g.items.length > 1 ? "Edited (" + g.items.length + " changes)" : "Edited"));
+            var badgeStyle = hasReassign
+              ? "background:#fef3c7;color:#92400e;"
+              : "background:#e0e7ff;color:#3730a3;";
             return "<tr><td style='white-space:nowrap;font-size:11px;'>" + when + "</td>" +
               "<td style='white-space:nowrap;font-size:11px;'><b>" + esc(who) + "</b></td>" +
-              "<td style='font-size:11px;'><span class='badge' style='background:#e0e7ff;color:#3730a3;'>Edited</span> " + change + "</td></tr>";
+              "<td style='font-size:11px;'><span class='badge' style='" + badgeStyle + "'>" + badgeText + "</span> " + changes + "</td>" +
+              "<td style='font-size:11px;'>" + (gReason ? "<span class='fst-italic'>" + esc(gReason) + "</span>" : "<span class='text-muted'>-</span>") + "</td></tr>";
           }).join("")
-        : "<tr><td colspan='3' class='text-center text-muted'>No history</td></tr>";
+        : "<tr><td colspan='4' class='text-center text-muted'>No history</td></tr>";
 
       bodyEl.innerHTML =
         "<div class='p-3'>" +
@@ -281,7 +403,7 @@ window.openTicketDetails = function (id) {
             "<div class='col-md-6'><div class='modal-info h-100'><div class='dss-modal-sec'>Customer Info</div>" + dssBuildRows(c, ["ClientId"]) + "</div></div>" +
           "</div>" +
           "<div class='modal-info'><div class='dss-modal-sec'>History (Created & Edits)</div>" +
-            "<table class='table table-sm mb-0' style='font-size:12px;'><thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead><tbody>" + auditHtml + "</tbody></table>" +
+            "<table class='table table-sm mb-0' style='font-size:12px;'><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Reason</th></tr></thead><tbody>" + auditHtml + "</tbody></table>" +
           "</div>" +
         "</div>";
     })
