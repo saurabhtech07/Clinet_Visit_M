@@ -17,12 +17,12 @@ public class DailySupportController : Controller
     // (Random.Next se duplicate/skewed numbers aate the). Duplicate check ke saath
     // taaki do log ek saath banayein to bhi number clash na ho.
     private string GenerateTicketNo(){
-        string prefix=$"TKT-{DateTime.Now:ddMMyy}-";
+        string prefix=$"TKT-{AppTime.Now:ddMMyy}-";
         using var con=_db.GetConnection(); con.Open();
         int seq;
         using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE SupportDate>=@DayStart AND SupportDate<@DayEnd",con)){
-            cmd.Parameters.AddWithValue("@DayStart",DateTime.Today);
-            cmd.Parameters.AddWithValue("@DayEnd",DateTime.Today.AddDays(1));
+            cmd.Parameters.AddWithValue("@DayStart",AppTime.Today);
+            cmd.Parameters.AddWithValue("@DayEnd",AppTime.Today.AddDays(1));
             seq=Convert.ToInt32(cmd.ExecuteScalar())+1;
         }
         string ticketNo;
@@ -95,6 +95,34 @@ public class DailySupportController : Controller
         worksheet.Columns().AdjustToContents(); using var stream=new MemoryStream(); workbook.SaveAs(stream); stream.Position=0; string fileName=$"DSS_Report_{DateTime.Now:ddMMyyyy_hhmmtt}.xlsx"; return File(stream.ToArray(),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",fileName);
     }
 
+    // ---- Audit history (DailySupportHistory) --------------------------------
+    // Har create/edit ka record: kisne, kya badla, purana->naya value, kab.
+    private static string? Trunc200(string? s)=> s!=null&&s.Length>200 ? s.Substring(0,200) : s;
+    private void LogTicketHistory(int supportId,string action,string? field,string? oldVal,string? newVal){
+        try{ using var con=_db.GetConnection(); con.Open();
+            using var cmd=new SqlCommand(@"INSERT INTO dbo.DailySupportHistory(SupportId,Action,FieldName,OldValue,NewValue,ChangedBy,ChangedByName)
+                                           VALUES(@Sid,@Act,@F,@O,@N,@By,@ByName)",con);
+            cmd.Parameters.AddWithValue("@Sid",supportId);
+            cmd.Parameters.AddWithValue("@Act",action);
+            cmd.Parameters.AddWithValue("@F",(object?)field??DBNull.Value);
+            cmd.Parameters.AddWithValue("@O",(object?)Trunc200(oldVal)??DBNull.Value);
+            cmd.Parameters.AddWithValue("@N",(object?)Trunc200(newVal)??DBNull.Value);
+            cmd.Parameters.AddWithValue("@By",(object?)HttpContext.Session.GetInt32("UserId")??DBNull.Value);
+            cmd.Parameters.AddWithValue("@ByName",(object?)HttpContext.Session.GetString("FullName")??DBNull.Value);
+            cmd.ExecuteNonQuery();
+        }catch{ /* history fail ho to save/update na ruke */ }
+    }
+    private string ResolveUserName(string? id){
+        if(string.IsNullOrWhiteSpace(id)) return "";
+        if(!int.TryParse(id,out var i)) return id;
+        try{ using var con=_db.GetConnection(); con.Open(); using var c=new SqlCommand("SELECT TOP 1 FullName FROM Users WHERE UserId=@V",con); c.Parameters.AddWithValue("@V",i); return c.ExecuteScalar()?.ToString()??id; }catch{ return id; }
+    }
+    private string ResolveClientName(string? id){
+        if(string.IsNullOrWhiteSpace(id)) return "";
+        if(!int.TryParse(id,out var i)) return id;
+        try{ using var con=_db.GetConnection(); con.Open(); using var c=new SqlCommand("SELECT TOP 1 ClientName FROM Client WHERE ClientId=@V",con); c.Parameters.AddWithValue("@V",i); return c.ExecuteScalar()?.ToString()??id; }catch{ return id; }
+    }
+
     [HttpGet] public IActionResult Create(){
         var cols=_dynamicRepo.GetColumns("DailySupport");
         ViewBag.TicketNo=GenerateTicketNo();
@@ -113,8 +141,9 @@ public class DailySupportController : Controller
             using var con=_db.GetConnection(); con.Open(); using var chk=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE TicketNo=@T",con); chk.Parameters.AddWithValue("@T",values["TicketNo"]);
             if(Convert.ToInt32(chk.ExecuteScalar())>0) values["TicketNo"]=GenerateTicketNo();
         }
-        if(!values.ContainsKey("SupportDate")) values["SupportDate"]=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        try{ _dynamicRepo.Insert("DailySupport",values);
+        if(!values.ContainsKey("SupportDate")) values["SupportDate"]=AppTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        try{ int newId=_dynamicRepo.Insert("DailySupport",values);
+            LogTicketHistory(newId,"Created","Ticket",null,values.GetValueOrDefault("TicketNo"));
             if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,message="Call entry saved successfully."});
             return RedirectToAction(nameof(Index));
         }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return StatusCode(StatusCodes.Status400BadRequest, new{success=false,message=ex.Message}); throw; }
@@ -130,16 +159,42 @@ public class DailySupportController : Controller
     }
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Edit(int id,IFormCollection form){
         var values=form.Keys.Where(k=>k!="__RequestVerificationToken"&&k!="SupportId"&&k!="TicketNo").ToDictionary(k=>k,k=>form[k].ToString());
+        // Update se PEHLE purane values -> taaki kya badla (old->new) history me aa sake
+        var oldVals=new Dictionary<string,object?>();
+        try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT * FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var r=cmd.ExecuteReader(); if(r.Read()) for(int i=0;i<r.FieldCount;i++) oldVals[r.GetName(i)]=r.IsDBNull(i)?null:r.GetValue(i); }catch{}
         try{ _dynamicRepo.Update("DailySupport","SupportId",id,values);
+            // Changed fields ka audit log (AssignedTo/ClientId ka naam snapshot ke saath)
+            foreach(var kv in values){
+                if(kv.Key is "CreatedOn" or "SupportDate") continue;
+                if(!oldVals.TryGetValue(kv.Key,out var ovRaw)) continue;
+                string oldV=ovRaw?.ToString()??"", newV=kv.Value??"";
+                if(oldV==newV) continue;
+                string fo=oldV, fn=newV;
+                if(kv.Key=="AssignedTo"){ fo=ResolveUserName(oldV); fn=ResolveUserName(newV); }
+                else if(kv.Key=="ClientId"){ fo=ResolveClientName(oldV); fn=ResolveClientName(newV); }
+                LogTicketHistory(id,"Edited",kv.Key,fo,fn);
+            }
             if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return Json(new{success=true,id=id,message="Call entry updated successfully."});
             return RedirectToAction(nameof(Index));
         }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return StatusCode(StatusCodes.Status400BadRequest, new{success=false,message=ex.Message}); throw; }
     }
-    [HttpGet] public IActionResult GetDetails(int id){
+    // single=true -> sirf is ticket ki row history me (Index ka View modal).
+    // Warna (DSS Reports) client ki last 10 calls waisi hi rehti hain.
+    [HttpGet] public IActionResult GetDetails(int id, bool single=false){
         using var con=_db.GetConnection(); con.Open(); Dictionary<string,object?>? ticket=null; Dictionary<string,object?>? customer=null; List<Dictionary<string,object?>> history=new();
         using(var cmd=new SqlCommand(@"SELECT d.*, c.ClientName as CompanyName, u.FullName as AssignedToName FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId WHERE d.SupportId=@Id",con)){cmd.Parameters.AddWithValue("@Id",id); using var reader=cmd.ExecuteReader(); if(reader.Read()){ticket=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) ticket[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i);} reader.Close();}
-        if(ticket!=null&&ticket.ContainsKey("ClientId")&&ticket["ClientId"]!=null){ try{ using var cmd2=new SqlCommand("SELECT TOP 1 * FROM Client WHERE ClientId=@Cid",con); cmd2.Parameters.AddWithValue("@Cid",ticket["ClientId"]); using var reader2=cmd2.ExecuteReader(); if(reader2.Read()){customer=new Dictionary<string,object?>(); for(int i=0;i<reader2.FieldCount;i++) customer[reader2.GetName(i)]=reader2.IsDBNull(i)?null:reader2.GetValue(i);} reader2.Close(); }catch{} try{ using var cmd3=new SqlCommand("SELECT TOP 10 TicketNo, SupportDate, Issue, Status, Priority FROM DailySupport WHERE ClientId=@Cid ORDER BY SupportId DESC",con); cmd3.Parameters.AddWithValue("@Cid",ticket["ClientId"]); using var reader3=cmd3.ExecuteReader(); while(reader3.Read()){ var r=new Dictionary<string,object?>(); for(int i=0;i<reader3.FieldCount;i++) r[reader3.GetName(i)]=reader3.IsDBNull(i)?null:reader3.GetValue(i); history.Add(r);} }catch{} }
-        return Json(new{ticket,customer,history});
+        if(ticket!=null&&ticket.ContainsKey("ClientId")&&ticket["ClientId"]!=null){ try{ using var cmd2=new SqlCommand("SELECT TOP 1 * FROM Client WHERE ClientId=@Cid",con); cmd2.Parameters.AddWithValue("@Cid",ticket["ClientId"]); using var reader2=cmd2.ExecuteReader(); if(reader2.Read()){customer=new Dictionary<string,object?>(); for(int i=0;i<reader2.FieldCount;i++) customer[reader2.GetName(i)]=reader2.IsDBNull(i)?null:reader2.GetValue(i);} reader2.Close(); }catch{}
+            try{
+                string sql = single
+                    ? "SELECT TicketNo, SupportDate, Issue, Status, Priority FROM DailySupport WHERE SupportId=@Id"
+                    : "SELECT TOP 10 TicketNo, SupportDate, Issue, Status, Priority FROM DailySupport WHERE ClientId=@Cid ORDER BY SupportId DESC";
+                using var cmd3=new SqlCommand(sql,con); cmd3.Parameters.AddWithValue("@Cid",ticket["ClientId"]); cmd3.Parameters.AddWithValue("@Id",id);
+                using var reader3=cmd3.ExecuteReader(); while(reader3.Read()){ var r=new Dictionary<string,object?>(); for(int i=0;i<reader3.FieldCount;i++) r[reader3.GetName(i)]=reader3.IsDBNull(i)?null:reader3.GetValue(i); history.Add(r);}
+            }catch{} }
+        // Audit trail (sirf Index View ke liye): kaun banaya, kisne kya kab edit kiya
+        List<Dictionary<string,object?>> audit=new();
+        if(single){ try{ using var cmd4=new SqlCommand("SELECT Action, FieldName, OldValue, NewValue, ChangedByName, ChangedOn FROM DailySupportHistory WHERE SupportId=@Id ORDER BY HistoryId",con); cmd4.Parameters.AddWithValue("@Id",id); using var r4=cmd4.ExecuteReader(); while(r4.Read()){ var r=new Dictionary<string,object?>(); for(int i=0;i<r4.FieldCount;i++) r[r4.GetName(i)]=r4.IsDBNull(i)?null:r4.GetValue(i); audit.Add(r);} }catch{} }
+        return Json(new{ticket,customer,history,audit});
     }
     [HttpGet] public IActionResult SearchClientByMobile(string mobile){
         if(string.IsNullOrWhiteSpace(mobile)) return Json(null); using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT TOP 1 * FROM Client WHERE MobileNo LIKE @M OR PhoneNo LIKE @M",con); cmd.Parameters.AddWithValue("@M","%"+mobile+"%"); using var reader=cmd.ExecuteReader(); if(!reader.Read()) return Json(null);

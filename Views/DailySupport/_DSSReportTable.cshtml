@@ -8,8 +8,8 @@
 @foreach (var c in Model.Calls)
 {
     var dateVal = c.ContainsKey("SupportDate") ? c["SupportDate"] : null;
-    DateTime dateIn = DateTime.Now; if(dateVal!=null){try{dateIn=Convert.ToDateTime(dateVal);}catch{}}
-    var ageing = (DateTime.Now - dateIn).Days;
+    DateTime dateIn = ClientVisitManagement.AppTime.Now; if(dateVal!=null){try{dateIn=Convert.ToDateTime(dateVal);}catch{}}
+    var ageing = (ClientVisitManagement.AppTime.Now - dateIn).Days;
     var priority = c.ContainsKey("Priority") ? c["Priority"]?.ToString() : "Medium";
     var status = c.ContainsKey("Status") ? c["Status"]?.ToString() : "Open";
     var ticketNo = c.ContainsKey("TicketNo") ? c["TicketNo"]?.ToString() : "";
@@ -56,8 +56,8 @@
 @foreach (var c in Model.Calls)
 {
     var dateVal = c.ContainsKey("SupportDate") ? c["SupportDate"] : null;
-    DateTime dateIn = DateTime.Now; if(dateVal!=null){try{dateIn=Convert.ToDateTime(dateVal);}catch{}}
-    var ageing = (DateTime.Now - dateIn).Days;
+    DateTime dateIn = ClientVisitManagement.AppTime.Now; if(dateVal!=null){try{dateIn=Convert.ToDateTime(dateVal);}catch{}}
+    var ageing = (ClientVisitManagement.AppTime.Now - dateIn).Days;
     var priority = c.ContainsKey("Priority") ? c["Priority"]?.ToString() : "Medium";
     var status = c.ContainsKey("Status") ? c["Status"]?.ToString() : "Open";
     var ticketNo = c.ContainsKey("TicketNo") ? c["TicketNo"]?.ToString() : "";

@@ -63,8 +63,8 @@
         </div>
         <div class="col-md-3">
             <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">CALL DATE</label>
-            <input type="text" value="@DateTime.Now.ToString("dd-MM-yyyy")" readonly class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />
-            <input type="hidden" name="SupportDate" value="@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" />
+            <input type="text" value="@ClientVisitManagement.AppTime.Now.ToString("dd-MM-yyyy")" readonly class="form-control" style="border-radius:8px;height:38px;font-size:13px;" />
+            <input type="hidden" name="SupportDate" value="@ClientVisitManagement.AppTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" />
         </div>
     </div>
 
@@ -332,7 +332,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
     <input type="hidden" name="TicketNo" value="@ViewBag.TicketNo" />
     <input type="hidden" name="ClientId" id="hiddenClientId" />
     <input type="hidden" name="CustomerID" id="hiddenCustomerID" />
-    <input type="hidden" name="SupportDate" value="@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" />
+    <input type="hidden" name="SupportDate" value="@ClientVisitManagement.AppTime.Now.ToString("yyyy-MM-dd HH:mm:ss")" />
     <div class="row g-2 align-items-stretch">
         <!-- SELECT CLIENT -->
         <div class="col-12">
@@ -375,7 +375,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
             <div class="card-section w-100 p-3 border rounded bg-white">
                 <h6>Call Details</h6>
                 <div class="mb-2"><label class="form-label">Ticket No</label><input type="text" class="form-control" value="@ViewBag.TicketNo" readonly style="background:#f1f5f9;" /></div>
-                <div class="mb-2"><label class="form-label">Call Date</label><input type="text" class="form-control" value="@DateTime.Now.ToString("dd-MM-yyyy")" readonly style="background:#f1f5f9;" /></div>
+                <div class="mb-2"><label class="form-label">Call Date</label><input type="text" class="form-control" value="@ClientVisitManagement.AppTime.Now.ToString("dd-MM-yyyy")" readonly style="background:#f1f5f9;" /></div>
                 <div class="mb-2"><label class="form-label">Status</label><select name="Status" class="form-select"><option selected>Open</option><option>In Progress</option><option>On Hold</option><option>Pending</option><option>Closed</option></select></div>
                 <div class="mb-2"><label class="form-label">Priority</label><select name="Priority" class="form-select"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select></div>
                 <div class="mb-2"><label class="form-label">Channel</label><select name="Channel" class="form-select"><option>Phone</option><option>WhatsApp</option><option>Email</option><option>Walk-in / Service</option></select></div>

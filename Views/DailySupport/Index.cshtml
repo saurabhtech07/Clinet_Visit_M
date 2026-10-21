@@ -244,20 +244,35 @@ window.openTicketDetails = function (id) {
   if (editEl) editEl.href = "/DailySupport/Edit/" + id;
   modal.show();
 
-  fetch("/DailySupport/GetDetails?id=" + encodeURIComponent(id), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+  fetch("/DailySupport/GetDetails?id=" + encodeURIComponent(id) + "&single=true", { headers: { "X-Requested-With": "XMLHttpRequest" } })
     .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then(function (data) {
-      var t = data.ticket || {}, c = data.customer || {}, h = data.history || [];
+      var t = data.ticket || {}, c = data.customer || {}, h = data.history || [], audit = data.audit || [];
       titleEl.textContent = (t.TicketNo || "") + (t.CompanyName ? " - " + t.CompanyName : "");
       var skip = ["SupportId", "ClientId", "CustomerID", "UserId", "VisitTypeId", "AssignedTo", "CallerName", "Description", "CompanyName"];
-      var hist = h.length
-        ? h.map(function (row) {
-            return "<tr><td><span style='background:#0f172a;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;'>" + (row.TicketNo || "") + "</span></td>" +
-              "<td style='font-size:11px;'>" + (row.SupportDate ? new Date(row.SupportDate).toLocaleString() : "-") + "</td>" +
-              "<td style='font-size:11px;'>" + (row.Issue || "-") + "</td>" +
-              "<td>" + (row.Status || "-") + "</td><td>" + (row.Priority || "-") + "</td></tr>";
+
+      function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+      var fieldLabels = { AssignedTo: "Assigned To", ClientId: "Customer", Status: "Status", Priority: "Priority", Issue: "Issue", Description: "Description", Solution: "Solution", Mobile: "Mobile", CallerName: "Caller Name", Category: "Category", Channel: "Channel", CallType: "Call Type" };
+
+      // Audit trail: kaun banaya / kisne kya kab edit kiya (time + naam ke saath)
+      var auditHtml = audit.length
+        ? audit.map(function (a) {
+            var when = a.ChangedOn ? new Date(a.ChangedOn).toLocaleString() : "-";
+            var who = a.ChangedByName || "-";
+            if (a.Action === "Created") {
+              return "<tr><td style='white-space:nowrap;font-size:11px;'>" + when + "</td>" +
+                "<td style='white-space:nowrap;font-size:11px;'><b>" + esc(who) + "</b></td>" +
+                "<td style='font-size:11px;'><span class='badge' style='background:#dcfce7;color:#166534;'>Created</span> New ticket created</td></tr>";
+            }
+            var label = fieldLabels[a.FieldName] || a.FieldName || "Field";
+            var change = "<b>" + esc(label) + "</b>: " +
+              (a.OldValue ? "<span class='text-danger text-decoration-line-through'>" + esc(a.OldValue) + "</span> → " : "") +
+              "<span class='text-success'>" + esc(a.NewValue || "-") + "</span>";
+            return "<tr><td style='white-space:nowrap;font-size:11px;'>" + when + "</td>" +
+              "<td style='white-space:nowrap;font-size:11px;'><b>" + esc(who) + "</b></td>" +
+              "<td style='font-size:11px;'><span class='badge' style='background:#e0e7ff;color:#3730a3;'>Edited</span> " + change + "</td></tr>";
           }).join("")
-        : "<tr><td colspan='5' class='text-center text-muted'>No history</td></tr>";
+        : "<tr><td colspan='3' class='text-center text-muted'>No history</td></tr>";
 
       bodyEl.innerHTML =
         "<div class='p-3'>" +
@@ -265,8 +280,8 @@ window.openTicketDetails = function (id) {
             "<div class='col-md-6'><div class='modal-info h-100'><div class='dss-modal-sec'>Ticket Info</div>" + dssBuildRows(t, skip) + "</div></div>" +
             "<div class='col-md-6'><div class='modal-info h-100'><div class='dss-modal-sec'>Customer Info</div>" + dssBuildRows(c, ["ClientId"]) + "</div></div>" +
           "</div>" +
-          "<div class='modal-info'><div class='dss-modal-sec'>Customer History (Last 10 Calls)</div>" +
-            "<table class='table table-sm mb-0' style='font-size:12px;'><thead><tr><th>Ticket</th><th>Date</th><th>Issue</th><th>Status</th><th>Priority</th></tr></thead><tbody>" + hist + "</tbody></table>" +
+          "<div class='modal-info'><div class='dss-modal-sec'>History (Created & Edits)</div>" +
+            "<table class='table table-sm mb-0' style='font-size:12px;'><thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead><tbody>" + auditHtml + "</tbody></table>" +
           "</div>" +
         "</div>";
     })
