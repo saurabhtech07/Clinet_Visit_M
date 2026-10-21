@@ -15,6 +15,17 @@ namespace ClientVisitManagement.Models
         public string FilterStatus { get; set; }
         public string FilterUser { get; set; }
         public List<Dictionary<string, object?>> Users { get; set; } = new();
-        public DynamicTableViewModel TicketTable { get; set; } = new DynamicTableViewModel();
+        public DailySupportGridViewModel TicketTable { get; set; } = new DailySupportGridViewModel();
+    }
+
+    /// Daily Support grid (calls list) ke liye pagination + filter info.
+    /// DynamicTableViewModel me sirf SearchTerm/FilterStatus hota hai,
+    /// date aur user filter bhi chahiye (pager ke links me filters preserve
+    /// karne ke liye) - isliye yaha extra fields rakhe hain.
+    public class DailySupportGridViewModel : DynamicTableViewModel
+    {
+        public string FromDate { get; set; }
+        public string ToDate { get; set; }
+        public string FilterUser { get; set; }
     }
 }

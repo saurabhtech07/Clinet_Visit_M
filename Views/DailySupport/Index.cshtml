@@ -81,12 +81,25 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
  #dssTicketModal .dss-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;font-size:12px;}
  #dssTicketModal .dss-row span:first-child{color:#6b7280;}
  #dssTicketModal .dss-row span:last-child{font-weight:500;text-align:right;}
+  /* View popup - compact (sirf size, content same) */
+  #dssTicketModal .modal-dialog{max-width:820px;width:calc(100vw - 32px);}
+  #dssTicketModal .modal-header{padding:8px 14px !important;}
+  #dssTicketModal .modal-title{font-size:12.5px;}
+  #dssTicketModal .modal-body{max-height:calc(100vh - 135px);}
+  #dssTicketModal .modal-footer{padding:6px 12px !important;}
+  #dssTicketModal .modal-footer .btn{font-size:12px;padding:3px 10px;}
+  #dssTicketModal .modal-info{padding:8px 10px;border-radius:8px;}
+  #dssTicketModal .dss-modal-sec{margin-bottom:4px;font-size:9.5px;}
+  #dssTicketModal .dss-row{font-size:11.5px;margin-bottom:4px;gap:8px;}
+  #dssTicketModal table th,#dssTicketModal table td{padding:3px 6px;font-size:11px;}
+  #dssTicketModal table thead th{font-size:10px;text-transform:uppercase;color:#6b7280;}
+  @@media(max-width:700px){#dssTicketModal .modal-dialog{max-width:100%;width:calc(100vw - 12px);margin:.4rem auto;}}
 </style>
-<div class="d-flex justify-content-between align-items-center mb-2">
-    <h4 class="fw-bold mb-0">Daily Support System</h4>
-    <div class="d-flex gap-2">
-        <a href="/Client/Create" data-no-modal class="btn btn-light border" style="border-radius:8px;height:38px;font-size:13px;" onclick="event.preventDefault(); window.loadPage('/Client/Create', 'New Customer');">+ New Customer</a>
-        <a href="/DailySupport/Create" data-no-modal class="btn btn-dark px-3" style="border-radius:8px;height:38px;font-size:13px;" onclick="event.preventDefault(); window.loadPage('/DailySupport/Create', 'New Call Entry');">+ New Call Entry</a>
+<div class="d-flex justify-content-between align-items-center mb-1">
+    <h4 class="fw-bold mb-0" style="font-size:16px;letter-spacing:-0.01em;">Daily Support System</h4>
+    <div class="d-flex gap-1">
+        <a href="/Client/Create" data-no-modal class="btn btn-light border" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/Client/Create', 'New Customer');">+ New Customer</a>
+        <a href="/DailySupport/Create" data-no-modal class="btn btn-dark" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/DailySupport/Create', 'New Call Entry');">+ New Call Entry</a>
     </div>
 </div>
 <div class="row g-2 mb-2">
@@ -97,10 +110,10 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
 </div>
 <div class="card filter-card mb-2"><div class="card-body" style="padding:8px 10px;"><div class="row g-2 align-items-end"><div class="col-12 col-md-6 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">SEARCH</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;padding:4px 8px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, mobile..." /></div></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">STATUS</label><select id="dssStatus" class="form-select search-box">
 <option value="">All Status</option>
-@foreach(var st in new[]{"Open","In Progress","On Hold","Pending","Closed"}){<option value="@st" selected="@(string.Equals(Model.FilterStatus,st,System.StringComparison.OrdinalIgnoreCase))">@st</option>}
+@foreach(var st in new[]{"Open","In Progress","On Hold","Pending","Closed"}){<option value="@st" selected="@(string.Equals(Model.FilterStatus,st,System.StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@st</option>}
 </select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">USER</label><select id="dssUser" class="form-select search-box">
 <option value="">All Users</option>
-@foreach(var u in Model.Users){var uid=u.ContainsKey("UserId")?(u["UserId"]?.ToString()??""):"";var uname=u.ContainsKey("FullName")?(u["FullName"]?.ToString()??""):"";<option value="@uid" selected="@(uid==Model.FilterUser)">@uname</option>}
+@foreach(var u in Model.Users){var uid=u.ContainsKey("UserId")?(u["UserId"]?.ToString()??""):"";var uname=u.ContainsKey("FullName")?(u["FullName"]?.ToString()??""):"";<option value="@uid" selected="@(uid==Model.FilterUser ? "selected" : null)">@uname</option>}
 </select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
 <div class="col-12 col-md-6 col-lg-2 d-flex justify-content-end gap-2 align-items-end" style="flex-wrap:nowrap;">
 <a href="/DailySupport" class="btn btn-light border px-2" style="border-radius:8px;height:30px;font-size:12px;" onclick="event.preventDefault(); clearFilters();">Clear</a>
@@ -113,49 +126,98 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
 </ul>
 </div>
 </div></div></div></div>
-<div class="card table-card"><div id="tableContainer">@await Html.PartialAsync("_CallTable", Model.TicketTable)</div></div>
+<div id="tableContainer">@await Html.PartialAsync("_CallTable", Model.TicketTable)</div>
 
 <script>
-function loadTable(){
-  var s=document.getElementById('dssSearch').value;
-  var f=document.getElementById('fromDate').value;
-  var t=document.getElementById('toDate').value;
-  var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:'';
-  var u=document.getElementById('dssUser')?document.getElementById('dssUser').value:'';
-  var p=new URLSearchParams();
-  // Always send page/pageSize - the server returns the full page only when the
-  // query is empty (SPA loadPage). Without these, Clear would fetch the whole
-  // page and inject it into #tableContainer, breaking the layout in two parts.
-  currentPage=1;
-  p.append('page',currentPage);
-  p.append('pageSize',pageSizeCurrent);
-  if(s) p.append('search',s);
-  if(f) p.append('fromDate',f);
-  if(t) p.append('toDate',t);
-  if(st) p.append('status',st);
-  if(u) p.append('user',u);
-  fetch('/DailySupport/Index?'+p.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}})
-  .then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();})
-  .then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager();})
-  .catch(e=>Ajax.toast(e.message,'error'));
+/* ============================================================
+   Daily Support grid - pagination (grid ke upar wali bar)
+   ============================================================ */
+var dssCurrentPage = @Model.TicketTable.CurrentPage;
+var dssPageSize = @Model.TicketTable.PageSize;
+
+function dssGet(id){ var e=document.getElementById(id); return e ? e.value : ''; }
+function dssFilters(){
+  return {
+    search: (dssGet('dssSearch')||'').trim(),
+    fromDate: dssGet('fromDate'),
+    toDate: dssGet('toDate'),
+    status: dssGet('dssStatus'),
+    user: dssGet('dssUser')
+  };
 }
-var pageSizeCurrent=10; var currentPage=1;
-document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
-document.getElementById('fromDate')?.addEventListener('change',loadTable);
-document.getElementById('toDate')?.addEventListener('change',loadTable);
-document.getElementById('dssStatus')?.addEventListener('change',loadTable);
-document.getElementById('dssUser')?.addEventListener('change',loadTable);
-function clearFilters(){
-  var s=document.getElementById('dssSearch'); if(s) s.value='';
-  var f=document.getElementById('fromDate'); if(f) f.value='';
-  var t=document.getElementById('toDate'); if(t) t.value='';
-  var st=document.getElementById('dssStatus'); if(st) st.value='';
-  var u=document.getElementById('dssUser'); if(u) u.value='';
-  loadTable();
+/* partial=1 -> server sirf grid ka partial (table + pagination bar) bhejta hai */
+function dssQuery(page,pageSize,partial){
+  var f=dssFilters(); var p=new URLSearchParams();
+  if(partial) p.append('partial','1');
+  p.append('page',page||1);
+  p.append('pageSize',pageSize||dssPageSize||10);
+  if(f.search) p.append('search',f.search);
+  if(f.fromDate) p.append('fromDate',f.fromDate);
+  if(f.toDate) p.append('toDate',f.toDate);
+  if(f.status) p.append('status',f.status);
+  if(f.user) p.append('user',f.user);
+  return p.toString();
 }
-function goPage(p,ps){ currentPage=p||1; pageSizeCurrent=ps||10; var s=document.getElementById('dssSearch').value; var f=document.getElementById('fromDate').value; var t=document.getElementById('toDate').value; var st=document.getElementById('dssStatus')?document.getElementById('dssStatus').value:''; var u=document.getElementById('dssUser')?document.getElementById('dssUser').value:''; var pp=new URLSearchParams(); if(s) pp.append('search',s); if(f) pp.append('fromDate',f); if(t) pp.append('toDate',t); if(st) pp.append('status',st); if(u) pp.append('user',u); pp.append('page',currentPage); pp.append('pageSize',pageSizeCurrent); fetch('/DailySupport/Index?'+pp.toString(),{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>{if(!r.ok) throw new Error('HTTP '+r.status); return r.text();}).then(h=>{document.getElementById('tableContainer').innerHTML=h; attachSorting(); attachPager(); window.scrollTo({top:document.querySelector('.table-card')?.offsetTop-60,behavior:'smooth'});}).catch(e=>Ajax.toast(e.message,'error'));}
-function attachPager(){ document.querySelectorAll('.dss-page').forEach(a=>{a.onclick=function(e){e.preventDefault(); goPage(parseInt(this.getAttribute('data-page')), pageSizeCurrent);}}); document.querySelectorAll('.dss-page-size').forEach(sel=>{sel.onchange=function(){goPage(1, parseInt(this.value));}});}
+function dssRender(html){
+  var box=document.getElementById('tableContainer'); if(!box) return;
+  box.innerHTML=html;
+  // Server page/pageSize clamp kar chuka hota hai - nayi values yahan se padho
+  var tb=box.querySelector('.dss-grid-toolbar');
+  if(tb) dssCurrentPage=parseInt(tb.getAttribute('data-current-page'))||1;
+  var sel=box.querySelector('.dss-page-size');
+  if(sel) dssPageSize=parseInt(sel.value)||dssPageSize||10;
+  attachSorting(); attachPager();
+}
+function dssLoad(page,pageSize,scroll){
+  dssCurrentPage=page||1;
+  dssPageSize=pageSize||dssPageSize||10;
+  fetch('/DailySupport/Index?'+dssQuery(dssCurrentPage,dssPageSize,true),{headers:{'X-Requested-With':'XMLHttpRequest'}})
+  .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+  .then(function(h){
+    dssRender(h);
+    // URL sync - refresh / back-forward par wahi page khule
+    try{ history.replaceState(null,'','/DailySupport?'+dssQuery(dssCurrentPage,dssPageSize,false)); }catch(e){}
+    if(scroll){
+      // Pagination bar ab grid ke NICHE hai - isliye table ka TOP target karo,
+      // warna page change karne par grid ke bottom par scroll ho jayega.
+      var tc=document.getElementById('tableContainer');
+      if(tc) window.scrollTo({top:tc.getBoundingClientRect().top+window.pageYOffset-70,behavior:'smooth'});
+    }
+  })
+  .catch(function(e){ Ajax.toast(e.message,'error'); });
+}
+/* Filter badalne par hamesha page 1 */
+function loadTable(){ dssLoad(1,dssPageSize,false); }
+/* Pager button */
+function goPage(p,ps){ dssLoad(p||1,ps||dssPageSize,true); }
+function attachPager(){
+  document.querySelectorAll('#tableContainer .dss-page').forEach(function(a){
+    a.onclick=function(e){ e.preventDefault(); goPage(parseInt(this.getAttribute('data-page')),dssPageSize); };
+  });
+  document.querySelectorAll('#tableContainer .dss-page-size').forEach(function(sel){
+    sel.onchange=function(){ goPage(1,parseInt(this.value)); };
+  });
+}
 var sortState={};
+function parseDssDate(v){
+  if(!v) return NaN;
+  var s=String(v).trim().toLowerCase();
+  // dd-MM-yy hh:mm tt ya dd-mm-yyyy
+  var m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?)?/);
+  if(m){
+    var dd=parseInt(m[1],10), mm=parseInt(m[2],10)-1, yy=parseInt(m[3],10);
+    if(yy<100) yy+=2000;
+    var hh=0, mi=0, ss=0, ap=m[7];
+    if(m[4]){ hh=parseInt(m[4],10); if(ap==='pm'&&hh<12) hh+=12; if(ap==='am'&&hh===12) hh=0; }
+    if(m[5]) mi=parseInt(m[5],10);
+    if(m[6]) ss=parseInt(m[6],10);
+    var d=new Date(yy,mm,dd,hh,mi,ss);
+    return isNaN(d.getTime())?NaN:d.getTime();
+  }
+  var d2=Date.parse(v);
+  return isNaN(d2)?NaN:d2;
+}
+
 function attachSorting(){
   const table=document.querySelector("#tableContainer table"); if(!table) return;
   const ths=table.querySelectorAll("thead th");
@@ -168,11 +230,16 @@ function attachSorting(){
       th.classList.add('active'); th.querySelector('.sort-icon').textContent=dir==='asc'?'↑':'↓';
       let tbody=table.tBodies[0]; let rows=Array.from(tbody.rows);
       rows.sort((a,b)=>{
-        let aVal=a.cells[idx]?.innerText.trim().toLowerCase()||''; let bVal=b.cells[idx]?.innerText.trim().toLowerCase()||'';
-        let aNum=parseFloat(aVal), bNum=parseFloat(bVal);
-        if(!isNaN(aNum)&&!isNaN(bNum)) return dir==='asc'?aNum-bNum:bNum-aNum;
-        let aDate=Date.parse(aVal), bDate=Date.parse(bVal);
+        if(!a.cells[idx]||!b.cells[idx]) return 0;
+        let aVal=a.cells[idx]?.innerText.replace(/\s+/g,' ').trim()||''; 
+        let bVal=b.cells[idx]?.innerText.replace(/\s+/g,' ').trim()||'';
+        // date first
+        let aDate=parseDssDate(aVal), bDate=parseDssDate(bVal);
         if(!isNaN(aDate)&&!isNaN(bDate)) return dir==='asc'?aDate-bDate:bDate-aDate;
+        // number
+        let aNum=parseFloat(aVal.replace(/,/g,'')), bNum=parseFloat(bVal.replace(/,/g,''));
+        if(!isNaN(aNum)&&!isNaN(bNum)&&aVal.replace(/[^0-9.-]/g,'')!==''&&bVal.replace(/[^0-9.-]/g,'')!=='') return dir==='asc'?aNum-bNum:bNum-aNum;
+        // string
         return dir==='asc'?aVal.localeCompare(bVal):bVal.localeCompare(aVal);
       });
       rows.forEach(r=>tbody.appendChild(r));
@@ -181,23 +248,70 @@ function attachSorting(){
 }
 attachSorting(); attachPager();
 function getTable(){return document.querySelector("#tableContainer table");}
-function exportCSV(){let table=getTable(); if(!table) return; let csv=[]; table.querySelectorAll("tr").forEach(tr=>{let row=[]; tr.querySelectorAll("th,td").forEach(td=>{if(td.innerText.trim().toLowerCase()==='action') return; row.push('"'+td.innerText.replace(/"/g,'""')+'"');}); if(row.length) csv.push(row.join(","));}); let blob=new Blob([csv.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="DailySupport_"+new Date().toISOString().slice(0,10)+".csv"; a.click();}
-function exportExcel(){let table=getTable(); if(!table) return; let blob=new Blob(['\ufeff'+table.outerHTML],{type:"application/vnd.ms-excel"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="DailySupport_"+new Date().toISOString().slice(0,10)+".xls"; a.click();}
-function exportPrint(){let table=getTable(); if(!table) return; let w=window.open("","","width=1100,height=800"); w.document.write("<html><head><title>Daily Support</title><link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'><style>table{font-size:12px} th{position:static !important}</style></head><body class='p-3'><h5>Daily Support - "+new Date().toLocaleDateString()+"</h5>"+table.outerHTML+"</body></html>"); w.document.close(); w.focus(); setTimeout(()=>{w.print(); w.close();},500);}
+function exportCSV(){
+  // POORA filtered data download karo - server ka logic use
+  var f=dssFilters();
+  var p=new URLSearchParams();
+  if(f.search) p.append('search',f.search);
+  if(f.fromDate) p.append('fromDate',f.fromDate);
+  if(f.toDate) p.append('toDate',f.toDate);
+  if(f.status) p.append('status',f.status);
+  if(f.user) p.append('user',f.user);
+  p.append('export','csv');
+  window.location.href='/DailySupport/Index?'+p.toString();
+}
+function exportExcel(){
+  var f=dssFilters();
+  var p=new URLSearchParams();
+  if(f.search) p.append('search',f.search);
+  if(f.fromDate) p.append('fromDate',f.fromDate);
+  if(f.toDate) p.append('toDate',f.toDate);
+  if(f.status) p.append('status',f.status);
+  if(f.user) p.append('user',f.user);
+  p.append('export','excel');
+  window.location.href='/DailySupport/Index?'+p.toString();
+}
+function exportPrint(){
+  // Current grid ka print (user ne jo dekha hai wahi print ho)
+  let table=getTable(); if(!table) return;
+  let clone=table.cloneNode(true);
+  clone.querySelectorAll('button,a.btn').forEach(function(el){ el.outerHTML=el.textContent.trim(); });
+  let w=window.open("","","width=1100,height=800");
+  w.document.write("<html><head><title>Daily Support</title><link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'><style>body{font-family:Segoe UI,Arial,sans-serif;font-size:12px}table{font-size:11.5px}th,td{padding:4px 6px}th{position:static !important;background:#f8fafc}</style></head><body class='p-3'><h5>Daily Support - "+new Date().toLocaleDateString()+"</h5>"+clone.outerHTML+"</body></html>");
+  w.document.close(); w.focus(); setTimeout(()=>{w.print(); w.close();},600);
+}
+/* Filter change events */
+var dssSearchTimer=null;
+document.getElementById('dssSearch')?.addEventListener('keyup',function(){
+  clearTimeout(dssSearchTimer);
+  dssSearchTimer=setTimeout(function(){ loadTable(); },400);
+});
+document.getElementById('fromDate')?.addEventListener('change',loadTable);
+document.getElementById('toDate')?.addEventListener('change',loadTable);
+document.getElementById('dssStatus')?.addEventListener('change',loadTable);
+document.getElementById('dssUser')?.addEventListener('change',loadTable);
+function clearFilters(){
+  var s=document.getElementById('dssSearch'); if(s) s.value='';
+  var f=document.getElementById('fromDate'); if(f) f.value='';
+  var t=document.getElementById('toDate'); if(t) t.value='';
+  var st=document.getElementById('dssStatus'); if(st) st.value='';
+  var u=document.getElementById('dssUser'); if(u) u.value='';
+  loadTable();
+}
 </script>
 
 <!-- ===== Ticket details popup (grid me Ticket No / Action -> View se khulta hai) ===== -->
 <div class="modal fade" id="dssTicketModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable" style="max-width:980px;">
-    <div class="modal-content" style="border-radius:14px;overflow:hidden;">
-      <div class="modal-header" style="background:#0f172a;color:#fff;padding:10px 16px;">
-        <h6 class="modal-title mb-0" id="dssTicketModalTitle" style="font-weight:700;font-size:13px;">Ticket Details</h6>
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:12px;overflow:hidden;">
+      <div class="modal-header" style="background:#0f172a;color:#fff;padding:8px 14px;">
+        <h6 class="modal-title mb-0" id="dssTicketModalTitle" style="font-weight:700;font-size:12.5px;">Ticket Details</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-0" id="dssTicketModalBody">
         <div class="text-center p-5"><div class="spinner-border text-dark"></div></div>
       </div>
-      <div class="modal-footer py-2">
+      <div class="modal-footer py-1">
         <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
         <a href="#" id="dssTicketModalEdit" data-no-modal class="btn btn-sm" style="background:#0f172a;color:#fff;" onclick="event.preventDefault(); var h=this.getAttribute('href'); if(h && h!=='#') window.loadPage(h, 'Edit Call');">Open Edit Form</a>
       </div>
@@ -238,8 +352,6 @@ function exportPrint(){let table=getTable(); if(!table) return; let w=window.ope
 
 <script>
 (function () {
-  if (window.__dssTicketModalBound) return;
-  window.__dssTicketModalBound = true;
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".ticket-view-btn");
     if (!btn) return;
@@ -250,8 +362,6 @@ function exportPrint(){let table=getTable(); if(!table) return; let w=window.ope
 
 // ---- Re-Assign: button click -> user dropdown -> confirm ----
 (function () {
-  if (window.__dssReassignBound) return;
-  window.__dssReassignBound = true;
   var usersCache = null;
 
   function fillUsers(sel) {
@@ -270,42 +380,67 @@ function exportPrint(){let table=getTable(); if(!table) return; let w=window.ope
     if (!btn) return;
     e.preventDefault();
     var id = btn.getAttribute("data-id");
-    document.getElementById("dssReassignId").value = id;
-    document.getElementById("dssReassignReason").value = "";
+    var hid = document.getElementById("dssReassignId");
+    if (hid) hid.value = id;
+    var rea = document.getElementById("dssReassignReason");
+    if (rea) rea.value = "";
     var sel = document.getElementById("dssReassignUser");
+    if (!sel) return;
     sel.value = "";
     if (usersCache) { fillUsers(sel); }
     else {
       fetch("/DailySupport/GetEngineers", { headers: { "X-Requested-With": "XMLHttpRequest" } })
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(function (list) { usersCache = list || []; fillUsers(sel); })
-        .catch(function () { Ajax.toast("Users ki list load nahi hui.", "error"); });
+        .catch(function () { if (window.Ajax && Ajax.toast) Ajax.toast("Users ki list load nahi hui.", "error"); });
     }
-    bootstrap.Modal.getOrCreateInstance(document.getElementById("dssReassignModal")).show();
+    var m = document.getElementById("dssReassignModal");
+    if (m && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).show();
   });
 
-  document.getElementById("dssReassignForm").addEventListener("submit", function (e) {
+  document.addEventListener("submit", function (e) {
+    var form = e.target;
+    if (!form || form.id !== "dssReassignForm") return;
     e.preventDefault();
     var sel = document.getElementById("dssReassignUser");
-    if (!sel.value) { Ajax.toast("Pehle user select karein.", "error"); return; }
+    if (!sel || !sel.value) { if (window.Ajax && Ajax.toast) Ajax.toast("Pehle user select karein.", "error"); return; }
     var btn = document.getElementById("dssReassignSave");
-    btn.disabled = true; btn.textContent = "Saving…";
-    Ajax.post("/DailySupport/Reassign", new FormData(this))
-      .then(function (data) {
-        btn.disabled = false; btn.textContent = "Confirm Re-Assign";
-        if (data && data.success === false) { Ajax.toast(data.message || "Re-assign fail.", "error"); return; }
-        bootstrap.Modal.getOrCreateInstance(document.getElementById("dssReassignModal")).hide();
-        Ajax.toast(data.message || "Ticket re-assign ho gaya.", "success");
-        if (typeof loadTable === "function") loadTable();
-      })
-      .catch(function (err) {
-        btn.disabled = false; btn.textContent = "Confirm Re-Assign";
-        Ajax.toast(err.message || "Re-assign fail.", "error");
-      });
+    if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+    if (window.Ajax && Ajax.post) {
+      Ajax.post("/DailySupport/Reassign", new FormData(form))
+        .then(function (data) {
+          if (btn) { btn.disabled = false; btn.textContent = "Confirm Re-Assign"; }
+          if (data && data.success === false) { if (window.Ajax && Ajax.toast) Ajax.toast(data.message || "Re-assign fail.", "error"); return; }
+          var m2 = document.getElementById("dssReassignModal");
+          if (m2 && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m2).hide();
+          if (window.Ajax && Ajax.toast) Ajax.toast(data.message || "Ticket re-assign ho gaya.", "success");
+          if (typeof loadTable === "function") loadTable();
+        })
+        .catch(function (err) {
+          if (btn) { btn.disabled = false; btn.textContent = "Confirm Re-Assign"; }
+          if (window.Ajax && Ajax.toast) Ajax.toast(err.message || "Re-assign fail.", "error");
+        });
+    } else {
+      fetch("/DailySupport/Reassign", { method: "POST", body: new FormData(form), headers: { "X-Requested-With": "XMLHttpRequest" } })
+        .then(function(r){return r.json();})
+        .then(function(data){
+          if (btn) { btn.disabled = false; btn.textContent = "Confirm Re-Assign"; }
+          if (!data || data.success === false) { alert(data && data.message ? data.message : "Re-assign fail."); return; }
+          var m2 = document.getElementById("dssReassignModal");
+          if (m2 && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m2).hide();
+          alert(data.message || "Ticket re-assign ho gaya.");
+          if (typeof loadTable === "function") loadTable();
+        })
+        .catch(function(err){
+          if (btn) { btn.disabled = false; btn.textContent = "Confirm Re-Assign"; }
+          alert(err.message || "Re-assign fail.");
+        });
+    }
   });
 })();
 
 function dssFmtLabel(k) { return String(k).replace(/([a-z])([A-Z])/g, "$1 $2"); }
+function dssEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 
 function dssBuildRows(obj, skip) {
   if (!obj) return '<div class="text-muted" style="font-size:12px;">No data</div>';
@@ -314,7 +449,7 @@ function dssBuildRows(obj, skip) {
     if (skip.indexOf(k) > -1) continue;
     var v = obj[k]; if (v === null || v === undefined || v === "") v = "-";
     if (String(k).toLowerCase().indexOf("date") > -1 && v !== "-") { try { v = new Date(v).toLocaleString(); } catch (err) { } }
-    html += '<div class="dss-row"><span>' + dssFmtLabel(k) + '</span><span>' + v + '</span></div>';
+    html += '<div class="dss-row"><span>' + dssEsc(dssFmtLabel(k)) + '</span><span>' + dssEsc(v) + '</span></div>';
   }
   return html || '<div class="text-muted" style="font-size:12px;">No data</div>';
 }
@@ -336,10 +471,10 @@ window.openTicketDetails = function (id) {
     .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then(function (data) {
       var t = data.ticket || {}, c = data.customer || {}, h = data.history || [], audit = data.audit || [];
-      titleEl.textContent = (t.TicketNo || "") + (t.CompanyName ? " - " + t.CompanyName : "");
+      titleEl.textContent = ((t.TicketNo || "") + (t.CompanyName ? " - " + t.CompanyName : "")).replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
       var skip = ["SupportId", "ClientId", "CustomerID", "UserId", "VisitTypeId", "AssignedTo", "CallerName", "Description", "CompanyName"];
 
-      function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+      function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
       var fieldLabels = { AssignedTo: "Assigned To", ClientId: "Customer", Status: "Status", Priority: "Priority", Issue: "Issue", Description: "Description", Solution: "Solution", Mobile: "Mobile", CallerName: "Caller Name", Category: "Category", Channel: "Channel", CallType: "Call Type" };
 
       // Audit trail: kaun banaya / kisne kya kab edit kiya (time + naam ke saath)
@@ -349,15 +484,16 @@ window.openTicketDetails = function (id) {
       function isChangeAction(x) { return x === "Edited" || x === "Reassigned"; }
       audit.forEach(function (a) {
         var t = a.ChangedOn ? new Date(a.ChangedOn).getTime() : 0;
+        var whoName = a.ChangedByName || a.ChangedBy || "-";
         var last = auditGroups.length ? auditGroups[auditGroups.length - 1] : null;
         // Same user + lagbhag same time (2 sec andar) + dono change actions = ek hi row
         if (last && isChangeAction(a.Action) && isChangeAction(last.action) &&
-            (last.who || "") === (a.ChangedByName || "") &&
+            (last.who || "") === (whoName || "") &&
             Math.abs(t - last.firstTime) <= 2000) {
           last.items.push(a);
           if (t > last.lastTime) last.lastTime = t;
         } else {
-          auditGroups.push({ action: a.Action, who: a.ChangedByName, firstTime: t, lastTime: t, items: [a] });
+          auditGroups.push({ action: a.Action, who: whoName, firstTime: t, lastTime: t, items: [a] });
         }
       });
 

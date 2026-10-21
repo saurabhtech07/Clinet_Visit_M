@@ -48,20 +48,20 @@
                     <label class="label-dss">Status</label>
                     <select name="status" class="form-select input-dss auto-filter">
                         <option value="">All Status</option>
-                        <option value="Open" selected="@(Model.FilterStatus=="Open")">Open</option>
-                        <option value="In Progress" selected="@(Model.FilterStatus=="In Progress")">In Progress</option>
-                        <option value="On Hold" selected="@(Model.FilterStatus=="On Hold")">On Hold</option>
-                        <option value="Closed" selected="@(Model.FilterStatus=="Closed")">Closed</option>
+                        <option value="Open" selected="@(Model.FilterStatus=="Open" ? "selected" : null)">Open</option>
+                        <option value="In Progress" selected="@(Model.FilterStatus=="In Progress" ? "selected" : null)">In Progress</option>
+                        <option value="On Hold" selected="@(Model.FilterStatus=="On Hold" ? "selected" : null)">On Hold</option>
+                        <option value="Closed" selected="@(Model.FilterStatus=="Closed" ? "selected" : null)">Closed</option>
                     </select>
                 </div>
                 <div class="col-6 col-lg-2">
                     <label class="label-dss">Priority</label>
                     <select name="priority" class="form-select input-dss auto-filter">
                         <option value="">All Priority</option>
-                        <option value="Urgent" selected="@(Model.FilterPriority=="Urgent")">Urgent</option>
-                        <option value="High" selected="@(Model.FilterPriority=="High")">High</option>
-                        <option value="Medium" selected="@(Model.FilterPriority=="Medium")">Medium</option>
-                        <option value="Low" selected="@(Model.FilterPriority=="Low")">Low</option>
+                        <option value="Urgent" selected="@(Model.FilterPriority=="Urgent" ? "selected" : null)">Urgent</option>
+                        <option value="High" selected="@(Model.FilterPriority=="High" ? "selected" : null)">High</option>
+                        <option value="Medium" selected="@(Model.FilterPriority=="Medium" ? "selected" : null)">Medium</option>
+                        <option value="Low" selected="@(Model.FilterPriority=="Low" ? "selected" : null)">Low</option>
                     </select>
                 </div>
                 <div class="col-8 col-lg-3">
@@ -172,6 +172,14 @@ document.addEventListener('DOMContentLoaded',function(){
     ViewData["Title"] = "DSS Reports";
     int totalPages = Model.PageSize > 0 ? (int)Math.Ceiling((double)Model.TotalCalls / Model.PageSize) : 1;
     if(totalPages==0) totalPages=1;
+    // Current page ko valid range me rakho + "Showing X to Y" sahi nikale
+    int curPage = Model.CurrentPage<1 ? 1 : (Model.CurrentPage>totalPages ? totalPages : Model.CurrentPage);
+    int showingFrom = Model.TotalCalls==0 ? 0 : ((curPage-1)*Model.PageSize)+1;
+    int showingTo = Math.Min(curPage*Model.PageSize, Model.TotalCalls);
+    // Page numbers ka window (current ke aas paas 5)
+    int winStart=Math.Max(1,curPage-2);
+    int winEnd=Math.Min(totalPages,winStart+4);
+    winStart=Math.Max(1,winEnd-4);
 }
 <style>
     .card-dss{border:1px solid #e5e7f0;border-radius:12px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
@@ -188,10 +196,10 @@ document.addEventListener('DOMContentLoaded',function(){
     .badge-pri-High{background:#ffedd5;color:#ea580c;border:1px solid #fed7aa;border-radius:5px;font-size:11px;padding:3px 7px;font-weight:600;}
     .badge-pri-Medium{background:#fef3c7;color:#d97706;border:1px solid #fde68a;border-radius:5px;font-size:11px;padding:3px 7px;font-weight:600;}
     .badge-pri-Low{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;border-radius:5px;font-size:11px;padding:3px 7px;font-weight:600;}
-    .controls-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-size:12px;background:#fff;border:1px solid #e5e7f0;border-bottom:0;border-radius:12px 12px 0 0;}
+    .controls-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;font-size:12px;background:#fff;border:1px solid #e5e7f0;border-bottom:0;border-radius:12px 12px 0 0;}
     .page-size-select{height:34px;border-radius:8px;font-size:13px;padding:5px 12px;border:1px solid #e5e7eb;background:#fff;min-width:75px;cursor:pointer;}
     .table-wrapper{border:1px solid #e5e7f0;border-top:0;border-radius:0 0 12px 12px;background:#fff;overflow:hidden;position:relative;}
-    .table-scroll{height:calc(100vh - 340px);min-height:400px;max-height:600px;overflow:auto;}
+    .table-scroll{height:calc(100vh - 300px);min-height:400px;max-height:640px;overflow:auto;}
     .table-dss{width:100%;border-collapse:collapse;margin:0;table-layout:auto;}
     .table-dss thead th{font-size:11px;text-transform:uppercase;color:#6b7280;background:#f9fafb !important;font-weight:700;padding:8px 8px;white-space:nowrap;border-bottom:2px solid #e5e7eb;position:sticky;top:0;z-index:10;}
     .table-dss tbody td{font-size:12.5px;padding:6px 8px;border-bottom:1px solid #f3f4f6;background:#fff;white-space:normal;overflow-wrap:anywhere;vertical-align:middle;max-width:190px;}
@@ -201,6 +209,19 @@ document.addEventListener('DOMContentLoaded',function(){
     .page-btn:disabled{opacity:.35;cursor:not-allowed;}
     .loading-overlay{position:absolute;inset:0;background:rgba(255,255,255,.75);display:none;align-items:center;justify-content:center;z-index:30;}
     .loading-overlay.show{display:flex;}
+    /* Report View popup - compact */
+    #detailModal .modal-dialog{max-width:860px;width:calc(100vw - 32px);}
+    #detailModal .modal-content{border-radius:12px;}
+    #detailModal .modal-header{padding:8px 14px;}
+    #detailModal .modal-title{font-size:13px;}
+    #detailModal .modal-body{padding:0;max-height:calc(100vh - 140px);overflow-y:auto;}
+    #detailModal .modal-footer{padding:6px 12px;}
+    #detailModal .modal-footer .btn{font-size:12px;padding:3px 10px;}
+    #detailModal .nav-tabs .nav-link{padding:4px 10px;font-size:12px;border-radius:6px 6px 0 0;}
+    #detailModal .tab-content{padding:8px;}
+    #detailModal .tab-pane .table th,#detailModal .tab-pane .table td{padding:3px 6px;font-size:11px;}
+    #detailModal .tab-pane .table thead th{font-size:10px;text-transform:uppercase;color:#6b7280;}
+    @@media(max-width:700px){#detailModal .modal-dialog{max-width:100%;width:calc(100vw - 12px);margin:.4rem auto;}}
 </style>
 
 <div style="max-width:1450px;margin:0 auto;padding:8px 12px;">
@@ -224,17 +245,26 @@ document.addEventListener('DOMContentLoaded',function(){
             <div class="row g-2">
                 <div class="col-6 col-lg-2"><label class="label-dss">From Date</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control input-dss auto-filter" /></div>
                 <div class="col-6 col-lg-2"><label class="label-dss">To Date</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control input-dss auto-filter" /></div>
-                <div class="col-6 col-lg-2"><label class="label-dss">Status</label><select id="status" class="form-select input-dss auto-filter"><option value="">All Status</option><option value="Open" selected="@(Model.FilterStatus=="Open")">Open</option><option value="In Progress" selected="@(Model.FilterStatus=="In Progress")">In Progress</option><option value="On Hold" selected="@(Model.FilterStatus=="On Hold")">On Hold</option><option value="Closed" selected="@(Model.FilterStatus=="Closed")">Closed</option></select></div>
-                <div class="col-6 col-lg-2"><label class="label-dss">Priority</label><select id="priority" class="form-select input-dss auto-filter"><option value="">All Priority</option><option value="Urgent" selected="@(Model.FilterPriority=="Urgent")">Urgent</option><option value="High" selected="@(Model.FilterPriority=="High")">High</option><option value="Medium" selected="@(Model.FilterPriority=="Medium")">Medium</option><option value="Low" selected="@(Model.FilterPriority=="Low")">Low</option></select></div>
+                <div class="col-6 col-lg-2"><label class="label-dss">Status</label><select id="status" class="form-select input-dss auto-filter"><option value="">All Status</option><option value="Open" selected="@(Model.FilterStatus=="Open" ? "selected" : null)">Open</option><option value="In Progress" selected="@(Model.FilterStatus=="In Progress" ? "selected" : null)">In Progress</option><option value="On Hold" selected="@(Model.FilterStatus=="On Hold" ? "selected" : null)">On Hold</option><option value="Closed" selected="@(Model.FilterStatus=="Closed" ? "selected" : null)">Closed</option></select></div>
+                <div class="col-6 col-lg-2"><label class="label-dss">Priority</label><select id="priority" class="form-select input-dss auto-filter"><option value="">All Priority</option><option value="Urgent" selected="@(Model.FilterPriority=="Urgent" ? "selected" : null)">Urgent</option><option value="High" selected="@(Model.FilterPriority=="High" ? "selected" : null)">High</option><option value="Medium" selected="@(Model.FilterPriority=="Medium" ? "selected" : null)">Medium</option><option value="Low" selected="@(Model.FilterPriority=="Low" ? "selected" : null)">Low</option></select></div>
                 <div class="col-8 col-lg-3"><label class="label-dss">Search</label><input type="text" id="search" value="@Model.SearchTerm" class="form-control input-dss" placeholder="Ticket, Mobile, Issue..." /></div>
                 <div class="col-4 col-lg-1 d-flex align-items-end"><a href="#" id="resetBtn" class="btn-dss-light text-decoration-none w-100 text-center">Reset</a></div>
             </div>
         </form>
     </div>
 
+    <!-- ===== PAGINATION - grid ke UPAR (top side) ===== -->
     <div class="controls-bar">
-        <div class="d-flex align-items-center gap-2"><span>Show</span><select id="pageSizeSelect" class="page-size-select"><option value="10" selected="@(Model.PageSize==10)">10</option><option value="25" selected="@(Model.PageSize==25)">25</option><option value="50" selected="@(Model.PageSize==50)">50</option><option value="100" selected="@(Model.PageSize==100)">100</option></select><span>entries</span></div>
-        <div class="text-muted" id="tableInfo">Total: <b class="text-dark">@Model.TotalCalls</b> | Page <b id="infoPage">@Model.CurrentPage</b> of <b id="infoTotalPages">@totalPages</b></div>
+        <div class="d-flex align-items-center gap-2"><span>Show</span><select id="pageSizeSelect" class="page-size-select"><option value="10" selected="@(Model.PageSize==10 ? "selected" : null)">10</option><option value="25" selected="@(Model.PageSize==25 ? "selected" : null)">25</option><option value="50" selected="@(Model.PageSize==50 ? "selected" : null)">50</option><option value="100" selected="@(Model.PageSize==100 ? "selected" : null)">100</option></select><span>entries</span></div>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="text-muted" id="tableInfo">Total: <b class="text-dark">@Model.TotalCalls</b> | Page <b id="infoPage">@curPage</b> of <b id="infoTotalPages">@totalPages</b></div>
+            <div style="font-size:12px;color:#6b7280;" id="showingInfo">Showing @showingFrom to @showingTo of @Model.TotalCalls</div>
+        </div>
+        <div class="d-flex gap-1 align-items-center" id="pageNumbers">
+            <button class="page-btn" id="prevBtn" @(curPage<=1 ? "disabled" : "") title="Previous page"><i class="bi bi-chevron-left"></i></button>
+            @for(int p=winStart;p<=winEnd;p++){<button class="page-btn @(p==curPage ? "active" : "") page-number" data-page="@p">@p</button>}
+            <button class="page-btn" id="nextBtn" @(curPage>=totalPages ? "disabled" : "") title="Next page"><i class="bi bi-chevron-right"></i></button>
+        </div>
     </div>
 
     <div id="printArea">
@@ -290,20 +320,13 @@ document.addEventListener('DOMContentLoaded',function(){
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top bg-white">
-                <div style="font-size:12px;color:#6b7280;" id="showingInfo">Showing @((Model.CurrentPage-1)*Model.PageSize + 1) to @(Math.Min(Model.CurrentPage*Model.PageSize, Model.TotalCalls)) of @Model.TotalCalls</div>
-                <div class="d-flex gap-1" id="pageNumbers">
-                    <button class="page-btn" id="prevBtn" @(Model.CurrentPage<=1 ? "disabled" : "")><i class="bi bi-chevron-left"></i></button>
-                    @for(int p=1;p<=totalPages;p++){<button class="page-btn @(p==Model.CurrentPage ? "active" : "") page-number" data-page="@p">@p</button>}
-                    <button class="page-btn" id="nextBtn" @(Model.CurrentPage>=totalPages ? "disabled" : "")><i class="bi bi-chevron-right"></i></button>
-                </div>
-            </div>
+
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content" style="border-radius:16px;overflow:hidden;">
       <div class="modal-header" style="background:#111827;color:#fff;padding:14px 18px;">
         <h6 class="modal-title mb-0" id="modalTicketNo" style="font-weight:700;">Ticket Details</h6>
@@ -322,8 +345,10 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <script>
 var currentPage = @Model.CurrentPage; var currentPageSize = @Model.PageSize;
-function buildQuery(page){
+function buildQuery(page, partial){
     const params = new URLSearchParams();
+    // partial=1 -> server sirf grid ka partial (rows) bhejta hai
+    if(partial) params.set('partial','1');
     params.set('fromDate', document.getElementById('fromDate').value || '');
     params.set('toDate', document.getElementById('toDate').value || '');
     params.set('status', document.getElementById('status').value || '');
@@ -333,10 +358,10 @@ function buildQuery(page){
     params.set('pageSize', currentPageSize);
     return params.toString();
 }
-function updateExcelLink(){ document.getElementById('excelBtn').href = '/DailySupport/ExportExcel?' + buildQuery(1); }
+function updateExcelLink(){ document.getElementById('excelBtn').href = '/DailySupport/ExportExcel?' + buildQuery(1,false); }
 function loadData(page){
     if(page) currentPage = page;
-    const query = buildQuery(currentPage);
+    const query = buildQuery(currentPage,true);
     document.getElementById('loadingOverlay').classList.add('show');
     fetch('/DailySupport/DSSReports?' + query, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
     .then(async r => {
@@ -361,39 +386,131 @@ function loadData(page){
     }).catch(e=>{ Ajax.toast('Could not load report data.','error'); console.error(e); })
       .finally(()=>{ document.getElementById('loadingOverlay').classList.remove('show'); });
 }
-function fmtLabel(k){ return k.replace(/([a-z])([A-Z])/g,'$1 $2'); }
+function fmtLabel(k){
+    var map={AssignedTo:'Assigned To',AssignedToName:'Assigned To',ClientId:'Customer',SupportId:'Support ID',CustomerID:'Customer ID',Status:'Status',Priority:'Priority',Issue:'Issue',Description:'Description',Solution:'Solution',Mobile:'Mobile',CallerName:'Caller Name',Category:'Category',Channel:'Channel',CallType:'Call Type',SupportDate:'Support Date',TicketNo:'Ticket No',CreatedOn:'Created On',CompanyName:'Company'};
+    if(map[k]) return map[k];
+    return k.replace(/([a-z])([A-Z])/g,'$1 $2');
+}
+function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function fmtDate(v){ if(v===null||v===undefined||v==='') return '-'; var d=(v instanceof Date)?v:new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleString(); }
 function buildRows(obj, skip){
     if(!obj) return '<div class="text-muted p-2" style="font-size:12px;">No data</div>';
-    let html='';
-    for(const k in obj){
-        if(skip.includes(k)) continue;
-        let v = obj[k]; if(v===null||v===undefined||v==='') v='-';
-        if(k.toLowerCase().includes('date') && v!=='-'){ try{ v = new Date(v).toLocaleString(); }catch(e){} }
-        html += `<div class="d-flex justify-content-between mb-2"><span style="font-size:12px;color:#6b7280;">${fmtLabel(k)}:</span><span style="font-size:12px;font-weight:500;text-align:right;">${v}</span></div>`;
+    var html='';
+    for(var k in obj){
+        if(skip && skip.indexOf(k)>=0) continue;
+        var v=obj[k]; if(v===null||v===undefined||v==='') v='-';
+        if(v!=='-' && (k.toLowerCase().indexOf('date')>=0 || k==='CreatedOn')) v=fmtDate(v);
+        html += '<div class="d-flex justify-content-between mb-2" style="gap:12px;"><span style="font-size:12px;color:#6b7280;white-space:nowrap;">'+esc(fmtLabel(k))+':</span><span style="font-size:12px;font-weight:500;text-align:right;word-break:break-word;">'+esc(v)+'</span></div>';
     }
     return html || '<div class="text-muted p-2" style="font-size:12px;">No data</div>';
 }
+function ticketBadge(no,id){
+    if(!no) return '<span class="text-muted">-</span>';
+    if(!id) return '<span style="background:#111827;color:#fff;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;">'+esc(no)+'</span>';
+    return '<button type="button" onclick="openDetailModal('+id+')" title="Ye ticket kholo" style="background:#111827;color:#fff;border:0;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;">'+esc(no)+'</button>';
+}
+function priBadge(p){
+    var ok=['Urgent','High','Medium','Low'].indexOf(p)>=0;
+    return ok ? '<span class="badge-pri-'+esc(p)+'">'+esc(p)+'</span>' : '<span>'+esc(p||'-')+'</span>';
+}
+function statusPill(s){
+    return '<span class="badge bg-light border text-dark" style="border-radius:20px;font-size:11px;white-space:nowrap;">'+esc(s||'-')+'</span>';
+}
+// Same user + ~same time (2 sec) + change actions = ek hi row
+function groupAudit(rows, withTicket){
+    rows=rows||[];
+    var sorted=rows.slice().sort(function(a,b){
+        var ta=a.ChangedOn?new Date(a.ChangedOn).getTime():0, tb=b.ChangedOn?new Date(b.ChangedOn).getTime():0;
+        if(ta!==tb) return ta-tb;
+        return (a.HistoryId||0)-(b.HistoryId||0);
+    });
+    var groups=[];
+    sorted.forEach(function(a){
+        var t=a.ChangedOn?new Date(a.ChangedOn).getTime():0;
+        var last=groups.length?groups[groups.length-1]:null;
+        var change=(a.Action==='Edited'||a.Action==='Reassigned');
+        var lastChange=last && (last.action==='Edited'||last.action==='Reassigned');
+        var sameTicket=!withTicket || (last && String(last.supportId)===String(a.SupportId));
+        if(last && change && lastChange && sameTicket && (last.who||'')===(a.ChangedByName||'') && Math.abs(t-last.firstTime)<=2000){
+            last.items.push(a);
+            if(t>last.lastTime) last.lastTime=t;
+        } else {
+            groups.push({action:a.Action,who:a.ChangedByName,firstTime:t,lastTime:t,items:[a],supportId:a.SupportId,ticketNo:a.TicketNo});
+        }
+    });
+    return groups;
+}
+function auditTable(rows, withTicket, emptyText){
+    var groups=groupAudit(rows, withTicket);
+    if(!groups.length) return '<div class="text-muted p-3" style="font-size:12px;">'+esc(emptyText||'No history')+'</div>';
+    groups.reverse(); // latest first
+    var head='<tr><th>Time</th>'+(withTicket?'<th>Ticket</th>':'')+'<th>User</th><th>Action</th><th>Reason</th></tr>';
+    var body=groups.map(function(g){
+        var when=fmtDate(g.lastTime?new Date(g.lastTime):null);
+        var who='<b>'+esc(g.who||'-')+'</b>';
+        var tcell=withTicket?'<td style="white-space:nowrap;">'+ticketBadge(g.ticketNo,g.supportId)+'</td>':'';
+        if(g.action==='Created'){
+            return '<tr><td style="white-space:nowrap;font-size:11px;">'+when+'</td>'+tcell+'<td style="white-space:nowrap;font-size:11px;">'+who+'</td><td style="font-size:11px;"><span class="badge" style="background:#dcfce7;color:#166534;">Created</span> New ticket created</td><td style="font-size:11px;color:#94a3b8;">-</td></tr>';
+        }
+        var hasReassign=false, hasEdit=false, reason='';
+        g.items.forEach(function(a){
+            if(a.Action==='Reassigned') hasReassign=true; else hasEdit=true;
+            if(!reason && a.Reason) reason=a.Reason;
+        });
+        var changes=g.items.map(function(a){
+            var label=fmtLabel(a.FieldName||'');
+            var oldV=a.OldValue ? '<span style="color:#dc2626;text-decoration:line-through;">'+esc(a.OldValue)+'</span> → ' : '';
+            return '<b>'+esc(label)+'</b>: '+oldV+'<span style="color:#16a34a;">'+esc(a.NewValue||'-')+'</span>';
+        }).join('<br>');
+        var badgeText = hasReassign && hasEdit ? 'Re-Assigned + Edited' : (hasReassign ? 'Re-Assigned' : 'Edited ('+g.items.length+' change'+(g.items.length>1?'s':'')+')');
+        var badgeStyle = hasReassign ? 'background:#fef3c7;color:#92400e;' : 'background:#e0e7ff;color:#3730a3;';
+        return '<tr><td style="white-space:nowrap;font-size:11px;">'+when+'</td>'+tcell+'<td style="white-space:nowrap;font-size:11px;">'+who+'</td><td style="font-size:11px;"><span class="badge" style="'+badgeStyle+'">'+badgeText+'</span> '+changes+'</td><td style="font-size:11px;">'+(reason?'<span class="fst-italic">'+esc(reason)+'</span>':'<span class="text-muted">-</span>')+'</td></tr>';
+    }).join('');
+    return '<div class="table-responsive" style="max-height:220px;overflow:auto;"><table class="table table-sm mb-0" style="font-size:12px;"><thead style="position:sticky;top:0;background:#f9fafb;z-index:2;">'+head+'</thead><tbody>'+body+'</tbody></table></div>';
+}
+function clientCallsTable(rows){
+    if(!rows || !rows.length) return '<div class="text-muted p-3" style="font-size:12px;">Is client ki koi call nahi mili.</div>';
+    var body=rows.map(function(c){
+        var age=null; if(c.SupportDate){ var d=new Date(c.SupportDate); if(!isNaN(d.getTime())) age=Math.floor((Date.now()-d.getTime())/86400000); }
+        return '<tr><td style="white-space:nowrap;">'+ticketBadge(c.TicketNo,c.SupportId)+'</td><td style="font-size:12px;white-space:nowrap;">'+esc(fmtDate(c.SupportDate))+'</td><td title="'+esc(c.Issue)+'"><span style="display:inline-block;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;">'+esc(c.Issue||'-')+'</span></td><td>'+priBadge(c.Priority)+'</td><td>'+statusPill(c.Status)+'</td><td style="font-size:12px;white-space:nowrap;">'+esc(c.AssignedToName||'-')+'</td><td style="white-space:nowrap;">'+(age===null?'-':(age<=0?'Today':age+'d'))+'</td></tr>';
+    }).join('');
+    return '<div class="table-responsive" style="max-height:220px;overflow:auto;"><table class="table table-sm mb-0" style="font-size:12px;"><thead style="position:sticky;top:0;background:#f9fafb;z-index:2;"><tr><th>Ticket</th><th>Date</th><th>Issue</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Age</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+}
+var dssDetailModal=null;
 function openDetailModal(id){
-    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
-    document.getElementById('modalTicketNo').innerText = 'Loading...';
-    document.getElementById('modalBody').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-dark"></div></div>';
-    document.getElementById('modalEditLink').href = '/DailySupport/Edit/' + id;
-    modal.show();
-    fetch('/DailySupport/GetDetails?id=' + id).then(r=>{ if(!r.ok){ throw new Error('HTTP '+r.status); } return r.json(); }).then(data=>{
-        const t=data.ticket||{}, c=data.customer||{}, h=data.history||[];
-        document.getElementById('modalTicketNo').innerText = (t.TicketNo||'') + ' - ' + (t.CompanyName || c.ClientName || '');
-        let hist = h.length? h.map(row=>`<tr><td><span style="background:#111827;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;">${row.TicketNo}</span></td><td style="font-size:11px;">${row.SupportDate?new Date(row.SupportDate).toLocaleString():'-'}</td><td style="font-size:11px;">${row.Issue||'-'}</td><td>${row.Status}</td><td>${row.Priority}</td></tr>`).join('') : '<tr><td colspan="5" class="text-center text-muted">No history</td></tr>';
-        document.getElementById('modalBody').innerHTML = `<div class="p-3">
-            <div class="row g-3 mb-3">
-                <div class="col-md-6"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:8px;">Ticket Info</div>${buildRows(t,['ClientId','AssignedTo'])}</div></div>
-                <div class="col-md-6"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:8px;">Customer Info</div>${buildRows(c,['ClientId'])}</div></div>
-            </div>
-            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;">
-                <div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:8px;">Customer History (Last 10 Calls)</div>
-                <table class="table table-sm mb-0" style="font-size:12px;"><thead><tr><th>Ticket</th><th>Date</th><th>Issue</th><th>Status</th><th>Priority</th></tr></thead><tbody>${hist}</tbody></table>
-            </div>
-        </div>`;
-    }).catch(err=>{ console.error('GetDetails failed:', err); document.getElementById('modalBody').innerHTML='<div class="p-4 text-danger text-center">Failed to load: '+err.message+'</div>'; });
+    var modalEl=document.getElementById('detailModal');
+    if(!dssDetailModal) dssDetailModal=new bootstrap.Modal(modalEl);
+    document.getElementById('modalTicketNo').innerText='Loading...';
+    document.getElementById('modalBody').innerHTML='<div class="text-center p-5"><div class="spinner-border text-dark"></div></div>';
+    document.getElementById('modalEditLink').href='/DailySupport/Edit/'+id;
+    dssDetailModal.show();
+    fetch('/DailySupport/GetDetails?id='+encodeURIComponent(id)+'&includeAudit=true&includeClientHistory=true',{headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data){
+        var t=data.ticket||{}, c=data.customer||{}, audit=data.audit||[], calls=data.clientHistory||[], activity=data.clientAudit||[];
+        document.getElementById('modalTicketNo').innerText=(t.TicketNo||'')+(t.CompanyName?' - '+t.CompanyName:(c.ClientName?' - '+c.ClientName:''));
+        var ticketSkip=['SupportId','ClientId','CustomerID','AssignedTo','CompanyName'];
+        var groupsCount=groupAudit(activity,true).length;
+        var hasClient=!!(c && (c.ClientId!==undefined || c.ClientName));
+        var html='<ul class="nav nav-tabs px-3 pt-2" role="tablist">'+
+            '<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dssTabDetails" type="button">Details</button></li>'+
+            '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dssTabTicketHist" type="button">Ticket History'+(audit.length?' ('+audit.length+')':'')+'</button></li>'+
+            '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dssTabClient" type="button">Client Calls'+(calls.length?' ('+calls.length+')':'')+'</button></li>'+
+            '<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dssTabActivity" type="button">Client Activity'+(groupsCount?' ('+groupsCount+')':'')+'</button></li>'+
+            '</ul><div class="tab-content p-2">'+
+            '<div class="tab-pane fade show active" id="dssTabDetails">'+
+                '<div class="row g-2">'+
+                    '<div class="col-md-6"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:5px;">Ticket Info</div>'+buildRows(t,ticketSkip)+'</div></div>'+
+                    '<div class="col-md-6"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:5px;">Customer Info</div>'+(hasClient?buildRows(c,['ClientId']):'<div class="text-muted" style="font-size:12px;">Is ticket se koi client linked nahi hai.</div>')+'</div></div>'+
+                '</div>'+
+            '</div>'+
+            '<div class="tab-pane fade" id="dssTabTicketHist"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:5px;">Is Ticket Ki History (Created &amp; Edits)</div>'+auditTable(audit,false,'Is ticket par abhi tak koi change nahi hua.')+'</div></div>'+
+            '<div class="tab-pane fade" id="dssTabClient"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:5px;">Client Ki Saari Calls (Total '+calls.length+')</div>'+clientCallsTable(calls)+'</div></div>'+
+            '<div class="tab-pane fade" id="dssTabActivity"><div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;"><div style="font-size:10px;font-weight:700;color:#6b7280;margin-bottom:5px;">Client Activity Timeline - kab kya hua (Total '+groupsCount+' events)</div>'+auditTable(activity,true,'Is client ke tickets par abhi tak koi change nahi hua.')+'</div></div>'+
+            '</div>';
+        document.getElementById('modalBody').innerHTML=html;
+    })
+    .catch(function(err){ console.error('GetDetails failed:',err); document.getElementById('modalBody').innerHTML='<div class="p-4 text-danger text-center">Failed to load: '+esc(err.message)+'</div>'; });
 }
 (function initOnLoad(){
     updateExcelLink();

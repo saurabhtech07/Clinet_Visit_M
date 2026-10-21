@@ -57,6 +57,29 @@ public class AuthFilter : IAuthorizationFilter
         var userId = context.HttpContext.Session.GetInt32("UserId");
         var isAuthenticated = context.HttpContext.User.Identity?.IsAuthenticated == true;
 
+        /* ---- SESSION RESTORE ------------------------------------------------
+           Session in-memory hai (AddDistributedMemoryCache). App restart /
+           rebuild hone par UserId + FullName session se wipe ho jaate hain.
+           Auth cookie 7 din valid rehta hai (IsPersistent), to user login
+           rehne ke bajaye andar ghus jaata hai - par session khaali hone ki
+           wajah se history me "ChangedBy / ChangedByName" NULL likh diye
+           jaate the aur View modal me user ka naam BLANK dikhta tha.
+
+           Ab cookie ke claims se session wapas bhar dete hain.               */
+        if (userId == null && isAuthenticated)
+        {
+            var claims = context.HttpContext.User;
+            var uidText = claims?.FindFirst("UserId")?.Value;
+            var fullName = claims?.FindFirst("FullName")?.Value;
+            if (string.IsNullOrWhiteSpace(fullName)) fullName = claims?.Identity?.Name;
+            if (int.TryParse(uidText, out var restoredUid))
+            {
+                context.HttpContext.Session.SetInt32("UserId", restoredUid);
+                context.HttpContext.Session.SetString("FullName", fullName ?? "");
+                userId = restoredUid;
+            }
+        }
+
         // Agar Session bhi nahi aur Cookie auth bhi nahi to hi login pe bhej
         if (userId == null && !isAuthenticated)
         {
