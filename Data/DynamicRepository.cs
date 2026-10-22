@@ -46,7 +46,7 @@ public class DynamicRepository
     {
         ValidateTable("Client");
         page = Math.Max(1, page);
-        pageSize = pageSize is 10 or 20 or 50 or 100? pageSize : 10;
+        pageSize = PageSizePolicy.Resolve(pageSize);
 
         string orderColumn =!string.IsNullOrWhiteSpace(sort)? sort : "ClientId";
         string orderDir = string.Equals(direction, "ASC", StringComparison.OrdinalIgnoreCase)? "ASC" : "DESC";
@@ -83,7 +83,7 @@ where = @" WHERE CAST(c.ClientId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName 
     {
         ValidateTable("ClientVisit");
         page = Math.Max(1, page);
-        pageSize = pageSize is 10 or 20 or 50 or 100? pageSize : 10;
+        pageSize = PageSizePolicy.Resolve(pageSize);
         string orderDir = string.Equals(direction, "ASC", StringComparison.OrdinalIgnoreCase)? "ASC" : "DESC";
         string orderColumn =!string.IsNullOrWhiteSpace(sort)? sort : "VisitId";
         var conditions = new List<string>();
@@ -117,7 +117,7 @@ where = @" WHERE CAST(c.ClientId AS NVARCHAR(MAX)) LIKE @Search OR c.ClientName 
     {
         ValidateTable(tableName);
         page = Math.Max(1, page);
-        pageSize = pageSize is 10 or 20 or 50 or 100? pageSize : 10;
+        pageSize = PageSizePolicy.Resolve(pageSize);
         using var con = _db.GetConnection();
         con.Open();
 

@@ -162,7 +162,7 @@ public IActionResult Index(int page = 1, int pageSize = 10, string search = null
     [HttpGet("ExportExcel")]
     public IActionResult ExportExcel(string search = null)
     {
-        var data = _repo.GetTable("StateMaster", 1, 100000, search, null, "ASC");
+        var data = _repo.GetTable("StateMaster", 1, int.MaxValue, search, null, "ASC");
         var csv = new StringBuilder();
         csv.AppendLine("Sr.No,StateId,StateCode,StateName,IsActive,Date & Time");
         int sr = 1;

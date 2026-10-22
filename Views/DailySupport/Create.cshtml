@@ -321,7 +321,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
 </style>
 
 <div class="d-flex align-items-center gap-2 mb-2">
-    <a href="/DailySupport" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/DailySupport');">
+    <a href="/DailySupport" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/DailySupport' + window.location.search);">
         <i class="bi bi-arrow-left me-1"></i> Back
     </a>
     <h4 class="fw-bold mb-0" style="font-size:16px;">Daily Support - New Call Entry</h4>
@@ -412,6 +412,11 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
     </div>
 </form>
 <script>
+    /* Back button ke href me filters daal do - new tab / middle click par bhi
+       filter bache (warna sirf onclick wala path carry karta hai) */
+    document.querySelectorAll('a[href="/DailySupport"]').forEach(function(a){
+        a.href='/DailySupport'+window.location.search;
+    });
     // Client Visit Create jaisa: search box + native dropdown (sare client load hote hain)
     function onClientChange(id){
         var sel=document.getElementById('clientDropdown');
@@ -455,7 +460,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
         });
         searchBox.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();return false;}});
     }
-    function clearAll(){ window.loadPage('/DailySupport/Create','New Call Entry'); }
+    function clearAll(){ window.loadPage('/DailySupport/Create'+window.location.search,'New Call Entry'); }
     // Issue box me bolkar likhne ke liye (Client Visit ke Discussion jaisa)
     var rec=null, listening=false;
     function toggleDictation(){
@@ -473,7 +478,7 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
         if(!f) return;
         f.addEventListener('submit',function(e){
             e.preventDefault();
-            Ajax.submit({url:'/DailySupport/Create',form:f,onSuccess:function(){ window.loadPage('/DailySupport'); }});
+            Ajax.submit({url:'/DailySupport/Create',form:f,onSuccess:function(){ window.loadPage('/DailySupport' + window.location.search); }});
         });
     })();
 </script>

@@ -30,7 +30,7 @@ public class DailyReportRepository
         int? assignedTo, DateTime? fromDate, DateTime? toDate, string? sort, string direction)
     {
         if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 10;   // Index allowed sizes clamp karta hai; Export all-rows (int.MaxValue) bhejta hai
+        pageSize = PageSizePolicy.Resolve(pageSize);   // Grid allowed sizes clamp karta hai; Export "all rows" (int.MaxValue) bhejta hai
 
         var vm = new DailyReportViewModel
         {

@@ -45,6 +45,7 @@ public class LeadRepository
         string? sort, string direction)
     {
         if (page < 1) page = 1;
+        pageSize = PageSizePolicy.Resolve(pageSize);
 
         var vm = new DynamicTableViewModel
         {

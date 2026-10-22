@@ -528,7 +528,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     [HttpGet]
     public IActionResult ExportExcel(string? search)
     {
-        var data = _dynamicRepo.GetClientVisitTable(1, 10000, search, null, "DESC");
+        var data = _dynamicRepo.GetClientVisitTable(1, int.MaxValue, search, null, "DESC");
         var vtMap = GetVisitTypeMap();
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("ClientVisit");
@@ -554,7 +554,7 @@ public IActionResult ClientVisitReport(int page = 1, int pageSize = 10, string? 
     [HttpGet]
     public IActionResult ExportCsv(string? search)
     {
-        var data = _dynamicRepo.GetClientVisitTable(1, 10000, search, null, "DESC");
+        var data = _dynamicRepo.GetClientVisitTable(1, int.MaxValue, search, null, "DESC");
         var vtMap = GetVisitTypeMap();
         var sb = new StringBuilder();
         sb.AppendLine(string.Join(",", data.Columns.Select(c => c == "VisitTypeId" ? "Visit Type" : c)));

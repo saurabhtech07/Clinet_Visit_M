@@ -99,7 +99,7 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
     <h4 class="fw-bold mb-0" style="font-size:16px;letter-spacing:-0.01em;">Daily Support System</h4>
     <div class="d-flex gap-1">
         <a href="/Client/Create" data-no-modal class="btn btn-light border" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/Client/Create', 'New Customer');">+ New Customer</a>
-        <a href="/DailySupport/Create" data-no-modal class="btn btn-dark" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/DailySupport/Create', 'New Call Entry');">+ New Call Entry</a>
+        <a href="/DailySupport/Create" data-no-modal class="btn btn-dark" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/DailySupport/Create?' + dssQuery(dssCurrentPage, dssPageSize, false), 'New Call Entry');">+ New Call Entry</a>
     </div>
 </div>
 <div class="row g-2 mb-2">
@@ -158,9 +158,19 @@ function dssQuery(page,pageSize,partial){
   if(f.user) p.append('user',f.user);
   return p.toString();
 }
+/* "New Call Entry" ke href me filters daal do - new tab / middle click par
+   bhi filter bache (warna sirf onclick wala path carry karta hai) */
+function dssSyncLinks(){
+  document.querySelectorAll('a[href^="/DailySupport/Create"]').forEach(function(a){
+    a.href='/DailySupport/Create?'+dssQuery(dssCurrentPage,dssPageSize,false);
+  });
+}
+dssSyncLinks();
 function dssRender(html){
   var box=document.getElementById('tableContainer'); if(!box) return;
   box.innerHTML=html;
+  // Filters badalne par "New Call Entry" ka href bhi stale ho jata hai - refresh karo
+  if (typeof dssSyncLinks === 'function') dssSyncLinks();
   // Server page/pageSize clamp kar chuka hota hai - nayi values yahan se padho
   var tb=box.querySelector('.dss-grid-toolbar');
   if(tb) dssCurrentPage=parseInt(tb.getAttribute('data-current-page'))||1;
@@ -464,7 +474,8 @@ window.openTicketDetails = function (id) {
 
   titleEl.textContent = "Loading…";
   bodyEl.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-dark"></div></div>';
-  if (editEl) editEl.href = "/DailySupport/Edit/" + id;
+  // Edit link me filters bhi - Edit karke wapas aane par filter na ude
+  if (editEl) editEl.href = "/DailySupport/Edit/" + id + "?" + dssQuery(dssCurrentPage, dssPageSize, false);
   modal.show();
 
   fetch("/DailySupport/GetDetails?id=" + encodeURIComponent(id) + "&single=true", { headers: { "X-Requested-With": "XMLHttpRequest" } })

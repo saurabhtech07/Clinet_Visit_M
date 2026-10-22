@@ -21,6 +21,7 @@ public class FollowUpController : Controller
     [HttpGet]
     public IActionResult Index(int page = 1, int pageSize = 10, int? userId = null, string? search = null, string? status = null, string? sort = null, string direction = "DESC", string? section = null)
     {
+        if (!PageSizePolicy.GridSizes.Contains(pageSize)) pageSize = PageSizePolicy.Default;
         var vm = _repo.GetPage(page, pageSize, userId, search, status ?? section, sort, direction);
         vm.Users   = _userRepo.GetAll();
         vm.Clients = _clientRepo.GetAll();
@@ -32,6 +33,7 @@ public class FollowUpController : Controller
     [HttpGet]
     public IActionResult Filter(int page = 1, int pageSize = 10, int? userId = null, string? search = null, string? status = null, string? sort = null, string direction = "DESC")
     {
+        if (!PageSizePolicy.GridSizes.Contains(pageSize)) pageSize = PageSizePolicy.Default;
         var vm = _repo.GetPage(page, pageSize, userId, search, status, sort, direction);
         vm.Users = _userRepo.GetAll();
         return PartialView("_FuResult", vm);

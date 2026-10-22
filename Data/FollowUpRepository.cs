@@ -33,7 +33,7 @@ public class FollowUpRepository
         SyncVisitsToFollowUps();
 
         if (page < 1) page = 1;
-        if (pageSize is not (10 or 20 or 50 or 100)) pageSize = 10;
+        pageSize = PageSizePolicy.Resolve(pageSize);
 
         var vm = new FollowUpViewModel
         {

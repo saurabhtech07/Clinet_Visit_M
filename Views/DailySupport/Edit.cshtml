@@ -70,7 +70,7 @@
 </style>
 
 <div class="d-flex align-items-center gap-2 mb-2">
-    <a href="/DailySupport" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/DailySupport');">
+    <a href="/DailySupport" class="btn btn-light border btn-sm px-3" onclick="event.preventDefault(); window.loadPage('/DailySupport' + window.location.search);">
         <i class="bi bi-arrow-left me-1"></i> Back
     </a>
     <h4 class="fw-bold mb-0" style="font-size:16px;">Edit Call - @row["TicketNo"]</h4>
@@ -155,12 +155,17 @@
 </div>
 
 <script>
+/* Back button ke href me filters daal do - new tab / middle click par bhi
+   filter bache (warna sirf onclick wala path carry karta hai) */
+document.querySelectorAll('a[href="/DailySupport"]').forEach(function(a){
+  a.href='/DailySupport'+window.location.search;
+});
 (function(){
     var f=document.getElementById('editCallForm');
     if(!f) return;
     f.addEventListener('submit',function(e){
         e.preventDefault();
-        Ajax.submit({url:'/DailySupport/Edit/@row["SupportId"]',form:f,onSuccess:function(){ window.loadPage('/DailySupport'); }});
+        Ajax.submit({url:'/DailySupport/Edit/@row["SupportId"]',form:f,onSuccess:function(){ window.loadPage('/DailySupport' + window.location.search); }});
     });
 
     // ---- Issue box me bolkar likhne ke liye (Create form jaisa) ----
