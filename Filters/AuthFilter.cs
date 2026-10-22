@@ -30,6 +30,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace ClientVisitManagement.Filters;
 
@@ -76,6 +77,11 @@ public class AuthFilter : IAuthorizationFilter
             {
                 context.HttpContext.Session.SetInt32("UserId", restoredUid);
                 context.HttpContext.Session.SetString("FullName", fullName ?? "");
+                // Role bhi restore karo - warna app restart ke baad role pata hi
+                // nahi chalega aur "assign kar do" wala feature band ho jayega.
+                var role = claims?.FindFirst(ClaimTypes.Role)?.Value;
+                if (!string.IsNullOrWhiteSpace(role))
+                    context.HttpContext.Session.SetString("Role", role);
                 userId = restoredUid;
             }
         }

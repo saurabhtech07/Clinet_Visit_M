@@ -42,9 +42,11 @@ public class DailySupportController : Controller
         if(!string.IsNullOrWhiteSpace(fromDate)){ cmd.Parameters.AddWithValue("@F",fromDate); if(cmd.Parameters.Contains("@Cf")) cmd.Parameters["@Cf"].Value=fromDate; }
         if(!string.IsNullOrWhiteSpace(toDate)){ cmd.Parameters.AddWithValue("@T",toDate); if(cmd.Parameters.Contains("@Ct")) cmd.Parameters["@Ct"].Value=toDate; }
     }
+    // AssignedTo scope - cards ke count queries me use hota hai
+    private void AddUserParam(SqlCommand cmd, string? user){ if(!string.IsNullOrWhiteSpace(user)) cmd.Parameters.AddWithValue("@U",user); }
 
     [HttpGet]
-    public IActionResult Index(string? search, string? fromDate, string? toDate, string? status, string? user, int page=1, int pageSize=10){
+    public IActionResult Index(string? search, string? fromDate, string? toDate, string? status, string? user, int page=1, int pageSize=10, string? mywork=null){
         // ---- Pagination safety ----
         // Pehle page/pageSize validate nahi hote the. page=0 / pageSize=0 aane
         // par SQL OFFSET/FETCH galat ho jata tha aur grid KHAALI dikhta tha.
@@ -52,6 +54,27 @@ public class DailySupportController : Controller
         if(page<1) page=1;
         using var con=_db.GetConnection(); con.Open();
         var vm=new DailySupportDashboardViewModel(); vm.SearchTerm=search; vm.FromDate=fromDate; vm.ToDate=toDate; vm.FilterStatus=status; vm.FilterUser=user;
+
+        // ---- ROLE SCOPE + "MY WORK" MODE ----------------------------------
+        // Admin/Manager sab tickets dekh sakte hain. Normal (non Admin/Manager)
+        // user ko HAMESHA sirf apne hi assigned tickets dikhenge - URL me
+        // ?user=13 likh ke bhi server userId par force kar deta hai, isliye
+        // URL hack se dusron ka data nahi mil sakta.
+        bool canAssign=AccessControl.CanAssignWork(HttpContext);
+        int? myUid=AccessControl.CurrentUserId(HttpContext);
+        bool isMyWork=!string.IsNullOrWhiteSpace(mywork)&&(mywork=="1"||mywork.Equals("true",StringComparison.OrdinalIgnoreCase));
+        if(!canAssign||isMyWork){
+            // user ko apni id par force karo (userId na mile to kuch bhi na dikhe)
+            user=myUid.HasValue?myUid.Value.ToString():"-1";
+        }
+        vm.FilterUser=user;
+        vm.IsMyWork=isMyWork; vm.BaseUrl="/DailySupport"; vm.MyUserId=myUid;
+        vm.MyUserName=AccessControl.CurrentUserName(HttpContext); vm.CanAssign=canAssign;
+
+        // Badge ka count - mere OPEN tickets (Closed ke alawa)
+        if(myUid.HasValue){
+            try{ using var pc=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND (Status IS NULL OR Status <> 'Closed')",con); pc.Parameters.AddWithValue("@M",myUid.Value); vm.MyPendingCount=Convert.ToInt32(pc.ExecuteScalar()); }catch{}
+        }
         // User filter dropdown ke liye active users
         try{ using var ucmd=new SqlCommand("SELECT UserId, FullName FROM Users WHERE IsActive=1 ORDER BY FullName",con); using var ureader=ucmd.ExecuteReader(); while(ureader.Read()){ vm.Users.Add(new Dictionary<string,object?>{ ["UserId"]=ureader.GetInt32(0), ["FullName"]=ureader.IsDBNull(1)?ureader.GetInt32(0).ToString():ureader.GetString(1) }); } }catch{}
         // ---- Stats cards ka date filter ----
@@ -65,14 +88,17 @@ public class DailySupportController : Controller
         else if(!string.IsNullOrWhiteSpace(toDate)) dateSql=" AND d.SupportDate < DATEADD(DAY,1,@T)";
         bool hasRange=!string.IsNullOrEmpty(dateSql);
         string todaySql= hasRange ? dateSql : " AND CAST(d.SupportDate AS DATE)=CAST(GETDATE() AS DATE)";
+        // Cards bhi user ke scope me count hone chahiye - normal user ko apne
+        // hi cards dikhenge (dusron ka data leak na ho).
+        string userSql= !string.IsNullOrWhiteSpace(user) ? " AND d.AssignedTo=@U " : "";
         try{
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE 1=1 {todaySql}",con)){ AddDateParams(cmd,fromDate,toDate); vm.TodayCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE 1=1 {dateSql}",con)){ AddDateParams(cmd,fromDate,toDate); vm.TotalCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status IN ('Open','In Progress','On Hold','Pending') {dateSql}",con)){ AddDateParams(cmd,fromDate,toDate); vm.OpenCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status='Closed' {todaySql}",con)){ AddDateParams(cmd,fromDate,toDate); vm.ClosedToday=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status IN ('In Progress','Pending','On Hold') {dateSql}",con)){ AddDateParams(cmd,fromDate,toDate); vm.PendingCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
+            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE 1=1 {todaySql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.TodayCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
+            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE 1=1 {dateSql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.TotalCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
+            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status IN ('Open','In Progress','On Hold','Pending') {dateSql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.OpenCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
+            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status='Closed' {todaySql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.ClosedToday=Convert.ToInt32(cmd.ExecuteScalar()); }
+            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status IN ('In Progress','Pending','On Hold') {dateSql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.PendingCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
         }catch{}
-        string where=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)) where+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) where+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(user)) where+=" AND d.AssignedTo = @UserId ";
+        string where=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)) where+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) where+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(user)) where+=" AND d.AssignedTo = @UserId "; if(isMyWork) where+=" AND (d.Status IS NULL OR d.Status <> 'Closed') ";
         using var countCmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId {where}",con); if(!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){countCmd.Parameters.AddWithValue("@FromDate",fromDate);countCmd.Parameters["@FromDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(toDate)){countCmd.Parameters.AddWithValue("@ToDate",toDate);countCmd.Parameters["@ToDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) countCmd.Parameters.AddWithValue("@UserId",user); int total=0; try{total=(int)countCmd.ExecuteScalar();}catch{}
         // Last page se aage ka page request aaye (ya data delete ho gaya) to
         // grid khaali na dikhe - use last valid page par le aao
@@ -80,14 +106,14 @@ public class DailySupportController : Controller
         if(page>totalPages) page=totalPages;
         string dataSql=$@"SELECT d.*, c.ClientName, c.ClientName as CompanyName, u.FullName as AssignedName FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId {where} ORDER BY d.SupportId DESC OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
         using var dataCmd=new SqlCommand(dataSql,con); if(!string.IsNullOrWhiteSpace(search)) dataCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){dataCmd.Parameters.AddWithValue("@FromDate",fromDate);dataCmd.Parameters["@FromDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(toDate)){dataCmd.Parameters.AddWithValue("@ToDate",toDate);dataCmd.Parameters["@ToDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(status)) dataCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) dataCmd.Parameters.AddWithValue("@UserId",user); dataCmd.Parameters.AddWithValue("@Skip",(page-1)*pageSize); dataCmd.Parameters.AddWithValue("@Take",pageSize);
-        var table=new DailySupportGridViewModel{CurrentPage=page,PageSize=pageSize,TotalRecords=total,SearchTerm=search,FilterStatus=status,FromDate=fromDate,ToDate=toDate,FilterUser=user};
+        var table=new DailySupportGridViewModel{CurrentPage=page,PageSize=pageSize,TotalRecords=total,SearchTerm=search,FilterStatus=status,FromDate=fromDate,ToDate=toDate,FilterUser=user,BaseUrl=vm.BaseUrl,IsMyWork=isMyWork,CanAssign=canAssign};
         try{ using var reader=dataCmd.ExecuteReader(); for(int i=0;i<reader.FieldCount;i++) table.Columns.Add(reader.GetName(i)); while(reader.Read()){ var row=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i); table.Rows.Add(row);} }catch{}
         vm.TicketTable=table;
         
         // CSV/Excel export from Index (poora filtered data)
         if(!string.IsNullOrWhiteSpace(Request.Query["export"])){
             var exp = Request.Query["export"].ToString().ToLower();
-            string exWhere=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) exWhere+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)) exWhere+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) exWhere+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) exWhere+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(user)) exWhere+=" AND d.AssignedTo = @UserId ";
+            string exWhere=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) exWhere+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)) exWhere+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) exWhere+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) exWhere+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(user)) exWhere+=" AND d.AssignedTo = @UserId "; if(isMyWork) exWhere+=" AND (d.Status IS NULL OR d.Status <> 'Closed') ";
             string exSql=$@"SELECT d.TicketNo, d.SupportDate, c.ClientName, d.Mobile, d.Channel, d.CallType, d.Category, d.Priority, d.Status, u.FullName as AssignedTo, d.Issue FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId {exWhere} ORDER BY d.SupportId DESC";
             using var excmd=new SqlCommand(exSql,con); if(!string.IsNullOrWhiteSpace(search)) excmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){excmd.Parameters.AddWithValue("@FromDate",fromDate);excmd.Parameters["@FromDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(toDate)){excmd.Parameters.AddWithValue("@ToDate",toDate);excmd.Parameters["@ToDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(status)) excmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) excmd.Parameters.AddWithValue("@UserId",user);
             var dt=new DataTable(); try{ using var adapter=new SqlDataAdapter(excmd); adapter.Fill(dt);}catch{}
@@ -113,6 +139,86 @@ public class DailySupportController : Controller
         // tab poora page inject kar deti hai aur layout dobara ban jata hai.
         if(IsAjaxRequest() && Request.Query.ContainsKey("partial")) return PartialView("_CallTable",table);
         return View(vm);
+    }
+
+    // ============================================================
+    // MY WORK - POPUP (koi alag page nahi).
+    // Daily Support ke "My Work" button se ye partial modal me load hota hai:
+    // 4 stat cards + mere saare open tickets card list me.
+    // Data sirf logged-in user ka - server par force, URL se change nahi ho sakta.
+    // ============================================================
+    [HttpGet]
+    public IActionResult MyWorkPanel()
+    {
+        int? myUid=AccessControl.CurrentUserId(HttpContext);
+        var vm=new DailySupportDashboardViewModel{
+            IsMyWork=true,
+            MyUserId=myUid,
+            MyUserName=AccessControl.CurrentUserName(HttpContext),
+            CanAssign=AccessControl.CanAssignWork(HttpContext)
+        };
+        if(myUid.HasValue){
+            try{
+                using var con=_db.GetConnection(); con.Open();
+
+                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND (Status IS NULL OR Status <> 'Closed')",con)){
+                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.MyPendingCount=Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE)",con)){
+                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.TodayCalls=Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M",con)){
+                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.TotalCalls=Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND Status IN ('Open','In Progress','On Hold','Pending')",con)){
+                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.OpenCalls=Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND Status='Closed' AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE)",con)){
+                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.ClosedToday=Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND Status IN ('In Progress','Pending','On Hold')",con)){
+                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.PendingCalls=Convert.ToInt32(cmd.ExecuteScalar());
+                }
+
+                // Sirf WO tickets jo mere naam par assigned hain aur abhi CLOSED
+                // nahi hue. Closed tickets list me nahi aate.
+                // Har task ke saath uski LATEST reassign reason bhi aati hai
+                // (OUTER APPLY) - "mujhe ye kaam kyun diya gaya".
+                // Order: Urgent -> High -> Medium -> Low, uske baad newest.
+                string sqlWithReason=@"SELECT TOP 200 d.*, c.ClientName, u.FullName as AssignedName,
+                        hr.Reason as ReassignReason, hr.ChangedByName as ReassignedBy, hr.ChangedOn as ReassignedOn
+                    FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId
+                    OUTER APPLY (SELECT TOP 1 h.Reason, h.ChangedByName, h.ChangedOn
+                                 FROM DailySupportHistory h
+                                 WHERE h.SupportId=d.SupportId AND h.Action='Reassigned'
+                                   AND NULLIF(LTRIM(RTRIM(ISNULL(h.Reason,''))),'') IS NOT NULL
+                                 ORDER BY h.HistoryId DESC) hr
+                    WHERE d.AssignedTo=@M AND (d.Status IS NULL OR d.Status <> 'Closed')
+                    ORDER BY CASE LOWER(ISNULL(d.Priority,'')) WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                             d.SupportId DESC";
+                // Fallback: agar DB me DailySupportHistory / Reason column na ho
+                string sqlBasic=@"SELECT TOP 200 d.*, c.ClientName, u.FullName as AssignedName
+                    FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId
+                    WHERE d.AssignedTo=@M AND (d.Status IS NULL OR d.Status <> 'Closed')
+                    ORDER BY CASE LOWER(ISNULL(d.Priority,'')) WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+                             d.SupportId DESC";
+
+                void ReadTasks(string sqlText){
+                    vm.MyTasks.Clear();
+                    using var taskCmd=new SqlCommand(sqlText,con);
+                    taskCmd.Parameters.AddWithValue("@M",myUid.Value);
+                    using var r=taskCmd.ExecuteReader();
+                    while(r.Read()){
+                        var row=new Dictionary<string,object?>();
+                        for(int i=0;i<r.FieldCount;i++) row[r.GetName(i)]=r.IsDBNull(i)?null:r.GetValue(i);
+                        vm.MyTasks.Add(row);
+                    }
+                }
+                try{ ReadTasks(sqlWithReason); }
+                catch{ try{ ReadTasks(sqlBasic); }catch{} }
+            }catch{}
+        }
+        return PartialView("_MyWork", vm);
     }
 
     [HttpGet] public IActionResult DSSReports(string? search,string? fromDate,string? toDate,string? status,string? priority,int page=1,int pageSize=10){
@@ -215,6 +321,9 @@ public class DailySupportController : Controller
     [HttpGet] public IActionResult Create(){
         var cols=_dynamicRepo.GetColumns("DailySupport");
         ViewBag.TicketNo=GenerateTicketNo();
+        ViewBag.CanAssign=AccessControl.CanAssignWork(HttpContext);
+        ViewBag.MyUserId=AccessControl.CurrentUserId(HttpContext);
+        ViewBag.MyUserName=AccessControl.CurrentUserName(HttpContext);
         try{ ViewBag.Customers=_dynamicRepo.GetTable("Client").Rows; }catch{ ViewBag.Customers=new List<Dictionary<string,object?>>(); }
         try{ ViewBag.Engineers=_dynamicRepo.GetTable("Users").Rows; }catch{ ViewBag.Engineers=new List<Dictionary<string,object?>>(); }
         // AJAX (loadPage) -> sirf form ka partial, warna poora layout page
@@ -224,6 +333,12 @@ public class DailySupportController : Controller
     }
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Create(IFormCollection form){
         var values=form.Keys.Where(k=>k!="__RequestVerificationToken").ToDictionary(k=>k,k=>form[k].ToString());
+        // Normal user sirf apne aap ko assign kar sakta hai - form me bhaale
+        // kisi dusre ka UserId aaye to bhi server apni id hi rakhega.
+        if(!AccessControl.CanAssignWork(HttpContext)){
+            int? myUid=AccessControl.CurrentUserId(HttpContext);
+            if(myUid.HasValue) values["AssignedTo"]=myUid.Value.ToString();
+        }
         if(!values.ContainsKey("TicketNo")||string.IsNullOrWhiteSpace(values["TicketNo"])) values["TicketNo"]=GenerateTicketNo();
         else{
             // Form ka preview number kabhi-doosre-tab se already save ho chuka ho to duplicate na ban jaye
@@ -241,7 +356,7 @@ public class DailySupportController : Controller
         var cols=_dynamicRepo.GetColumns("DailySupport");
         using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT * FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var reader=cmd.ExecuteReader(); if(!reader.Read()) return NotFound();
         var row=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i); reader.Close();
-        ViewBag.RowData=row; try{ ViewBag.Customers=_dynamicRepo.GetTable("Client").Rows; }catch{ ViewBag.Customers=new List<Dictionary<string,object?>>(); } try{ ViewBag.Engineers=_dynamicRepo.GetTable("Users").Rows; }catch{ ViewBag.Engineers=new List<Dictionary<string,object?>>(); }
+        ViewBag.RowData=row; ViewBag.CanAssign=AccessControl.CanAssignWork(HttpContext); ViewBag.MyUserId=AccessControl.CurrentUserId(HttpContext); ViewBag.MyUserName=AccessControl.CurrentUserName(HttpContext); try{ ViewBag.Customers=_dynamicRepo.GetTable("Client").Rows; }catch{ ViewBag.Customers=new List<Dictionary<string,object?>>(); } try{ ViewBag.Engineers=_dynamicRepo.GetTable("Users").Rows; }catch{ ViewBag.Engineers=new List<Dictionary<string,object?>>(); }
         // AJAX (loadPage) -> sirf form ka partial (Add Lead wala pattern)
         if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return PartialView(cols);
         return View(cols);
@@ -251,6 +366,11 @@ public class DailySupportController : Controller
         // Update se PEHLE purane values -> taaki kya badla (old->new) history me aa sake
         var oldVals=new Dictionary<string,object?>();
         try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT * FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var r=cmd.ExecuteReader(); if(r.Read()) for(int i=0;i<r.FieldCount;i++) oldVals[r.GetName(i)]=r.IsDBNull(i)?null:r.GetValue(i); }catch{}
+        // Normal user reassign nahi kar sakta - AssignedTo ka purana value hi
+        // rakho (form me koi bhi value aaye). History me bhi change log nahi hoga.
+        if(!AccessControl.CanAssignWork(HttpContext)&&oldVals.TryGetValue("AssignedTo",out var oldAssigned)){
+            values["AssignedTo"]=oldAssigned?.ToString()??"";
+        }
         try{ _dynamicRepo.Update("DailySupport","SupportId",id,values);
             // Changed fields ka audit log (AssignedTo/ClientId ka naam snapshot ke saath)
             foreach(var kv in values){
@@ -342,6 +462,8 @@ public class DailySupportController : Controller
     // ---- Re-Assign: jab aap khud kaam na kar pao to ticket kisi aur user ko de do ----
     // Users ki list (modal ke dropdown ke liye)
     [HttpGet] public IActionResult GetEngineers(){
+        // Sirf Admin/Manager ko hi users ki list chahiye (reassign ke liye)
+        if(!AccessControl.CanAssignWork(HttpContext)) return Json(new List<object>());
         var list=new List<object>();
         try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT UserId, FullName FROM Users ORDER BY FullName",con); using var r=cmd.ExecuteReader();
             while(r.Read()) list.Add(new{ id=r.GetInt32(0), name=r.IsDBNull(1)||string.IsNullOrWhiteSpace(r.GetString(1)) ? "User #"+r.GetInt32(0) : r.GetString(1) });
@@ -350,6 +472,9 @@ public class DailySupportController : Controller
     }
     // Ticket ka AssignedTo badal + history me "Reassigned" log (reason ke saath)
     [HttpPost][ValidateAntiForgeryToken] public IActionResult Reassign(int id,int assignedTo,string? reason){
+        // Reassign sirf Admin/Manager kar sakta hai - normal user ticket
+        // dusron ko nahi de sakta (UI chhupa hai, par server bhi rokta hai).
+        if(!AccessControl.CanAssignWork(HttpContext)) return Json(new{success=false,message="Sirf Admin/Manager ticket reassign kar sakta hai."});
         if(id<=0||assignedTo<=0) return Json(new{success=false,message="Ticket ya user sahi nahi hai."});
         int oldAssigned=0; string ticketNo="";
         try{ using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT AssignedTo, TicketNo FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var r=cmd.ExecuteReader();

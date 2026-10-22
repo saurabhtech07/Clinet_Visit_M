@@ -56,7 +56,15 @@
 </form> *@
 
 @model List<DynamicField>
-@{ Layout=Context.Request.Headers["X-Requested-With"]=="XMLHttpRequest"?null:"~/Views/Shared/_Layout.cshtml"; var row=(Dictionary<string,object?>)ViewBag.RowData; var customers=ViewBag.Customers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>(); var engineers=ViewBag.Engineers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>(); var known=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"SupportId","TicketNo","ClientId","AssignedTo","Status","Channel","Category","Priority","Issue","Description","CallerName","CustomerID","UserId","VisitTypeId"}; var extra=Model.Where(f=>!known.Contains(f.Name)).ToList(); }
+@{ Layout=Context.Request.Headers["X-Requested-With"]=="XMLHttpRequest"?null:"~/Views/Shared/_Layout.cshtml"; var row=(Dictionary<string,object?>)ViewBag.RowData; var customers=ViewBag.Customers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>(); var engineers=ViewBag.Engineers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>(); var known=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"SupportId","TicketNo","ClientId","AssignedTo","Status","Channel","Category","Priority","Issue","Description","CallerName","CustomerID","UserId","VisitTypeId"}; var extra=Model.Where(f=>!known.Contains(f.Name)).ToList();
+   // Role helpers - normal user reassign nahi kar sakta
+   var canAssign=ViewBag.CanAssign as bool? ?? false;
+   var myUserId=ViewBag.MyUserId as int?;
+   var assignedId=row!=null&&row.ContainsKey("AssignedTo")?(row["AssignedTo"]?.ToString()??""):"";
+   var assignedLabel="Unassigned";
+   var assignedUser=engineers.FirstOrDefault(e=>e.ContainsKey("UserId")&&(e["UserId"]?.ToString()??"")==assignedId);
+   if(assignedUser!=null&&assignedUser.ContainsKey("FullName")&&!string.IsNullOrWhiteSpace(assignedUser["FullName"]?.ToString())) assignedLabel=assignedUser["FullName"]!.ToString()!;
+   if(!string.IsNullOrWhiteSpace(assignedId)&&assignedLabel=="Unassigned") assignedLabel="User #"+assignedId; }
 <style>
     /* Client Master jaisa responsive form - chhoti screen par cards stack ho jate hain */
     #editCallForm h6{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eef2f7;padding-bottom:5px;margin-bottom:8px}
@@ -85,7 +93,10 @@
                 <div class="row g-2">
                     <div class="col-12 col-md-4"><label class="form-label">Ticket No</label><input class="form-control" value="@row["TicketNo"]" readonly style="background:#f1f5f9;" /></div>
                     <div class="col-12 col-md-4"><label class="form-label">Client</label><select name="ClientId" class="form-select">@foreach(var c in customers){var cId=c["ClientId"]?.ToString();var cName=c["ClientName"]?.ToString(); if(cId==row["ClientId"]?.ToString()){<option value="@cId" selected>@cName [ID:@cId]</option>}else{<option value="@cId">@cName [ID:@cId]</option>}}</select></div>
-                    <div class="col-12 col-md-4"><label class="form-label">Assigned To</label><select name="AssignedTo" class="form-select"><option value="">Select User</option>@foreach(var e in engineers){var eId=e.ContainsKey("UserId")?e["UserId"]?.ToString():"";var eName=e.ContainsKey("FullName")?e["FullName"]?.ToString():""; if(eId==row["AssignedTo"]?.ToString()){<option value="@eId" selected>@eName</option>}else{<option value="@eId">@eName</option>}}</select></div>
+                    <div class="col-12 col-md-4">@if(canAssign){<label class="form-label">Assigned To</label><select name="AssignedTo" class="form-select"><option value="">Select User</option>@foreach(var e in engineers){var eId=e.ContainsKey("UserId")?e["UserId"]?.ToString():"";var eName=e.ContainsKey("FullName")?e["FullName"]?.ToString():""; if(eId==assignedId){<option value="@eId" selected>@eName</option>}else{<option value="@eId">@eName</option>}}</select>}else{<!-- Normal user - Assigned To badal nahi sakta, sirf dikhate hain -->
+                        <label class="form-label">Assigned To</label>
+                        <input type="hidden" name="AssignedTo" value="@assignedId" />
+                        <div class="form-control" style="background:#f1f5f9;display:flex;align-items:center;"><i class="bi bi-person-badge me-1"></i>@assignedLabel</div>}</div>
                 </div>
             </div>
         </div>
@@ -114,7 +125,7 @@
                 <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top gap-2 flex-wrap">
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleDictation()" id="dictationBtn">🎤 Speak</button>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-warning" id="editReassignBtn"><i class="bi bi-arrow-left-right me-1"></i>Re-Assign</button>
+                        @if(canAssign){<button type="button" class="btn btn-sm btn-outline-warning" id="editReassignBtn"><i class="bi bi-arrow-left-right me-1"></i>Re-Assign</button>}
                         <button type="submit" class="btn btn-primary btn-sm px-4">Update Ticket</button>
                     </div>
                 </div>
@@ -123,7 +134,9 @@
     </div>
 </form>
 
-<!-- ===== Re-Assign popup (Edit form se bhi kaam kisi aur ko de sakein) ===== -->
+<!-- ===== Re-Assign popup (Edit form se bhi kaam kisi aur ko de sakein) =====
+     Sirf Admin/Manager - normal user ke liye chhupa (server bhi reject karta hai) -->
+@if(canAssign){
 <div class="modal fade" id="editReassignModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width:470px;">
     <form id="editReassignForm" class="modal-content" style="border-radius:14px;overflow:hidden;">
@@ -153,6 +166,7 @@
     </form>
   </div>
 </div>
+}
 
 <script>
 /* Back button ke href me filters daal do - new tab / middle click par bhi

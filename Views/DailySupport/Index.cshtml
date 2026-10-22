@@ -96,9 +96,13 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
   @@media(max-width:700px){#dssTicketModal .modal-dialog{max-width:100%;width:calc(100vw - 12px);margin:.4rem auto;}}
 </style>
 <div class="d-flex justify-content-between align-items-center mb-1">
-    <h4 class="fw-bold mb-0" style="font-size:16px;letter-spacing:-0.01em;">Daily Support System</h4>
+    <h4 class="fw-bold mb-0" style="font-size:16px;letter-spacing:-0.01em;">@(Model.IsMyWork ? "★ My Work" : "Daily Support System")@if(Model.IsMyWork && !string.IsNullOrWhiteSpace(Model.MyUserName)){<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:8px;letter-spacing:0;">@Model.MyUserName</span>}</h4>
     <div class="d-flex gap-1">
-        <a href="/Client/Create" data-no-modal class="btn btn-light border" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/Client/Create', 'New Customer');">+ New Customer</a>
+        @if(Model.IsMyWork){
+            <a href="/DailySupport" data-no-modal class="btn btn-light border" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/DailySupport', 'Daily Support System');"><i class="bi bi-arrow-left me-1"></i>All Tickets</a>
+        }else{
+            <a href="/DailySupport?mywork=1" data-no-modal class="btn btn-dark" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" title="Mere assign kiye hue open tasks (popup)" onclick="event.preventDefault(); openMyWork();"><i class="bi bi-list-check me-1"></i>My Work<span style="display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;margin-left:5px;line-height:1;">@Model.MyPendingCount</span></a>
+        }
         <a href="/DailySupport/Create" data-no-modal class="btn btn-dark" style="border-radius:6px;height:28px;padding:0 10px;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;line-height:1;" onclick="event.preventDefault(); window.loadPage('/DailySupport/Create?' + dssQuery(dssCurrentPage, dssPageSize, false), 'New Call Entry');">+ New Call Entry</a>
     </div>
 </div>
@@ -111,10 +115,13 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
 <div class="card filter-card mb-2"><div class="card-body" style="padding:8px 10px;"><div class="row g-2 align-items-end"><div class="col-12 col-md-6 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">SEARCH</label><div class="input-group"><span class="input-group-text bg-white border-end-0" style="border-radius:8px 0 0 8px;padding:4px 8px;"><i class="bi bi-search"></i></span><input type="text" id="dssSearch" value="@Model.SearchTerm" class="form-control border-start-0 search-box" placeholder="Ticket, mobile..." /></div></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">STATUS</label><select id="dssStatus" class="form-select search-box">
 <option value="">All Status</option>
 @foreach(var st in new[]{"Open","In Progress","On Hold","Pending","Closed"}){<option value="@st" selected="@(string.Equals(Model.FilterStatus,st,System.StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@st</option>}
-</select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">USER</label><select id="dssUser" class="form-select search-box">
+</select></div>@if(Model.CanAssign && !Model.IsMyWork){<div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">USER</label><select id="dssUser" class="form-select search-box">
 <option value="">All Users</option>
 @foreach(var u in Model.Users){var uid=u.ContainsKey("UserId")?(u["UserId"]?.ToString()??""):"";var uname=u.ContainsKey("FullName")?(u["FullName"]?.ToString()??""):"";<option value="@uid" selected="@(uid==Model.FilterUser ? "selected" : null)">@uname</option>}
-</select></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
+</select></div>}else{<!-- Normal user / My Work mode - USER dropdown chhupa. Hidden select me apna UserId
+     rakha hai taaki AJAX refresh par filter na ude. Server par bhi force hai, isliye
+     URL me ?user=<koi aur id> likh ke bhi dusron ka data nahi milega. -->
+<div style="display:none;"><select id="dssUser"><option value="@Model.MyUserId" selected>@Model.MyUserName</option></select></div>}<div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">FROM DATE</label><input type="date" id="fromDate" value="@Model.FromDate" class="form-control search-box" /></div><div class="col-6 col-md-3 col-lg-2"><label class="form-label" style="font-size:9px;font-weight:700;color:#64748b;margin-bottom:3px;">TO DATE</label><input type="date" id="toDate" value="@Model.ToDate" class="form-control search-box" /></div>
 <div class="col-12 col-md-6 col-lg-2 d-flex justify-content-end gap-2 align-items-end" style="flex-wrap:nowrap;">
 <a href="/DailySupport" class="btn btn-light border px-2" style="border-radius:8px;height:30px;font-size:12px;" onclick="event.preventDefault(); clearFilters();">Clear</a>
 <div class="dropdown">
@@ -134,6 +141,11 @@ document.getElementById('dssSearch')?.addEventListener('keyup',loadTable);
    ============================================================ */
 var dssCurrentPage = @Model.TicketTable.CurrentPage;
 var dssPageSize = @Model.TicketTable.PageSize;
+/* "My Work" mode ON hai kya? - query string me flag chalta hai taaki Edit
+   karke wapas aane par bhi My Work hi khule (server par user force hai) */
+var dssMyWork = @(Model.IsMyWork ? "true" : "false");
+/* USER dropdown change kar sakta hai? (sirf Admin/Manager, aur My Work me nahi) */
+var dssCanChangeUser = @((Model.CanAssign && !Model.IsMyWork) ? "true" : "false");
 
 function dssGet(id){ var e=document.getElementById(id); return e ? e.value : ''; }
 function dssFilters(){
@@ -156,6 +168,7 @@ function dssQuery(page,pageSize,partial){
   if(f.toDate) p.append('toDate',f.toDate);
   if(f.status) p.append('status',f.status);
   if(f.user) p.append('user',f.user);
+  if(dssMyWork) p.append('mywork','1');
   return p.toString();
 }
 /* "New Call Entry" ke href me filters daal do - new tab / middle click par
@@ -267,6 +280,7 @@ function exportCSV(){
   if(f.toDate) p.append('toDate',f.toDate);
   if(f.status) p.append('status',f.status);
   if(f.user) p.append('user',f.user);
+  if(dssMyWork) p.append('mywork','1');
   p.append('export','csv');
   window.location.href='/DailySupport/Index?'+p.toString();
 }
@@ -278,6 +292,7 @@ function exportExcel(){
   if(f.toDate) p.append('toDate',f.toDate);
   if(f.status) p.append('status',f.status);
   if(f.user) p.append('user',f.user);
+  if(dssMyWork) p.append('mywork','1');
   p.append('export','excel');
   window.location.href='/DailySupport/Index?'+p.toString();
 }
@@ -305,8 +320,18 @@ function clearFilters(){
   var f=document.getElementById('fromDate'); if(f) f.value='';
   var t=document.getElementById('toDate'); if(t) t.value='';
   var st=document.getElementById('dssStatus'); if(st) st.value='';
-  var u=document.getElementById('dssUser'); if(u) u.value='';
+  // USER dropdown sirf Admin/Manager (aur My Work ke bahar) reset hota hai -
+  // warna normal user ka apna filter hi chala jayega.
+  if(dssCanChangeUser){ var u=document.getElementById('dssUser'); if(u) u.value=''; }
   loadTable();
+}
+/* Re-Assign ke baad refresh: My Work popup khula ho to usko reload karo,
+   warna grid. */
+function dssRefreshAfterChange(){
+  var mw=document.getElementById('dssMyWorkModal');
+  if(mw && mw.classList.contains('show') && typeof openMyWork==='function'){ openMyWork(); return; }
+  if(dssMyWork){ window.location.reload(); }
+  else if(typeof loadTable==='function'){ loadTable(); }
 }
 </script>
 
@@ -329,7 +354,37 @@ function clearFilters(){
   </div>
 </div>
 
-<!-- ===== Re-Assign popup (kaam na kar pao to kisi aur user ko do) ===== -->
+<!-- ===== MY WORK popup (4 cards + mere assign kiye tasks) - page ki zarurat nahi ===== -->
+<div class="modal fade" id="dssMyWorkModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable" style="max-width:720px;width:calc(100vw - 20px);margin:.5rem auto;">
+    <div class="modal-content" style="border-radius:10px;overflow:hidden;">
+      <div class="modal-header" style="background:#0f172a;color:#fff;padding:6px 12px;">
+        <h6 class="modal-title mb-0" style="font-weight:700;font-size:11.5px;"><i class="bi bi-list-check me-1"></i> My Work @if(!string.IsNullOrWhiteSpace(Model.MyUserName)){<span style="font-size:9.5px;font-weight:500;opacity:.75;margin-left:5px;">@Model.MyUserName</span>}</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="font-size:9px;"></button>
+      </div>
+      <div class="modal-body p-0" id="dssMyWorkBody" style="background:#f8fafc;max-height:calc(100vh - 90px);">
+        <div class="text-center p-4"><div class="spinner-border spinner-border-sm text-dark"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* My Work popup - har baar fresh data (cards + tasks) load karta hai */
+function openMyWork(){
+  var el=document.getElementById('dssMyWorkModal'); if(!el) return;
+  var body=document.getElementById('dssMyWorkBody');
+  if(body) body.innerHTML='<div class="text-center p-5"><div class="spinner-border text-dark"></div></div>';
+  if(window.bootstrap) bootstrap.Modal.getOrCreateInstance(el).show();
+  fetch('/DailySupport/MyWorkPanel', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+    .then(function(h){ if(body) body.innerHTML=h; })
+    .catch(function(e){ if(body) body.innerHTML='<div class="p-4 text-danger text-center">Load nahi hua: '+e.message+'</div>'; });
+}
+</script>
+
+<!-- ===== Re-Assign popup (kaam na kar pao to kisi aur user ko do) =====
+     Sirf Admin/Manager - normal user ke liye ye chhupa hai (server bhi reject karta hai) -->
+@if(Model.CanAssign){
 <div class="modal fade" id="dssReassignModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width:470px;">
     <form id="dssReassignForm" class="modal-content" style="border-radius:14px;overflow:hidden;">
@@ -359,6 +414,7 @@ function clearFilters(){
     </form>
   </div>
 </div>
+}
 
 <script>
 (function () {
@@ -424,7 +480,8 @@ function clearFilters(){
           var m2 = document.getElementById("dssReassignModal");
           if (m2 && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m2).hide();
           if (window.Ajax && Ajax.toast) Ajax.toast(data.message || "Ticket re-assign ho gaya.", "success");
-          if (typeof loadTable === "function") loadTable();
+          if (typeof dssRefreshAfterChange === "function") dssRefreshAfterChange();
+          else if (typeof loadTable === "function") loadTable();
         })
         .catch(function (err) {
           if (btn) { btn.disabled = false; btn.textContent = "Confirm Re-Assign"; }
@@ -439,7 +496,8 @@ function clearFilters(){
           var m2 = document.getElementById("dssReassignModal");
           if (m2 && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m2).hide();
           alert(data.message || "Ticket re-assign ho gaya.");
-          if (typeof loadTable === "function") loadTable();
+          if (typeof dssRefreshAfterChange === "function") dssRefreshAfterChange();
+          else if (typeof loadTable === "function") loadTable();
         })
         .catch(function(err){
           if (btn) { btn.disabled = false; btn.textContent = "Confirm Re-Assign"; }

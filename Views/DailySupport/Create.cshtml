@@ -304,6 +304,10 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
     Layout = Context.Request.Headers["X-Requested-With"]=="XMLHttpRequest" ? null : "~/Views/Shared/_Layout.cshtml";
     var customers=ViewBag.Customers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>();
     var engineers=ViewBag.Engineers as List<Dictionary<string,object?>>??new List<Dictionary<string,object?>>();
+  // Role helpers - normal user sirf apne aap ko assign kar sakta hai
+  var canAssign=ViewBag.CanAssign as bool? ?? false;
+  var myUserId=ViewBag.MyUserId as int?;
+  var myUserName=ViewBag.MyUserName as string ?? "";
     var known=new HashSet<string>(StringComparer.OrdinalIgnoreCase){"SupportId","TicketNo","Status","Priority","SupportDate","ClientId","CustomerID","Mobile","Channel","CallType","Category","AssignedTo","Issue","Description","CreatedOn","UserId","VisitTypeId","Solution","CallerName"};
     var extra=Model.Where(f=>!known.Contains(f.Name)).ToList();
 }
@@ -381,7 +385,11 @@ document.getElementById('clearFormBtn').addEventListener('click', function(){
                 <div class="mb-2"><label class="form-label">Channel</label><select name="Channel" class="form-select"><option>Phone</option><option>WhatsApp</option><option>Email</option><option>Walk-in / Service</option></select></div>
                 <div class="mb-2"><label class="form-label">Call Type</label><select name="CallType" class="form-select"><option selected>Inquiry</option><option>Complaint</option><option>Service</option><option>New Requirement</option></select></div>
                 <div class="mb-2"><label class="form-label">Category</label><select name="Category" class="form-select"><option selected>Hardware</option><option>Software</option><option>Networking</option><option>Billing</option><option>Printer</option></select></div>
-                <div class="mb-2"><label class="form-label">Assign To (Users)</label><select name="AssignedTo" class="form-select"><option value="">-- Select User --</option>@foreach(var u in engineers){var uid=u.ContainsKey("UserId")?u["UserId"]:u.ContainsKey("EngineerID")?u["EngineerID"]:"";var uname=u.ContainsKey("FullName")?u["FullName"]:u.ContainsKey("EngineerName")?u["EngineerName"]:u.ContainsKey("UserName")?u["UserName"]:"";<option value="@uid">@uname</option>}</select></div>
+                <div class="mb-2">@if(canAssign){<label class="form-label">Assign To (Users)</label><select name="AssignedTo" class="form-select"><option value="">-- Select User --</option>@foreach(var u in engineers){var uid=u.ContainsKey("UserId")?u["UserId"]:u.ContainsKey("EngineerID")?u["EngineerID"]:"";var uname=u.ContainsKey("FullName")?u["FullName"]:u.ContainsKey("EngineerName")?u["EngineerName"]:u.ContainsKey("UserName")?u["UserName"]:"";<option value="@uid">@uname</option>}</select>}else{<!-- Normal user - dropdown chhupa, khud ka id hidden input se jaata hai -->
+                    <label class="form-label">Assigned To</label>
+                    <input type="hidden" name="AssignedTo" value="@myUserId" />
+                    <div class="form-control" style="background:#f1f5f9;display:flex;align-items:center;"><i class="bi bi-person-badge me-1"></i>@(string.IsNullOrWhiteSpace(myUserName)?("User #"+myUserId):myUserName)</div>
+                    <div class="form-text" style="font-size:10px;">Aapke naam ka ticket banega.</div>}</div>
                 @if(extra.Any()){
                     <hr />
                     <h6>Additional Information - Auto Added</h6>

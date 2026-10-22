@@ -16,6 +16,25 @@ namespace ClientVisitManagement.Models
         public string FilterUser { get; set; }
         public List<Dictionary<string, object?>> Users { get; set; } = new();
         public DailySupportGridViewModel TicketTable { get; set; } = new DailySupportGridViewModel();
+
+        /// <summary>
+        /// "My Work" dashboard ke liye mere saare open tickets (bina pagination).
+        /// Grid ki jagah ye list cards ke roop me dikhti hai.
+        /// </summary>
+        public List<Dictionary<string, object?>> MyTasks { get; set; } = new();
+
+        /// <summary>"My Work" mode ON hai kya? (same page, sirf mera kaam)</summary>
+        public bool IsMyWork { get; set; }
+        /// <summary>Grid ke pagination/Edit links kis base URL par banne hain</summary>
+        public string BaseUrl { get; set; } = "/DailySupport";
+        /// <summary>Logged-in user ka UserId (null = login nahi hai)</summary>
+        public int? MyUserId { get; set; }
+        /// <summary>Logged-in user ka naam</summary>
+        public string MyUserName { get; set; } = "";
+        /// <summary>Badge ke liye - mere OPEN (Closed ke alawa) tickets ki sankhya</summary>
+        public int MyPendingCount { get; set; }
+        /// <summary>Admin/Manager hai kya? (sirf ye dusron ko kaam assign kar sakte hain)</summary>
+        public bool CanAssign { get; set; }
     }
 
     /// Daily Support grid (calls list) ke liye pagination + filter info.
@@ -27,5 +46,11 @@ namespace ClientVisitManagement.Models
         public string FromDate { get; set; }
         public string ToDate { get; set; }
         public string FilterUser { get; set; }
+        /// <summary>Pagination + Edit link kis URL par bana hai (My Work mode me same page)</summary>
+        public string BaseUrl { get; set; } = "/DailySupport";
+        /// <summary>"My Work" mode ON hai kya? (Edit link me flag carry karne ke liye)</summary>
+        public bool IsMyWork { get; set; }
+        /// <summary>Grid me Re-Assign button dikhana hai kya? (sirf Admin/Manager)</summary>
+        public bool CanAssign { get; set; }
     }
 }

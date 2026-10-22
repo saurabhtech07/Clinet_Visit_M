@@ -1,0 +1,108 @@
+@model ClientVisitManagement.Models.DailySupportDashboardViewModel
+@{
+    string MwStatusStyle(string s){
+        var k=(s??"").Trim().ToLowerInvariant();
+        switch(k){
+            case "closed": case "resolved": case "complete": case "completed": return "background:#dcfce7;color:#166534;";
+            case "open": case "new": case "pending": return "background:#fee2e2;color:#b91c1c;";
+            case "in progress": case "inprogress": case "in-process": return "background:#ede9fe;color:#5b21b6;";
+            case "on hold": case "onhold": case "hold": return "background:#ffedd5;color:#9a3412;";
+            default: return "background:#f1f5f9;color:#475569;";
+        }
+    }
+    string MwPriorityStyle(string p){
+        var k=(p??"").Trim().ToLowerInvariant();
+        switch(k){
+            case "urgent": return "background:#7f1d1d;color:#fff;";
+            case "high": return "background:#fee2e2;color:#b91c1c;";
+            case "medium": return "background:#fef9c3;color:#854d0e;";
+            default: return "background:#f1f5f9;color:#475569;";
+        }
+    }
+}
+<style>
+/* My Work popup - compact (sirf is partial ke andar) */
+.mw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;}
+.mw-stat{background:#fff;border:1px solid #eef2f7;border-radius:8px;padding:5px 8px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+.mw-stat .l{font-size:8px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mw-stat .v{font-size:15px;font-weight:800;line-height:1.15;}
+.mw-stat .f{font-size:8px;color:#94a3b8;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mw-stat.am{border-bottom:2px solid #f59e0b;} .mw-stat.am .v{color:#b45309;}
+.mw-stat.rd{border-bottom:2px solid #ef4444;} .mw-stat.rd .v{color:#dc2626;}
+.mw-stat.gr{border-bottom:2px solid #10b981;} .mw-stat.gr .v{color:#059669;}
+.mw-stat.pu{border-bottom:2px solid #8b5cf6;} .mw-stat.pu .v{color:#7c3aed;}
+.mw-list{border:1px solid #e8edf3;border-radius:8px;overflow:hidden;background:#fff;}
+.mw-row{display:flex;align-items:center;gap:7px;padding:5px 8px;border-top:1px solid #f1f5f9;min-height:34px;}
+.mw-row:first-child{border-top:0;}
+.mw-row:hover{background:#f8fafc;}
+.mw-row .tk{background:#0f172a;color:#fff;padding:2px 6px;border-radius:5px;font-weight:700;font-size:9px;white-space:nowrap;font-family:ui-monospace,Consolas,monospace;line-height:1.4;flex-shrink:0;}
+.mw-row .who{min-width:0;flex:1;}
+.mw-row .client{font-size:10.5px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mw-row .sub{font-size:9px;color:#94a3b8;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mw-row .reason{font-size:9px;color:#b45309;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.mw-row .badge2{font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.mw-row .acts{display:flex;gap:3px;flex-shrink:0;}
+.mw-row .acts .btn{padding:1px 5px;font-size:10px;line-height:1.5;}
+@@media(max-width:575px){.mw-stats{grid-template-columns:repeat(2,1fr);} .mw-row .sub{display:none;} .mw-row .badge2.pri{display:none;}}
+</style>
+
+<div style="padding:8px 9px 10px;">
+    <div class="mw-stats">
+        <div class="mw-stat am"><div class="l">Today's Tasks</div><div class="v">@Model.TodayCalls</div><div class="f">Total @Model.TotalCalls</div></div>
+        <div class="mw-stat rd"><div class="l">My Open</div><div class="v">@Model.OpenCalls</div><div class="f">Need action</div></div>
+        <div class="mw-stat gr"><div class="l">Closed Today</div><div class="v">@Model.ClosedToday</div><div class="f">Done today</div></div>
+        <div class="mw-stat pu"><div class="l">Pending</div><div class="v">@Model.PendingCalls</div><div class="f">In progress</div></div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-1">
+        <div class="d-flex align-items-center gap-1">
+            <span class="fw-bold" style="font-size:11px;"><i class="bi bi-list-task me-1"></i>Tasks Assigned to Me</span>
+            <span style="background:#0f172a;color:#fff;font-size:9px;font-weight:700;padding:0 6px;border-radius:20px;line-height:15px;">@Model.MyTasks.Count</span>
+        </div>
+        <small class="text-muted" style="font-size:9px;">Sirf open tasks</small>
+    </div>
+
+    @if(!Model.MyTasks.Any()){
+        <div style="border:1px dashed #cbd5e1;border-radius:8px;background:#fff;text-align:center;padding:18px 12px;">
+            <div style="font-size:22px;line-height:1;">🎉</div>
+            <div class="fw-bold mt-1" style="font-size:11px;">Koi open task nahi hai</div>
+            <div class="text-muted" style="font-size:9.5px;">Jo ticket aapko assign hua hai aur closed nahi hua, wo yahan dikhega.</div>
+        </div>
+    }
+    else {
+        <div class="mw-list">
+            @foreach(var t in Model.MyTasks){
+                var id = t.ContainsKey("SupportId") ? t["SupportId"]?.ToString() : "";
+                var ticket = t.ContainsKey("TicketNo") ? t["TicketNo"]?.ToString() : "";
+                var clientName = t.ContainsKey("ClientName") ? t["ClientName"]?.ToString() : (t.ContainsKey("CompanyName") ? t["CompanyName"]?.ToString() : "");
+                var cat = t.ContainsKey("Category") ? t["Category"]?.ToString() : "";
+                var pri = t.ContainsKey("Priority") ? t["Priority"]?.ToString() : "";
+                var stRaw = t.ContainsKey("Status") ? t["Status"]?.ToString() : "";
+                var st = string.IsNullOrWhiteSpace(stRaw) ? "Open" : stRaw.Trim();
+                var issue = t.ContainsKey("Issue") ? t["Issue"]?.ToString() : "";
+                var reason = t.ContainsKey("ReassignReason") ? t["ReassignReason"]?.ToString() : "";
+                var reasonBy = t.ContainsKey("ReassignedBy") ? t["ReassignedBy"]?.ToString() : "";
+                var reasonOn = t.ContainsKey("ReassignedOn") ? t["ReassignedOn"] : null;
+                var editUrl = "/DailySupport/Edit/" + id;
+                var sub = (string.IsNullOrWhiteSpace(issue) ? "" : issue) + (string.IsNullOrWhiteSpace(cat) ? "" : (string.IsNullOrWhiteSpace(issue) ? "" : " · ") + cat);
+                <div class="mw-row">
+                    <span class="tk">@ticket</span>
+                    <div class="who">
+                        <div class="client" title="@clientName">@clientName</div>
+                        <div class="sub" title="@sub">@(string.IsNullOrWhiteSpace(sub) ? "—" : sub)</div>
+                        @if(!string.IsNullOrWhiteSpace(reason)){
+                            var onTxt = reasonOn!=null ? " · " + Convert.ToDateTime(reasonOn).ToString("dd-MM-yy hh:mm tt") : "";
+                            <div class="reason" title="@(reasonBy + ": " + reason + onTxt)"><i class="bi bi-arrow-return-right me-1"></i>@(string.IsNullOrWhiteSpace(reasonBy) ? "" : reasonBy + ": ")&ldquo;@reason&rdquo;@onTxt</div>
+                        }
+                    </div>
+                    <span class="badge2 pri" style="@MwPriorityStyle(pri)">@pri</span>
+                    <span class="badge2" style="@MwStatusStyle(st)">@st</span>
+                    <div class="acts">
+                        <a href="@editUrl" class="btn btn-sm btn-outline-primary" title="Edit"
+                           onclick="event.preventDefault(); var m=document.getElementById('dssMyWorkModal'); if(m&&window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).hide(); window.loadPage('@editUrl', 'Edit Call');"><i class="bi bi-pencil"></i></a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
