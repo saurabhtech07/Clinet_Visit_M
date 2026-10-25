@@ -124,7 +124,10 @@
         const sortLink = e.target.closest(".sort-link");
         if(sortLink){ e.preventDefault(); e.__reportNavHandled = true; const col=sortLink.dataset.sort; if(currentSort===col) currentDir=currentDir==="ASC"?"DESC":"ASC"; else {currentSort=col; currentDir="ASC";} loadReport(buildReportUrl(1)); return; }
         const pageLink = e.target.closest(".ajax-report-link");
-        if(pageLink){ e.preventDefault(); e.__reportNavHandled = true; loadReport(pageLink.href); }
+        if(pageLink){ e.preventDefault(); e.__reportNavHandled = true; loadReport(pageLink.href); return; }
+        // DSS Report jaisa pager - Prev / Next buttons (page number box ke saath)
+        const pagerBtn = e.target.closest(".report-page-btn");
+        if(pagerBtn){ e.preventDefault(); e.__reportNavHandled = true; const p = parseInt(pagerBtn.dataset.page); if(p >= 1) loadReport(buildReportUrl(p)); }
     });
     }
     function viewReportDetails(id){ openVisitDetails(id); }

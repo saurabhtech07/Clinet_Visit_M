@@ -3,11 +3,17 @@
     int start = Model.TotalRecords == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
     int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalRecords);
     int sr = start;
+    // DSS Report jaisa pager: Prev [Page X of Y] Next
+    int clTotalPages = Model.TotalPages < 1 ? 1 : Model.TotalPages;
+    int clPage = Model.CurrentPage < 1 ? 1 : (Model.CurrentPage > clTotalPages ? clTotalPages : Model.CurrentPage);
+    string clSearch = Uri.EscapeDataString(Model.SearchTerm ?? "");
+    string clSort = Uri.EscapeDataString(Model.SortColumn ?? "");
+    string clDir = Model.SortDirection;
 }
 
 <style>
   /* Grid ke andar hi scroll (Daily Support / Client Visit jaisa) */
-  .table-scroll-container { position: relative; max-height: 58vh; overflow: auto; }
+  .table-scroll-container { position: relative; max-height: 63vh; overflow: auto; }
   .dss-table thead th {
         position: sticky; top: 0; z-index: 10;
         font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
@@ -38,6 +44,22 @@
   .table-sort-link { color: #475569 !important; text-decoration: none; }
   .table-sort-link:hover { color: #0f172a !important; }
   .sort-neutral { opacity: 0.4; }
+  /* DSS Report jaisa bottom pager (table se thoda neeche) */
+  .client-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+        margin-top: 10px; padding: 10px 14px; font-size: 12px; background: #fff;
+        border-top: 1px solid #eef0f2; border-radius: 0 0 14px 14px; }
+  .client-pager .cp-page-size { width: 75px; height: 34px; border-radius: 8px; border: 1px solid #e5e7eb;
+        background: #fff; font-size: 13px; padding: 5px 12px; cursor: pointer; }
+  .client-pager .cp-label, .client-pager .cp-total { font-size: 12px; color: #6c757d; }
+  .client-pager .cp-total b { color: #111827; }
+  .client-pager .cp-showing { font-size: 12px; color: #64748b; }
+  .cp-page-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer;
+        color: #111827; text-decoration: none; padding: 0; flex: 0 0 auto; }
+  .cp-page-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .cp-page-box { height: 34px; min-width: 120px; display: flex; align-items: center; justify-content: center;
+        gap: 5px; padding: 0 14px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;
+        font-size: 13px; color: #374151; white-space: nowrap; }
 </style>
 
 <div class="table-scroll-container">
@@ -139,22 +161,41 @@
     </table>
 </div>
 
-<!-- FOOTER - User Master jaisa (scroll nahi hoga) -->
-<div class="d-flex justify-content-between align-items-center p-2 border-top bg-white" style="border-radius:0 0 14px 14px;">
+<!-- FOOTER - DSS Report jaisa pager (Prev / Page X of Y / Next) -->
+<div class="client-pager">
     <div class="d-flex align-items-center gap-2">
-        <select id="clientPageSize" class="form-select form-select-sm" style="width:70px; border-radius:8px;">
+        <span class="cp-label">Show</span>
+        <select id="clientPageSize" class="form-select cp-page-size">
             <option value="10" selected="@(Model.PageSize == 10)">10</option>
             <option value="20" selected="@(Model.PageSize == 20)">20</option>
             <option value="50" selected="@(Model.PageSize == 50)">50</option>
             <option value="100" selected="@(Model.PageSize == 100)">100</option>
         </select>
-        <span style="font-size:12px; color:#64748b;">records per page</span>
+        <span class="cp-label">entries</span>
     </div>
-    <div style="font-size:12px; color:#64748b;">Showing @start to @end of @Model.TotalRecords entries</div>
-    <div class="d-flex gap-1">
-        @if (Model.CurrentPage > 1) { <a class="btn btn-sm btn-light border ajax-client-link" href="/Client?page=@(Model.CurrentPage - 1)&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=@Uri.EscapeDataString(Model.SortColumn ?? "")&direction=@Model.SortDirection">Previous</a> }
-        else { <button class="btn btn-sm btn-light border" disabled>Previous</button> }
-        @if (Model.CurrentPage < Model.TotalPages) { <a class="btn btn-sm btn-light border ajax-client-link" href="/Client?page=@(Model.CurrentPage + 1)&pageSize=@Model.PageSize&search=@Uri.EscapeDataString(Model.SearchTerm ?? "")&sort=@Uri.EscapeDataString(Model.SortColumn ?? "")&direction=@Model.SortDirection">Next</a> }
-        else { <button class="btn btn-sm btn-light border" disabled>Next</button> }
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="cp-total">Total: <b>@Model.TotalRecords</b></span>
+        <span class="cp-showing">Showing @start to @end of @Model.TotalRecords</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        @if (clPage > 1)
+        {
+            <a class="cp-page-btn ajax-client-link" title="Previous page"
+               href="/Client?page=@(clPage - 1)&pageSize=@Model.PageSize&search=@clSearch&sort=@clSort&direction=@clDir"><i class="bi bi-chevron-left"></i></a>
+        }
+        else
+        {
+            <button type="button" class="cp-page-btn" disabled title="Previous page"><i class="bi bi-chevron-left"></i></button>
+        }
+        <div class="cp-page-box">Page <b>@clPage</b> of <b>@clTotalPages</b></div>
+        @if (clPage < clTotalPages)
+        {
+            <a class="cp-page-btn ajax-client-link" title="Next page"
+               href="/Client?page=@(clPage + 1)&pageSize=@Model.PageSize&search=@clSearch&sort=@clSort&direction=@clDir"><i class="bi bi-chevron-right"></i></a>
+        }
+        else
+        {
+            <button type="button" class="cp-page-btn" disabled title="Next page"><i class="bi bi-chevron-right"></i></button>
+        }
     </div>
 </div>

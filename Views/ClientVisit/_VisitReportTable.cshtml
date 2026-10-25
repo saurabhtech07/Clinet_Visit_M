@@ -28,6 +28,12 @@
    /* Wrap + compact: horizontal scroll ki jarurat nahi padti */
    .report-table-responsive tbody td{ padding: 4px 6px; font-size: 11.5px; border-color: #f1f5f9; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
    .report-table-responsive thead th:hover{ background: #f1f5f9!important; }
+   /* DSS Report jaisa bottom pager */
+   .cv-pager{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;font-size:12px;background:#fff;border-top:1px solid #eef0f2;}
+   .cv-pager .page-size-select{height:34px;border-radius:8px;font-size:13px;padding:5px 12px;border:1px solid #e5e7eb;background:#fff;min-width:75px;cursor:pointer;}
+   .cv-pager .page-btn{width:34px;height:34px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:#111827;padding:0;}
+   .cv-pager .page-btn:disabled{opacity:.35;cursor:not-allowed;}
+   .cv-pager .page-box{height:34px;min-width:120px;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;font-size:13px;color:#374151;white-space:nowrap;}
 </style>
 
 <div class="table-responsive report-table-responsive">
@@ -90,28 +96,45 @@ else
 </table>
 </div>
 
-<div class="d-flex justify-content-between align-items-center p-3 border-top bg-white">
+@{
+    // DSS Report jaisa pager: Prev [Page X of Y] Next
+    int totalPages = Model.TotalPages < 1 ? 1 : Model.TotalPages;
+    int curPage = Model.CurrentPage < 1 ? 1 : (Model.CurrentPage > totalPages ? totalPages : Model.CurrentPage);
+    int showingFrom = Model.TotalRecords == 0 ? 0 : ((curPage - 1) * Model.PageSize) + 1;
+    int showingTo = Math.Min(curPage * Model.PageSize, Model.TotalRecords);
+}
+<div class="cv-pager">
     <div class="d-flex align-items-center gap-2">
-        <span style="font-size:12px; color:#6c757d;">Show</span>
-        <select id="reportPageSize" class="form-select form-select-sm" style="width:75px; height:32px; border-radius:8px; background:#f8f9fa;">
+        <span>Show</span>
+        <select id="reportPageSize" class="page-size-select">
             <option value="10" selected="@(Model.PageSize==10)">10</option>
             <option value="20" selected="@(Model.PageSize==20)">20</option>
             <option value="50" selected="@(Model.PageSize==50)">50</option>
             <option value="100" selected="@(Model.PageSize==100)">100</option>
         </select>
-        <span style="font-size:12px; color:#6c757d;">Total: @Model.TotalRecords</span>
+        <span>entries</span>
     </div>
-    <div class="d-flex align-items-center gap-1">
-        @{
-            var prevPage = Model.CurrentPage - 1;
-            var nextPage = Model.CurrentPage + 1;
-        }
-        <a href="/ClientVisit/ClientVisitReport?page=@prevPage&term=@Model.SearchTerm&sort=@Model.SortColumn&direction=@Model.SortDirection&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate" class="btn btn-sm @(prevPage>=1? "btn-light border ajax-report-link" : "btn-light border disabled")" style="border-radius:8px;">Previous</a>
-        @for(int i=Math.Max(1, Model.CurrentPage-2); i<=Math.Min(Model.TotalPages, Model.CurrentPage+2); i++)
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="text-muted">Total: <b class="text-dark">@Model.TotalRecords</b></div>
+        <div style="font-size:12px;color:#6b7280;">Showing @showingFrom to @showingTo of @Model.TotalRecords</div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        @if (curPage > 1)
         {
-            var url = $"/ClientVisit/ClientVisitReport?page={i}&term={Model.SearchTerm}&sort={Model.SortColumn}&direction={Model.SortDirection}&fromDate={ViewBag.FromDate}&toDate={ViewBag.ToDate}";
-            <a href="@url" class="btn btn-sm ajax-report-link @(i==Model.CurrentPage? "btn-dark" : "btn-light border")" style="border-radius:8px; min-width:32px;">@i</a>
+            <button type="button" class="page-btn report-page-btn" data-page="@(curPage - 1)" title="Previous page"><i class="bi bi-chevron-left"></i></button>
         }
-        <a href="/ClientVisit/ClientVisitReport?page=@nextPage&term=@Model.SearchTerm&sort=@Model.SortColumn&direction=@Model.SortDirection&fromDate=@ViewBag.FromDate&toDate=@ViewBag.ToDate" class="btn btn-sm @(nextPage<=Model.TotalPages? "btn-light border ajax-report-link" : "btn-light border disabled")" style="border-radius:8px;">Next</a>
+        else
+        {
+            <button type="button" class="page-btn" disabled title="Previous page"><i class="bi bi-chevron-left"></i></button>
+        }
+        <div class="page-box">Page <b>@curPage</b> of <b>@totalPages</b></div>
+        @if (curPage < totalPages)
+        {
+            <button type="button" class="page-btn report-page-btn" data-page="@(curPage + 1)" title="Next page"><i class="bi bi-chevron-right"></i></button>
+        }
+        else
+        {
+            <button type="button" class="page-btn" disabled title="Next page"><i class="bi bi-chevron-right"></i></button>
+        }
     </div>
 </div>

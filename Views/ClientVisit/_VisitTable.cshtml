@@ -672,6 +672,16 @@
     }
  .visit-table-responsive tbody td{ padding: 5px 8px; font-size: 12.5px; border-color: #f1f5f9; }
  .visit-table-responsive thead th:hover{ background: #f1f5f9!important; }
+ /* DSS Report jaisa bottom pager */
+ .visit-pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;font-size:12px;background:#fff;border-top:1px solid #eef0f2;}
+ .visit-pager .vp-page-size{width:75px;height:34px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:13px;padding:5px 12px;cursor:pointer;}
+ .visit-pager .vp-label{font-size:12px;color:#6c757d;}
+ .visit-pager .vp-total{font-size:12px;color:#6c757d;}
+ .visit-pager .vp-total b{color:#111827;}
+ .visit-pager .vp-showing{font-size:12px;color:#64748b;}
+ .vp-page-btn{width:34px;height:34px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:#111827;text-decoration:none;padding:0;flex:0 0 auto;}
+ .vp-page-btn:disabled{opacity:.35;cursor:not-allowed;}
+ .vp-page-box{height:34px;min-width:120px;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;font-size:13px;color:#374151;white-space:nowrap;}
 </style>
 
 <div class="table-responsive visit-table-responsive">
@@ -740,28 +750,45 @@ else
 </table>
 </div>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center p-2 border-top bg-light gap-2">
+@{
+    // DSS Report jaisa pager: Prev [Page X of Y] Next
+    int vTotalPages = Model.TotalPages < 1 ? 1 : Model.TotalPages;
+    int vCurPage = Model.CurrentPage < 1 ? 1 : (Model.CurrentPage > vTotalPages ? vTotalPages : Model.CurrentPage);
+    int vShowingFrom = Model.TotalRecords == 0 ? 0 : ((vCurPage - 1) * Model.PageSize) + 1;
+    int vShowingTo = Math.Min(vCurPage * Model.PageSize, Model.TotalRecords);
+}
+<div class="visit-pager">
     <div class="d-flex align-items-center gap-2">
-        <span style="font-size:12px; color:#6c757d;">Show per page</span>
-        <select id="visitPageSize" class="form-select form-select-sm" style="width:70px; height:30px; border-radius:8px; background:#fff; font-size:12px;">
+        <span class="vp-label">Show</span>
+        <select id="visitPageSize" class="form-select vp-page-size">
             <option value="10" selected="@(Model.PageSize==10)">10</option>
             <option value="20" selected="@(Model.PageSize==20)">20</option>
             <option value="50" selected="@(Model.PageSize==50)">50</option>
             <option value="100" selected="@(Model.PageSize==100)">100</option>
         </select>
+        <span class="vp-label">entries</span>
     </div>
-    <div style="font-size:12px; color:#64748b;">Showing @((Model.TotalRecords==0)?0:((Model.CurrentPage-1)*Model.PageSize)+1) to @Math.Min(Model.CurrentPage*Model.PageSize,Model.TotalRecords) of @Model.TotalRecords entries</div>
-    <div class="btn-group btn-group-sm">
-        @{
-            var prevPage = Model.CurrentPage - 1;
-            var nextPage = Model.CurrentPage + 1;
-        }
-        <a href="/ClientVisit?page=@prevPage&term=@Model.SearchTerm&sort=@Model.SortColumn&direction=@Model.SortDirection&status=@(Model.FilterStatus ?? "")" class="btn btn-light border ajax-visit-link @(prevPage<1?"disabled":"")">Previous</a>
-        @for(int i=Math.Max(1, Model.CurrentPage-2); i<=Math.Min(Model.TotalPages, Model.CurrentPage+2); i++)
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="vp-total">Total: <b>@Model.TotalRecords</b></span>
+        <span class="vp-showing">Showing @vShowingFrom to @vShowingTo of @Model.TotalRecords</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        @if (vCurPage > 1)
         {
-            var url = $"/ClientVisit?page={i}&term={Model.SearchTerm}&sort={Model.SortColumn}&direction={Model.SortDirection}&status={Model.FilterStatus}";
-            <a href="@url" class="btn ajax-visit-link @(i==Model.CurrentPage? "btn-dark" : "btn-light border")">@i</a>
+            <button type="button" class="vp-page-btn vp-page" data-page="@(vCurPage - 1)" title="Previous page"><i class="bi bi-chevron-left"></i></button>
         }
-        <a href="/ClientVisit?page=@nextPage&term=@Model.SearchTerm&sort=@Model.SortColumn&direction=@Model.SortDirection&status=@(Model.FilterStatus ?? "")" class="btn btn-light border ajax-visit-link @(nextPage>Model.TotalPages?"disabled":"")">Next</a>
+        else
+        {
+            <button type="button" class="vp-page-btn" disabled title="Previous page"><i class="bi bi-chevron-left"></i></button>
+        }
+        <div class="vp-page-box">Page <b>@vCurPage</b> of <b>@vTotalPages</b></div>
+        @if (vCurPage < vTotalPages)
+        {
+            <button type="button" class="vp-page-btn vp-page" data-page="@(vCurPage + 1)" title="Next page"><i class="bi bi-chevron-right"></i></button>
+        }
+        else
+        {
+            <button type="button" class="vp-page-btn" disabled title="Next page"><i class="bi bi-chevron-right"></i></button>
+        }
     </div>
 </div>

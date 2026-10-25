@@ -226,7 +226,11 @@ public class DailySupportController : Controller
         using var con=_db.GetConnection(); con.Open(); string where=" WHERE 1=1 ";
         if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search OR d.CallerName LIKE @Search) ";
         if(!string.IsNullOrWhiteSpace(fromDate)&&!string.IsNullOrWhiteSpace(toDate)) where+=" AND d.SupportDate >= @FromDate AND d.SupportDate < DATEADD(DAY,1,@ToDate) ";
-        if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(priority)) where+=" AND d.Priority = @Priority ";
+        // "All Status" (default) me Closed tickets nahi dikhte - sirf tab dikhte hain
+        // jab user dropdown se "Closed" select kare.
+        if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status ";
+        else where+=" AND (d.Status IS NULL OR d.Status <> 'Closed') ";
+        if(!string.IsNullOrWhiteSpace(priority)) where+=" AND d.Priority = @Priority ";
         int total=0; try{ using var countCmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId {where}",con); if(!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){countCmd.Parameters.AddWithValue("@FromDate",fromDate);countCmd.Parameters.AddWithValue("@ToDate",toDate);} if(!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(priority)) countCmd.Parameters.AddWithValue("@Priority",priority); total=(int)countCmd.ExecuteScalar(); }catch{}
         // Last valid page par clamp (khaali grid na dikhe)
         int totalPages = total>0 ? (int)Math.Ceiling(total/(double)pageSize) : 1;
@@ -251,12 +255,15 @@ public class DailySupportController : Controller
         using var con=_db.GetConnection(); con.Open(); string where=" WHERE 1=1 ";
         if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search OR d.CallerName LIKE @Search) ";
         if(!string.IsNullOrWhiteSpace(fromDate)&&!string.IsNullOrWhiteSpace(toDate)) where+=" AND d.SupportDate >= @FromDate AND d.SupportDate < DATEADD(DAY,1,@ToDate) ";
-        if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; if(!string.IsNullOrWhiteSpace(priority)) where+=" AND d.Priority = @Priority ";
+        // Export bhi grid jaisa hi rahe: "All" par Closed exclude, "Closed" select par sirf Closed
+        if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status ";
+        else where+=" AND (d.Status IS NULL OR d.Status <> 'Closed') ";
+        if(!string.IsNullOrWhiteSpace(priority)) where+=" AND d.Priority = @Priority ";
         string dataSql=$@"SELECT d.TicketNo, d.SupportDate as [DateTime], c.ClientName as Customer, d.Mobile, d.CallerName, d.Issue, d.Priority, d.Status, u.FullName as AssignedTo, d.CreatedOn FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId {where} ORDER BY d.SupportId DESC";
         using var cmd=new SqlCommand(dataSql,con); if(!string.IsNullOrWhiteSpace(search)) cmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){cmd.Parameters.AddWithValue("@FromDate",fromDate);cmd.Parameters.AddWithValue("@ToDate",toDate);} if(!string.IsNullOrWhiteSpace(status)) cmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(priority)) cmd.Parameters.AddWithValue("@Priority",priority);
         var dt=new DataTable(); try{ using var adapter=new SqlDataAdapter(cmd); adapter.Fill(dt);}catch{}
         using var workbook=new XLWorkbook(); var worksheet=workbook.Worksheets.Add("DSS Reports"); worksheet.Cell(1,1).Value="DSS Detailed Report"; worksheet.Cell(1,1).Style.Font.Bold=true; worksheet.Cell(1,1).Style.Font.FontSize=14;
-        worksheet.Cell(2,1).Value=$"Filters: From {fromDate??"All"} To {toDate??"All"} | Status: {status??"All"} | Priority: {priority??"All"} | Search: {search??"All"} | Exported: {DateTime.Now:dd-MM-yyyy hh:mm tt}";
+        worksheet.Cell(2,1).Value=$"Filters: From {fromDate??"All"} To {toDate??"All"} | Status: {(string.IsNullOrWhiteSpace(status)?"All (Closed excluded)":status)} | Priority: {priority??"All"} | Search: {search??"All"} | Exported: {DateTime.Now:dd-MM-yyyy hh:mm tt}";
         if(dt.Rows.Count>0){ worksheet.Cell(4,1).InsertTable(dt,"DSSData",true); var table=worksheet.Tables.FirstOrDefault(); if(table!=null){table.ShowAutoFilter=true;table.Theme=XLTableTheme.TableStyleLight9;}} else{ worksheet.Cell(4,1).Value="No records found"; }
         worksheet.Columns().AdjustToContents(); using var stream=new MemoryStream(); workbook.SaveAs(stream); stream.Position=0; string fileName=$"DSS_Report_{DateTime.Now:ddMMyyyy_hhmmtt}.xlsx"; return File(stream.ToArray(),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",fileName);
     }

@@ -813,7 +813,10 @@
             return;
         }
         const pageLink = e.target.closest(".ajax-visit-link");
-        if(pageLink){ e.preventDefault(); e.__visitNavHandled = true; loadVisitTable(pageLink.href); }
+        if(pageLink){ e.preventDefault(); e.__visitNavHandled = true; loadVisitTable(pageLink.href); return; }
+        // DSS Report jaisa pager - Prev / Next (beech me Page X of Y box)
+        const pagerBtn = e.target.closest(".vp-page");
+        if(pagerBtn){ e.preventDefault(); e.__visitNavHandled = true; const pg = parseInt(pagerBtn.dataset.page); if(pg >= 1) loadVisitTable(buildUrl(pg)); }
     });
     }
     function viewDetails(id) { openVisitDetails(id); }
