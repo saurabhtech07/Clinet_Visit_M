@@ -43,6 +43,8 @@
 .mw-row .badge2{font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 .mw-row .acts{display:flex;gap:3px;flex-shrink:0;}
 .mw-row .acts .btn{padding:1px 5px;font-size:10px;line-height:1.5;}
+.newpill{background:#dc2626;color:#fff;font-size:7.5px;font-weight:800;padding:0 4px;border-radius:3px;letter-spacing:.3px;margin-right:3px;vertical-align:middle;}
+.mw-newbox{background:#ecfeff;border:1px solid #a5f3fc;border-left:3px solid #0891b2;border-radius:8px;padding:5px 8px;margin-bottom:6px;font-size:10.5px;font-weight:700;color:#0e7490;}
 @@media(max-width:575px){.mw-stats{grid-template-columns:repeat(2,1fr);} .mw-row .sub{display:none;} .mw-row .badge2.pri{display:none;}}
 </style>
 
@@ -53,6 +55,12 @@
         <div class="mw-stat gr"><div class="l">Closed Today</div><div class="v">@Model.ClosedToday</div><div class="f">Done today</div></div>
         <div class="mw-stat pu"><div class="l">Pending</div><div class="v">@Model.PendingCalls</div><div class="f">In progress</div></div>
     </div>
+
+    @if(Model.MyUnreadComments > 0){
+        <div class="mw-newbox">
+            <i class="bi bi-chat-dots-fill me-1"></i>@Model.MyUnreadComments new comment(s) on your tickets
+        </div>
+    }
 
     <div class="d-flex align-items-center justify-content-between mb-1">
         <div class="d-flex align-items-center gap-1">
@@ -83,9 +91,16 @@
                 var reason = t.ContainsKey("ReassignReason") ? t["ReassignReason"]?.ToString() : "";
                 var reasonBy = t.ContainsKey("ReassignedBy") ? t["ReassignedBy"]?.ToString() : "";
                 var reasonOn = t.ContainsKey("ReassignedOn") ? t["ReassignedOn"] : null;
+                /* NEW: latest comment on this ticket (reply from admin) */
+                var cmtText = t.ContainsKey("LastCommentText") ? t["LastCommentText"]?.ToString() : "";
+                var cmtBy   = t.ContainsKey("LastCommentBy")   ? t["LastCommentBy"]?.ToString()   : "";
+                var cmtOn   = t.ContainsKey("LastCommentOn")   ? t["LastCommentOn"]               : null;
+                var cmtCnt  = t.ContainsKey("CommentCount")    ? t["CommentCount"]?.ToString()    : "";
+                int unreadCnt = 0;
+                if(t.ContainsKey("UnreadCommentCount") && t["UnreadCommentCount"]!=null) unreadCnt = Convert.ToInt32(t["UnreadCommentCount"]);
                 var editUrl = "/DailySupport/Edit/" + id;
                 var sub = (string.IsNullOrWhiteSpace(issue) ? "" : issue) + (string.IsNullOrWhiteSpace(cat) ? "" : (string.IsNullOrWhiteSpace(issue) ? "" : " · ") + cat);
-                <div class="mw-row">
+                <div class="mw-row" style="@(unreadCnt>0 ? "background:#ecfeff;box-shadow:inset 3px 0 0 #0891b2;" : "")">
                     <span class="tk">@ticket</span>
                     <div class="who">
                         <div class="client" title="@clientName">@clientName</div>
@@ -94,12 +109,53 @@
                             var onTxt = reasonOn!=null ? " · " + Convert.ToDateTime(reasonOn).ToString("dd-MM-yy hh:mm tt") : "";
                             <div class="reason" title="@(reasonBy + ": " + reason + onTxt)"><i class="bi bi-arrow-return-right me-1"></i>@(string.IsNullOrWhiteSpace(reasonBy) ? "" : reasonBy + ": ")&ldquo;@reason&rdquo;@onTxt</div>
                         }
+                        @if(!string.IsNullOrWhiteSpace(cmtText)){
+                            var cmtOnTxt = cmtOn!=null ? " · " + Convert.ToDateTime(cmtOn).ToString("dd-MM-yy hh:mm tt") : "";
+                            <div class="reason" style="color:#0e7490;" title="@(cmtBy + ": " + cmtText + cmtOnTxt)"><i class="bi bi-chat-left-text me-1"></i>@if(unreadCnt>0){<span class="newpill">NEW</span>}@(string.IsNullOrWhiteSpace(cmtBy) ? "" : cmtBy + ": ")&ldquo;@cmtText&rdquo;@cmtOnTxt@(string.IsNullOrWhiteSpace(cmtCnt) ? "" : " · " + cmtCnt + " comment(s)")</div>
+                        }
                     </div>
                     <span class="badge2 pri" style="@MwPriorityStyle(pri)">@pri</span>
                     <span class="badge2" style="@MwStatusStyle(st)">@st</span>
                     <div class="acts">
                         <a href="@editUrl" class="btn btn-sm btn-outline-primary" title="Edit"
                            onclick="event.preventDefault(); var m=document.getElementById('dssMyWorkModal'); if(m&&window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).hide(); window.loadPage('@editUrl', 'Edit Call');"><i class="bi bi-pencil"></i></a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if(Model.MyNewComments.Any()){
+        <div class="d-flex align-items-center justify-content-between mb-1" style="margin-top:10px;">
+            <div class="d-flex align-items-center gap-1">
+                <span class="fw-bold" style="font-size:11px;color:#0e7490;"><i class="bi bi-chat-left-text me-1"></i>New Comments</span>
+                <span style="background:#0891b2;color:#fff;font-size:9px;font-weight:700;padding:0 6px;border-radius:20px;line-height:15px;">@Model.MyNewComments.Count</span>
+            </div>
+            <small class="text-muted" style="font-size:9px;">closed / reassigned tickets</small>
+        </div>
+        <div class="mw-list">
+            @foreach(var c in Model.MyNewComments){
+                var cid = c.ContainsKey("SupportId") ? c["SupportId"]?.ToString() : "";
+                var cticket = c.ContainsKey("TicketNo") ? c["TicketNo"]?.ToString() : "";
+                var cclient = c.ContainsKey("ClientName") ? c["ClientName"]?.ToString() : "";
+                var cstatus = c.ContainsKey("Status") ? c["Status"]?.ToString() : "";
+                var ctext = c.ContainsKey("CommentText") ? c["CommentText"]?.ToString() : "";
+                var cby = c.ContainsKey("CreatedByName") ? c["CreatedByName"]?.ToString() : "";
+                var con = c.ContainsKey("CreatedOn") ? c["CreatedOn"] : null;
+                var cst = string.IsNullOrWhiteSpace(cstatus) ? "Open" : cstatus.Trim();
+                var conTxt = con!=null ? Convert.ToDateTime(con).ToString("dd-MM-yy hh:mm tt") : "";
+                var cUrl = "/DailySupport/Edit/" + cid;
+                <div class="mw-row" style="background:#f0fdff;">
+                    <span class="tk">@cticket</span>
+                    <div class="who">
+                        <div class="client" title="@cclient">@cclient</div>
+                        <div class="reason" style="color:#0e7490;white-space:normal;" title="@(cby + ": " + ctext + " · " + conTxt)"><span class="newpill">NEW</span>@(string.IsNullOrWhiteSpace(cby) ? "" : cby + ": ")&ldquo;@ctext&rdquo;</div>
+                        <div class="sub">@conTxt</div>
+                    </div>
+                    <span class="badge2" style="@MwStatusStyle(cst)">@cst</span>
+                    <div class="acts">
+                        <a href="@cUrl" class="btn btn-sm btn-outline-primary" title="Open"
+                           onclick="event.preventDefault(); var m=document.getElementById('dssMyWorkModal'); if(m&&window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).hide(); window.loadPage('@cUrl', 'Edit Call');"><i class="bi bi-box-arrow-up-right"></i></a>
                     </div>
                 </div>
             }

@@ -161,24 +161,28 @@ public class DailySupportController : Controller
             try{
                 using var con=_db.GetConnection(); con.Open();
 
-                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND (Status IS NULL OR Status <> 'Closed')",con)){
-                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.MyPendingCount=Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE)",con)){
-                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.TodayCalls=Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M",con)){
-                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.TotalCalls=Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND Status IN ('Open','In Progress','On Hold','Pending')",con)){
-                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.OpenCalls=Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND Status='Closed' AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE)",con)){
-                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.ClosedToday=Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                using(var cmd=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND Status IN ('In Progress','Pending','On Hold')",con)){
-                    cmd.Parameters.AddWithValue("@M",myUid.Value); vm.PendingCalls=Convert.ToInt32(cmd.ExecuteScalar());
-                }
+                // OPT: pehle 6 alag COUNT queries (6 round trips) the - ab ek hi query.
+                // Result bilkul same hai, sirf network trips kam.
+                try{
+                    using var statCmd=new SqlCommand(@"SELECT
+                            ISNULL(SUM(CASE WHEN AssignedTo=@M AND (Status IS NULL OR Status<>'Closed') THEN 1 ELSE 0 END),0) AS MyPending,
+                            ISNULL(SUM(CASE WHEN AssignedTo=@M AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END),0) AS TodayCalls,
+                            ISNULL(SUM(CASE WHEN AssignedTo=@M THEN 1 ELSE 0 END),0) AS TotalCalls,
+                            ISNULL(SUM(CASE WHEN AssignedTo=@M AND Status IN ('Open','In Progress','On Hold','Pending') THEN 1 ELSE 0 END),0) AS OpenCalls,
+                            ISNULL(SUM(CASE WHEN AssignedTo=@M AND Status='Closed' AND CAST(SupportDate AS DATE)=CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END),0) AS ClosedToday,
+                            ISNULL(SUM(CASE WHEN AssignedTo=@M AND Status IN ('In Progress','Pending','On Hold') THEN 1 ELSE 0 END),0) AS PendingCalls
+                        FROM DailySupport",con);
+                    statCmd.Parameters.AddWithValue("@M",myUid.Value);
+                    using var sr=statCmd.ExecuteReader();
+                    if(sr.Read()){
+                        vm.MyPendingCount=Convert.ToInt32(sr["MyPending"]);
+                        vm.TodayCalls=Convert.ToInt32(sr["TodayCalls"]);
+                        vm.TotalCalls=Convert.ToInt32(sr["TotalCalls"]);
+                        vm.OpenCalls=Convert.ToInt32(sr["OpenCalls"]);
+                        vm.ClosedToday=Convert.ToInt32(sr["ClosedToday"]);
+                        vm.PendingCalls=Convert.ToInt32(sr["PendingCalls"]);
+                    }
+                }catch{}
 
                 // Sirf WO tickets jo mere naam par assigned hain aur abhi CLOSED
                 // nahi hue. Closed tickets list me nahi aate.
@@ -216,6 +220,72 @@ public class DailySupportController : Controller
                 }
                 try{ ReadTasks(sqlWithReason); }
                 catch{ try{ ReadTasks(sqlBasic); }catch{} }
+
+                // NEW (ticket comments): per task latest comment + total count (1 query).
+                // Unread count alag query se aata hai (neeche) - isliye yahan sirf latest text.
+                var taskIds=new List<int>();
+                try{
+                    foreach(var t in vm.MyTasks){
+                        if(t.ContainsKey("SupportId") && t["SupportId"]!=null){
+                            var sid=Convert.ToInt32(t["SupportId"]);
+                            if(!taskIds.Contains(sid)) taskIds.Add(sid);
+                        }
+                    }
+                    if(taskIds.Count>0){
+                        var idList=string.Join(",",taskIds);
+                        var cm=ReadRows(con,@"SELECT c.SupportId, c.CommentText, c.CreatedByName, c.CreatedOn, x.Cnt
+                            FROM dbo.DailySupportComment c
+                            INNER JOIN (SELECT SupportId, MAX(CommentId) AS LastId, COUNT(*) AS Cnt
+                                        FROM dbo.DailySupportComment WHERE SupportId IN ("+idList+@") GROUP BY SupportId) x
+                                ON x.LastId=c.CommentId",_=>{});
+                        foreach(var row in cm){
+                            var sid=Convert.ToInt32(row["SupportId"]);
+                            Dictionary<string,object?>? task=null;
+                            foreach(var t in vm.MyTasks){
+                                if(t.ContainsKey("SupportId")&&t["SupportId"]!=null&&Convert.ToInt32(t["SupportId"])==sid){ task=t; break; }
+                            }
+                            if(task==null) continue;
+                            task["LastCommentText"]=row["CommentText"];
+                            task["LastCommentBy"]=row["CreatedByName"];
+                            task["LastCommentOn"]=row["CreatedOn"];
+                            task["CommentCount"]=row["Cnt"];
+                        }
+                    }
+                }catch{}
+
+                // NEW: mere liye unread comments (1 query) - teeno kaam karti hai:
+                //   (a) upar banner ka total, (b) task row ka NEW pill, (c) closed/reassigned ka block.
+                // Pehle ye 2 alag queries thi (total unread + block).
+                try{
+                    var unread=ReadRows(con,@"SELECT u.SupportId, u.UnreadCnt, c.CommentText, c.CreatedByName, c.CreatedOn,
+                            d.TicketNo, d.Status, cl.ClientName
+                        FROM (SELECT SupportId, COUNT(*) AS UnreadCnt, MAX(CommentId) AS LastId
+                              FROM dbo.DailySupportComment
+                              WHERE ReplyToUserId=@M AND ReadOn IS NULL
+                                AND (CreatedBy IS NULL OR CreatedBy<>@M)
+                              GROUP BY SupportId) u
+                        INNER JOIN dbo.DailySupportComment c ON c.CommentId=u.LastId
+                        INNER JOIN DailySupport d           ON d.SupportId=u.SupportId
+                        LEFT JOIN Client cl                 ON d.ClientId=cl.ClientId
+                        ORDER BY u.LastId DESC",
+                        c=>c.Parameters.AddWithValue("@M",myUid.Value));
+                    foreach(var row in unread){
+                        if(row["SupportId"]==null) continue;
+                        var sid=Convert.ToInt32(row["SupportId"]);
+                        var cnt=row["UnreadCnt"]==null?0:Convert.ToInt32(row["UnreadCnt"]);
+                        vm.MyUnreadComments+=cnt;                       // banner total (sab tickets ka)
+                        if(taskIds.Contains(sid)){
+                            foreach(var t in vm.MyTasks){               // mera open task -> row pe NEW pill
+                                if(t.ContainsKey("SupportId")&&t["SupportId"]!=null&&Convert.ToInt32(t["SupportId"])==sid){
+                                    t["UnreadCommentCount"]=cnt; break;
+                                }
+                            }
+                        }
+                        else if(vm.MyNewComments.Count<8){              // closed / reassigned -> alag block
+                            vm.MyNewComments.Add(row);
+                        }
+                    }
+                }catch{}
             }catch{}
         }
         return PartialView("_MyWork", vm);
@@ -360,6 +430,7 @@ public class DailySupportController : Controller
         }catch(Exception ex){ if(Request.Headers["X-Requested-With"]=="XMLHttpRequest") return StatusCode(StatusCodes.Status400BadRequest, new{success=false,message=ex.Message}); throw; }
     }
     [HttpGet] public IActionResult Edit(int id){
+        MarkCommentsRead(id); // NEW: ticket kholte hi mere comments read mark (additive, kabhi throw nahi karta)
         var cols=_dynamicRepo.GetColumns("DailySupport");
         using var con=_db.GetConnection(); con.Open(); using var cmd=new SqlCommand("SELECT * FROM DailySupport WHERE SupportId=@Id",con); cmd.Parameters.AddWithValue("@Id",id); using var reader=cmd.ExecuteReader(); if(!reader.Read()) return NotFound();
         var row=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i); reader.Close();
@@ -495,6 +566,91 @@ public class DailySupportController : Controller
         // History: AssignedTo old->new naam ke saath + reason
         LogTicketHistory(id,"Reassigned","AssignedTo",ResolveUserName(oldAssigned>0?oldAssigned.ToString():null),newName,reason);
         return Json(new{success=true,message=ticketNo+" ab "+newName+" ko assign ho gaya."});
+    }
+
+    // ---- Ticket COMMENTS (new) ----------------------------------------------
+    // Comment on a ticket / reply to the assigned user. No delete/edit - permanent record.
+    // No existing function was modified; these are two new endpoints.
+
+    // NEW: mark comments as read for the current user (only those addressed to me
+    // and not written by me). Used when the ticket is opened (popup or edit page).
+    private void MarkCommentsRead(int supportId){
+        if(supportId<=0) return;
+        var me=AccessControl.CurrentUserId(HttpContext);
+        if(!me.HasValue) return;
+        try{
+            using var con=_db.GetConnection(); con.Open();
+            using var cmd=new SqlCommand(@"UPDATE dbo.DailySupportComment SET ReadOn=GETDATE()
+                WHERE SupportId=@Id AND ReplyToUserId=@M AND ReadOn IS NULL
+                  AND (CreatedBy IS NULL OR CreatedBy<>@M)",con);
+            cmd.Parameters.AddWithValue("@Id",supportId);
+            cmd.Parameters.AddWithValue("@M",me.Value);
+            cmd.ExecuteNonQuery();
+        }catch{}
+    }
+
+    [HttpGet] public IActionResult GetComments(int id){
+        MarkCommentsRead(id); // popup kholne par bhi read mark
+        var list=new List<Dictionary<string,object?>>();
+        string assignedName="";
+        if(id>0){
+            try{
+                using var con=_db.GetConnection(); con.Open();
+                // OPT: pehle 2 queries thi (assigned user + comment list) - ab ek hi join query.
+                // LEFT JOIN hai taaki bina comment wale ticket ka bhi assigned naam mil jaye.
+                var rows=ReadRows(con,@"SELECT d.AssignedTo, u.FullName AS AssignedName,
+                        c.CommentId, c.SupportId, c.CommentText, c.ReplyToUserId, c.ReplyToName,
+                        c.CreatedBy, c.CreatedByName, c.CreatedOn
+                    FROM DailySupport d
+                    LEFT JOIN Users u ON d.AssignedTo=u.UserId
+                    LEFT JOIN dbo.DailySupportComment c ON c.SupportId=d.SupportId
+                    WHERE d.SupportId=@Id
+                    ORDER BY c.CommentId",
+                    c=>c.Parameters.AddWithValue("@Id",id));
+                foreach(var row in rows){
+                    if(string.IsNullOrEmpty(assignedName) && row["AssignedName"]!=null)
+                        assignedName=row["AssignedName"]!.ToString()!;
+                    if(row["CommentId"]==null) continue;   // ticket hai par comment nahi
+                    list.Add(row);
+                }
+            }catch{}
+        }
+        return Json(new{success=true, assignedToName=assignedName, comments=list});
+    }
+
+    [HttpPost][ValidateAntiForgeryToken] public IActionResult AddComment(int id,string? comment){
+        if(id<=0) return Json(new{success=false,message="Ticket not found."});
+        var text=(comment??"").Trim();
+        if(text.Length==0) return Json(new{success=false,message="Please write a comment first."});
+        if(text.Length>2000) text=text.Substring(0,2000);
+        int? replyTo=null; string? replyToName=null;
+        try{
+            using var con=_db.GetConnection(); con.Open();
+            using(var cmd=new SqlCommand(@"SELECT d.AssignedTo, u.FullName FROM DailySupport d
+                    LEFT JOIN Users u ON d.AssignedTo=u.UserId WHERE d.SupportId=@Id",con)){
+                cmd.Parameters.AddWithValue("@Id",id);
+                using var r=cmd.ExecuteReader();
+                if(!r.Read()) return Json(new{success=false,message="Ticket not found."});
+                if(!r.IsDBNull(0)) replyTo=Convert.ToInt32(r.GetValue(0));
+                if(!r.IsDBNull(1)) replyToName=r.GetString(1);
+            }
+            var uid=AccessControl.CurrentUserId(HttpContext);
+            var uname=AccessControl.CurrentUserName(HttpContext);
+            int newId;
+            using(var cmd=new SqlCommand(@"INSERT INTO dbo.DailySupportComment(SupportId,CommentText,ReplyToUserId,ReplyToName,CreatedBy,CreatedByName)
+                    VALUES(@Sid,@Txt,@Rt,@Rn,@By,@ByName); SELECT CAST(SCOPE_IDENTITY() AS INT);",con)){
+                cmd.Parameters.AddWithValue("@Sid",id);
+                cmd.Parameters.AddWithValue("@Txt",text);
+                cmd.Parameters.AddWithValue("@Rt",(object?)replyTo??DBNull.Value);
+                cmd.Parameters.AddWithValue("@Rn",(object?)replyToName??DBNull.Value);
+                cmd.Parameters.AddWithValue("@By",(object?)uid??DBNull.Value);
+                cmd.Parameters.AddWithValue("@ByName",(object?)uname??DBNull.Value);
+                newId=Convert.ToInt32(cmd.ExecuteScalar());
+            }
+            return Json(new{success=true,message="Comment added.",
+                comment=new{CommentId=newId,SupportId=id,CommentText=text,ReplyToUserId=replyTo,ReplyToName=replyToName,
+                            CreatedBy=uid,CreatedByName=uname,CreatedOn=DateTime.Now}});
+        }catch(Exception ex){ return Json(new{success=false,message="Could not save comment: "+ex.Message}); }
     }
     [HttpGet] public IActionResult SearchClientByMobile(string mobile){
         if(string.IsNullOrWhiteSpace(mobile)) return Json(null);

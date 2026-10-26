@@ -346,6 +346,24 @@ function dssRefreshAfterChange(){
       <div class="modal-body p-0" id="dssTicketModalBody">
         <div class="text-center p-5"><div class="spinner-border text-dark"></div></div>
       </div>
+      <!-- ===== NEW: Ticket Comments (reply goes to the assigned user). This block
+           is separate so openTicketDetails() replacing the body HTML cannot wipe it. ===== -->
+      <div id="dssCommentsWrap" style="border-top:1px solid #e5e7eb;background:#fff;padding:7px 12px;">
+        <div class="d-flex align-items-center justify-content-between" style="margin-bottom:4px;">
+          <div style="font-size:9.5px;font-weight:800;color:#0f172a;letter-spacing:.3px;">
+            <i class="bi bi-chat-left-text me-1"></i>COMMENTS <span id="dssCommentCount" style="color:#64748b;font-weight:700;"></span>
+          </div>
+          <div id="dssCommentReplyTo" style="font-size:10px;color:#0e7490;font-weight:600;"></div>
+        </div>
+        <div id="dssCommentsList" style="display:none;max-height:132px;overflow-y:auto;border:1px solid #eef2f7;border-radius:8px;background:#f8fafc;padding:3px 6px;margin-bottom:5px;"></div>
+        <div class="d-flex gap-1 align-items-end">
+          <textarea id="dssCommentText" class="form-control form-control-sm" rows="2" maxlength="2000"
+                    placeholder="Write a comment… (sent to the assigned user)"
+                    style="font-size:11.5px;border-radius:8px;resize:vertical;min-height:38px;"></textarea>
+          <button type="button" class="btn btn-sm" id="dssCommentPost"
+                  style="background:#0f172a;color:#fff;white-space:nowrap;height:34px;font-size:11.5px;">Post</button>
+        </div>
+      </div>
       <div class="modal-footer py-1">
         <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
         <a href="#" id="dssTicketModalEdit" data-no-modal class="btn btn-sm" style="background:#0f172a;color:#fff;" onclick="event.preventDefault(); var h=this.getAttribute('href'); if(h && h!=='#') window.loadPage(h, 'Edit Call');">Open Edit Form</a>
@@ -466,7 +484,9 @@ function openMyWork(){
 
   document.addEventListener("submit", function (e) {
     var form = e.target;
-    if (!form || form.id !== "dssReassignForm") return;
+    /* NOTE: form.id use mat karo - form ke andar <input name="id"> hone se
+       form.id input element return karta hai, string nahi. Isliye getAttribute. */
+    if (!form || form.getAttribute("id") !== "dssReassignForm") return;
     e.preventDefault();
     var sel = document.getElementById("dssReassignUser");
     if (!sel || !sel.value) { if (window.Ajax && Ajax.toast) Ajax.toast("Pehle user select karein.", "error"); return; }
@@ -617,3 +637,112 @@ window.openTicketDetails = function (id) {
     });
 };
 </script>
+
+<script>
+/* =========================================================================
+   TICKET COMMENTS - self-contained block.
+   No existing function or markup was touched.
+   - Comments load when the ticket details popup opens
+   - Post -> /DailySupport/AddComment (reply goes to the assigned user)
+   - No delete/edit (permanent record)
+   ========================================================================= */
+(function () {
+  var wrap   = document.getElementById("dssCommentsWrap");
+  if (!wrap) return;
+  var modalEl = document.getElementById("dssTicketModal");
+  var listEl  = document.getElementById("dssCommentsList");
+  var inputEl = document.getElementById("dssCommentText");
+  var postBtn = document.getElementById("dssCommentPost");
+  var replyEl = document.getElementById("dssCommentReplyTo");
+  var countEl = document.getElementById("dssCommentCount");
+  var currentId = null;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function fmt(v) { if (!v) return ""; try { return new Date(v).toLocaleString(); } catch (e) { return String(v); } }
+
+  /* Ticket id comes from the Edit link href (/DailySupport/Edit/<id>),
+     which openTicketDetails sets before modal.show(). No existing function touched. */
+  function ticketId() {
+    var a = document.getElementById("dssTicketModalEdit");
+    var h = a ? (a.getAttribute("href") || "") : "";
+    var m = h.match(/\/DailySupport\/Edit\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
+  function render(list) {
+    if (!listEl) return;
+    list = list || [];
+    if (countEl) countEl.textContent = list.length ? "(" + list.length + ")" : "";
+    if (!list.length) {
+      listEl.innerHTML = "";
+      listEl.style.display = "none";
+      return;
+    }
+    listEl.style.display = "";
+    listEl.innerHTML = list.map(function (c) {
+      var to = c.ReplyToName ? ' <span style="color:#0e7490;">&rarr; ' + esc(c.ReplyToName) + '</span>' : '';
+      return '<div style="padding:4px 3px;border-bottom:1px dashed #e8edf3;">' +
+        '<div style="font-size:9.5px;color:#64748b;"><b style="color:#0f172a;">' + esc(c.CreatedByName || "User") + '</b> &middot; ' + esc(fmt(c.CreatedOn)) + to + '</div>' +
+        '<div style="font-size:11.5px;color:#0f172a;white-space:pre-wrap;line-height:1.35;">' + esc(c.CommentText) + '</div>' +
+        '</div>';
+    }).join("");
+    listEl.scrollTop = listEl.scrollHeight;
+  }
+
+  function load(id) {
+    if (!listEl) return;
+    if (!id) { render([]); if (replyEl) replyEl.textContent = ""; return; }
+    listEl.style.display = "";
+    listEl.innerHTML = '<div class="text-muted" style="font-size:10.5px;padding:6px;">Loading&hellip;</div>';
+    fetch("/DailySupport/GetComments?id=" + encodeURIComponent(id), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (d) {
+        if (replyEl) replyEl.textContent = (d && d.assignedToName) ? ("Reply to: " + d.assignedToName) : "No user assigned";
+        render(d && d.comments);
+      })
+      .catch(function (e) {
+        if (listEl) { listEl.style.display = ""; listEl.innerHTML = '<div class="text-danger" style="font-size:10.5px;padding:6px;">' + esc(e.message) + '</div>'; }
+      });
+  }
+
+  function post() {
+    if (!currentId) { if (window.Ajax) Ajax.toast("Ticket not found.", "error"); return; }
+    var txt = (inputEl && inputEl.value || "").trim();
+    if (!txt) { if (window.Ajax) Ajax.toast("Please write a comment first.", "error"); if (inputEl) inputEl.focus(); return; }
+    if (!window.Ajax || !Ajax.post) { if (window.Ajax) Ajax.toast("Comment helper not loaded.", "error"); return; }
+    postBtn.disabled = true; postBtn.textContent = "Posting…";
+    var fd = new FormData();
+    fd.append("id", currentId);
+    fd.append("comment", txt);
+    Ajax.post("/DailySupport/AddComment", fd)
+      .then(function (d) {
+        postBtn.disabled = false; postBtn.textContent = "Post";
+        if (!d || d.success === false) { Ajax.toast((d && d.message) || "Could not save comment.", "error"); return; }
+        if (inputEl) inputEl.value = "";
+        Ajax.toast(d.message || "Comment added.", "success");
+        load(currentId);
+      })
+      .catch(function (err) {
+        postBtn.disabled = false; postBtn.textContent = "Post";
+        Ajax.toast((err && err.message) || "Could not save comment.", "error");
+      });
+  }
+
+  if (modalEl) {
+    modalEl.addEventListener("show.bs.modal", function () {
+      currentId = ticketId();
+      if (inputEl) inputEl.value = "";
+      if (replyEl) replyEl.textContent = "";
+      load(currentId);
+    });
+  }
+  if (postBtn) postBtn.addEventListener("click", post);
+  if (inputEl) inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); post(); }
+  });
+})();
+</script>
+

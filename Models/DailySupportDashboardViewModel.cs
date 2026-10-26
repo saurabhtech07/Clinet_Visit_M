@@ -33,6 +33,10 @@ namespace ClientVisitManagement.Models
         public string MyUserName { get; set; } = "";
         /// <summary>Badge ke liye - mere OPEN (Closed ke alawa) tickets ki sankhya</summary>
         public int MyPendingCount { get; set; }
+        /// <summary>Mujhe address hue unread comments ki total sankhya (My Work banner ke liye)</summary>
+        public int MyUnreadComments { get; set; }
+        /// <summary>Unread comments jinpar mera open task nahi (Closed / reassign ho gaya) - alag block</summary>
+        public List<Dictionary<string, object?>> MyNewComments { get; set; } = new();
         /// <summary>Admin/Manager hai kya? (sirf ye dusron ko kaam assign kar sakte hain)</summary>
         public bool CanAssign { get; set; }
     }
