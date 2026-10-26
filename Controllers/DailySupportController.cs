@@ -11,7 +11,8 @@ public class DailySupportController : Controller
 {
     private readonly DBHelper _db;
     private readonly DynamicRepository _dynamicRepo;
-    public DailySupportController(DBHelper db, DynamicRepository dynamicRepo){ _db=db; _dynamicRepo=dynamicRepo; }
+    private readonly ILogger<DailySupportController> _logger;
+    public DailySupportController(DBHelper db, DynamicRepository dynamicRepo, ILogger<DailySupportController> logger){ _db=db; _dynamicRepo=dynamicRepo; _logger=logger; }
 
     // Sequential per-day ticket number: TKT-ddMMyy-001, TKT-ddMMyy-002 ...
     // (Random.Next se duplicate/skewed numbers aate the). Duplicate check ke saath
@@ -586,43 +587,56 @@ public class DailySupportController : Controller
             cmd.Parameters.AddWithValue("@Id",supportId);
             cmd.Parameters.AddWithValue("@M",me.Value);
             cmd.ExecuteNonQuery();
-        }catch{}
+        }catch(Exception ex){ _logger.LogWarning(ex,"Could not mark comments as read for ticket {SupportId}.",supportId); }
+    }
+
+    private bool CanAccessCommentTicket(int supportId){
+        var userId=AccessControl.CurrentUserId(HttpContext);
+        if(supportId<=0||!userId.HasValue) return false;
+        using var con=_db.GetConnection(); con.Open();
+        using var cmd=new SqlCommand(@"SELECT COUNT(*) FROM DailySupport
+            WHERE SupportId=@Id AND (@CanAssign=1 OR AssignedTo=@UserId)",con);
+        cmd.Parameters.AddWithValue("@Id",supportId);
+        cmd.Parameters.AddWithValue("@CanAssign",AccessControl.CanAssignWork(HttpContext));
+        cmd.Parameters.AddWithValue("@UserId",userId.Value);
+        return Convert.ToInt32(cmd.ExecuteScalar())>0;
     }
 
     [HttpGet] public IActionResult GetComments(int id){
+        if(!CanAccessCommentTicket(id)) return NotFound();
         MarkCommentsRead(id); // popup kholne par bhi read mark
         var list=new List<Dictionary<string,object?>>();
         string assignedName="";
-        if(id>0){
-            try{
-                using var con=_db.GetConnection(); con.Open();
-                // OPT: pehle 2 queries thi (assigned user + comment list) - ab ek hi join query.
-                // LEFT JOIN hai taaki bina comment wale ticket ka bhi assigned naam mil jaye.
-                var rows=ReadRows(con,@"SELECT d.AssignedTo, u.FullName AS AssignedName,
-                        c.CommentId, c.SupportId, c.CommentText, c.ReplyToUserId, c.ReplyToName,
-                        c.CreatedBy, c.CreatedByName, c.CreatedOn
-                    FROM DailySupport d
-                    LEFT JOIN Users u ON d.AssignedTo=u.UserId
-                    LEFT JOIN dbo.DailySupportComment c ON c.SupportId=d.SupportId
-                    WHERE d.SupportId=@Id
-                    ORDER BY c.CommentId",
-                    c=>c.Parameters.AddWithValue("@Id",id));
-                foreach(var row in rows){
-                    if(string.IsNullOrEmpty(assignedName) && row["AssignedName"]!=null)
-                        assignedName=row["AssignedName"]!.ToString()!;
-                    if(row["CommentId"]==null) continue;   // ticket hai par comment nahi
-                    list.Add(row);
-                }
-            }catch{}
+        using(var con=_db.GetConnection()){
+            con.Open();
+            // LEFT JOIN keeps the assigned user's name available when no comments exist.
+            using var cmd=new SqlCommand(@"SELECT d.AssignedTo, u.FullName AS AssignedName,
+                    c.CommentId, c.SupportId, c.CommentText, c.ReplyToUserId, c.ReplyToName,
+                    c.CreatedBy, c.CreatedByName, c.CreatedOn
+                FROM DailySupport d
+                LEFT JOIN Users u ON d.AssignedTo=u.UserId
+                LEFT JOIN dbo.DailySupportComment c ON c.SupportId=d.SupportId
+                WHERE d.SupportId=@Id
+                ORDER BY c.CommentId",con);
+            cmd.Parameters.AddWithValue("@Id",id);
+            using var reader=cmd.ExecuteReader();
+            while(reader.Read()){
+                var row=new Dictionary<string,object?>();
+                for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i);
+                if(string.IsNullOrEmpty(assignedName) && row["AssignedName"]!=null)
+                    assignedName=row["AssignedName"]!.ToString()!;
+                if(row["CommentId"]==null) continue;
+                list.Add(row);
+            }
         }
         return Json(new{success=true, assignedToName=assignedName, comments=list});
     }
 
     [HttpPost][ValidateAntiForgeryToken] public IActionResult AddComment(int id,string? comment){
-        if(id<=0) return Json(new{success=false,message="Ticket not found."});
+        if(!CanAccessCommentTicket(id)) return NotFound();
         var text=(comment??"").Trim();
         if(text.Length==0) return Json(new{success=false,message="Please write a comment first."});
-        if(text.Length>2000) text=text.Substring(0,2000);
+        if(text.Length>2000) return Json(new{success=false,message="Comment cannot exceed 2000 characters."});
         int? replyTo=null; string? replyToName=null;
         try{
             using var con=_db.GetConnection(); con.Open();
@@ -650,7 +664,10 @@ public class DailySupportController : Controller
             return Json(new{success=true,message="Comment added.",
                 comment=new{CommentId=newId,SupportId=id,CommentText=text,ReplyToUserId=replyTo,ReplyToName=replyToName,
                             CreatedBy=uid,CreatedByName=uname,CreatedOn=DateTime.Now}});
-        }catch(Exception ex){ return Json(new{success=false,message="Could not save comment: "+ex.Message}); }
+        }catch(Exception ex){
+            _logger.LogError(ex,"Could not save a comment for ticket {SupportId}.",id);
+            return StatusCode(StatusCodes.Status500InternalServerError,new{success=false,message="Could not save comment. Please try again."});
+        }
     }
     [HttpGet] public IActionResult SearchClientByMobile(string mobile){
         if(string.IsNullOrWhiteSpace(mobile)) return Json(null);

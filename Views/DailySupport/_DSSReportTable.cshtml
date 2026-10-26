@@ -76,7 +76,7 @@
         <td><span class="badge bg-light border text-dark" style="border-radius:12px;font-size:11px;white-space:nowrap;">@status</span></td>
         <td style="font-size:12px;white-space:nowrap;">@assigned</td>
         <td style="white-space:nowrap;">@(ageing==0 ? "Today" : ageing+"d")</td>
-        <td><button type="button" class="btn btn-sm border bg-white view-btn" data-id="@callId" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;"><i class="bi bi-eye" style="font-size:12px;"></i></button></td>
+        <td style="white-space:nowrap;"><button type="button" class="btn btn-sm border bg-white view-btn" data-id="@callId" title="View details" style="width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;"><i class="bi bi-eye" style="font-size:12px;"></i></button> <button type="button" class="btn btn-sm border bg-white comment-btn" data-id="@callId" data-ticket="@ticketNo" title="View or add comments" style="height:28px;display:inline-flex;align-items:center;justify-content:center;gap:3px;border-radius:6px;color:#0369a1;font-size:10px;padding:0 6px;"><i class="bi bi-chat-left-text" style="font-size:12px;"></i> Comment</button></td>
     </tr>
 }
 

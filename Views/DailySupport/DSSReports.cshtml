@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded',function(){
                             <th>Status</th>
                             <th>Assigned</th>
                             <th>Age</th>
-                            <th class="actions-col no-print" style="width:70px;">Action</th>
+                            <th class="actions-col no-print" style="width:125px;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -296,6 +296,9 @@ document.addEventListener('DOMContentLoaded',function(){
                                 <td class="actions-cell no-print">
                                     <button type="button" class="btn btn-sm border bg-white view-btn" data-id="@callId" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
                                         <i class="bi bi-eye" style="font-size:13px;"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm border bg-white comment-btn" data-id="@callId" data-ticket="@ticketNo" title="View or add comments" style="height:30px;display:inline-flex;align-items:center;justify-content:center;gap:4px;border-radius:8px;color:#0369a1;font-size:11px;padding:0 7px;">
+                                        <i class="bi bi-chat-left-text" style="font-size:13px;"></i> Comment
                                     </button>
                                 </td>
                             </tr>
@@ -335,6 +338,27 @@ document.addEventListener('DOMContentLoaded',function(){
       <div class="modal-footer">
         <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
         <a href="#" id="modalEditLink" class="btn btn-sm" style="background:#111827;color:#fff;">Open Full Form</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="dssReportCommentsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:560px;">
+    <div class="modal-content" style="border-radius:12px;overflow:hidden;">
+      <div class="modal-header" style="background:#111827;color:#fff;padding:10px 14px;">
+        <h6 class="modal-title mb-0" id="dssReportCommentsTitle" style="font-weight:700;">Ticket Comments</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="background:#f8fafc;">
+        <div id="dssReportCommentsList" aria-live="polite" style="max-height:280px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:8px;margin-bottom:10px;"></div>
+        <label for="dssReportCommentText" class="form-label" style="font-size:11px;font-weight:700;color:#475569;">ADD COMMENT</label>
+        <textarea id="dssReportCommentText" class="form-control" rows="3" maxlength="2000" placeholder="Write a comment..." style="resize:vertical;"></textarea>
+        <div id="dssReportCommentReplyTo" class="form-text"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-light border btn-sm" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-dark" id="dssReportCommentPost">Post Comment</button>
       </div>
     </div>
   </div>
@@ -508,6 +532,54 @@ function openDetailModal(id){
     })
     .catch(function(err){ console.error('GetDetails failed:',err); document.getElementById('modalBody').innerHTML='<div class="p-4 text-danger text-center">Failed to load: '+esc(err.message)+'</div>'; });
 }
+var dssReportCommentId=null;
+var dssReportCommentTicketNo='';
+var dssReportCommentsModal=null;
+function openDssReportComments(id,ticketNo){
+    if(!id) return;
+    dssReportCommentId=String(id);
+    dssReportCommentTicketNo=ticketNo||'Ticket';
+    var modalEl=document.getElementById('dssReportCommentsModal');
+    if(!dssReportCommentsModal) dssReportCommentsModal=bootstrap.Modal.getOrCreateInstance(modalEl);
+    document.getElementById('dssReportCommentsTitle').textContent='Comments - '+dssReportCommentTicketNo;
+    document.getElementById('dssReportCommentText').value='';
+    document.getElementById('dssReportCommentReplyTo').textContent='';
+    document.getElementById('dssReportCommentsList').innerHTML='<div class="text-muted small">Loading comments...</div>';
+    dssReportCommentsModal.show();
+    fetch('/DailySupport/GetComments?id='+encodeURIComponent(dssReportCommentId),{headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(function(r){if(!r.ok) throw new Error('Could not load comments (HTTP '+r.status+').');return r.json();})
+      .then(function(data){
+        document.getElementById('dssReportCommentReplyTo').textContent=data.assignedToName?'Reply to: '+data.assignedToName:'No user assigned';
+        var list=document.getElementById('dssReportCommentsList');
+        var comments=data.comments||[];
+        list.innerHTML=comments.length?comments.map(function(c){
+          return '<div style="padding:6px 2px;border-bottom:1px solid #eef2f7;">'+
+            '<div style="font-size:11px;color:#64748b;"><strong style="color:#0f172a;">'+esc(c.CreatedByName||'User')+'</strong> · '+esc(fmtDate(c.CreatedOn))+
+            (c.ReplyToName?' <span style="color:#0369a1;">→ '+esc(c.ReplyToName)+'</span>':'')+'</div>'+
+            '<div style="font-size:13px;color:#0f172a;white-space:pre-wrap;word-break:break-word;">'+esc(c.CommentText)+'</div></div>';
+        }).join(''):'<div class="text-muted small">No comments yet.</div>';
+      })
+      .catch(function(err){document.getElementById('dssReportCommentsList').innerHTML='<div class="text-danger small">'+esc(err.message)+'</div>';});
+}
+document.getElementById('dssReportCommentPost').addEventListener('click',function(){
+    var text=document.getElementById('dssReportCommentText').value.trim();
+    if(!dssReportCommentId){Ajax.toast('Ticket not found.','error');return;}
+    if(!text){Ajax.toast('Please write a comment first.','error');return;}
+    var btn=this;
+    var form=new FormData();
+    form.append('id',dssReportCommentId);
+    form.append('comment',text);
+    btn.disabled=true;
+    Ajax.post('/DailySupport/AddComment',form)
+      .then(function(data){
+        if(data.success===false) throw new Error(data.message||'Could not save comment.');
+        document.getElementById('dssReportCommentText').value='';
+        Ajax.toast(data.message||'Comment added.','success');
+        openDssReportComments(dssReportCommentId,dssReportCommentTicketNo);
+      })
+      .catch(function(err){Ajax.toast(err.message||'Could not save comment.','error');})
+      .finally(function(){btn.disabled=false;});
+});
 (function initOnLoad(){
     updateExcelLink();
     const exportBtn=document.getElementById('exportBtn'), exportMenu=document.getElementById('exportMenu');
@@ -538,6 +610,8 @@ function openDetailModal(id){
         else if(next) loadData(currentPage+1);
     });
     document.getElementById('tableBody').addEventListener('click', e=>{
+        const comment=e.target.closest('.comment-btn');
+        if(comment){ const id=comment.getAttribute('data-id'); if(id) openDssReportComments(id,comment.getAttribute('data-ticket')); return; }
         const btn=e.target.closest('.view-btn'); if(btn){ const id=btn.getAttribute('data-id'); if(id) openDetailModal(id); }
     });
     document.getElementById('resetBtn').addEventListener('click', e=>{ e.preventDefault(); ['fromDate','toDate','status','priority','search'].forEach(id=>document.getElementById(id).value=''); currentPage=1; loadData(1); });
