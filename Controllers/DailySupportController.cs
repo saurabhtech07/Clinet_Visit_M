@@ -40,19 +40,39 @@ public class DailySupportController : Controller
     // AJAX request? (SPA navigation + grid partial dono isi header se aate hain)
     private bool IsAjaxRequest()=> string.Equals(Request.Headers["X-Requested-With"],"XMLHttpRequest",StringComparison.OrdinalIgnoreCase);
     private void AddDateParams(SqlCommand cmd, string? fromDate, string? toDate){
-        if(!string.IsNullOrWhiteSpace(fromDate)){ cmd.Parameters.AddWithValue("@F",fromDate); if(cmd.Parameters.Contains("@Cf")) cmd.Parameters["@Cf"].Value=fromDate; }
-        if(!string.IsNullOrWhiteSpace(toDate)){ cmd.Parameters.AddWithValue("@T",toDate); if(cmd.Parameters.Contains("@Ct")) cmd.Parameters["@Ct"].Value=toDate; }
+        // Date ko string ke roop me bhejne se SQL Server ko implicit conversion
+        // karni pad sakti hai. Typed DateTime parameters query plan ko stable rakhte hain.
+        if(DateTime.TryParse(fromDate, out var from)){ var p=cmd.Parameters.Add("@F",SqlDbType.DateTime); p.Value=from; if(cmd.Parameters.Contains("@Cf")) cmd.Parameters["@Cf"].Value=from; }
+        if(DateTime.TryParse(toDate, out var to)){ var p=cmd.Parameters.Add("@T",SqlDbType.DateTime); p.Value=to; if(cmd.Parameters.Contains("@Ct")) cmd.Parameters["@Ct"].Value=to; }
+    }
+    private void AddTypedDateParameter(SqlCommand cmd,string name,string? value){
+        if(DateTime.TryParse(value,out var parsed)) cmd.Parameters.Add(name,SqlDbType.DateTime).Value=parsed;
+        else cmd.Parameters.AddWithValue(name,(object?)value??DBNull.Value);
     }
     // AssignedTo scope - cards ke count queries me use hota hai
-    private void AddUserParam(SqlCommand cmd, string? user){ if(!string.IsNullOrWhiteSpace(user)) cmd.Parameters.AddWithValue("@U",user); }
+    private void AddUserParam(SqlCommand cmd, string? user){
+        if(int.TryParse(user,out var userId)) cmd.Parameters.Add("@U",SqlDbType.Int).Value=userId;
+        else if(!string.IsNullOrWhiteSpace(user)) cmd.Parameters.AddWithValue("@U",user);
+    }
+    private void AddTypedIntParameter(SqlCommand cmd,string name,string? value){
+        if(int.TryParse(value,out var parsed)) cmd.Parameters.Add(name,SqlDbType.Int).Value=parsed;
+        else cmd.Parameters.AddWithValue(name,(object?)value??DBNull.Value);
+    }
+    private string BuildFullTextSearch(string? value){
+        var cleaned=new string((value??"").Where(c=>char.IsLetterOrDigit(c)||char.IsWhiteSpace(c)).ToArray()).Trim();
+        return string.IsNullOrWhiteSpace(cleaned)?"":"\""+cleaned.Replace("\"","\"\"")+"*\"";
+    }
 
     [HttpGet]
-    public IActionResult Index(string? search, string? fromDate, string? toDate, string? status, string? user, int page=1, int pageSize=10, string? mywork=null){
+    public IActionResult Index(string? search, string? fromDate, string? toDate, string? status, string? user, int page=1, int pageSize=20, string? mywork=null){
         // ---- Pagination safety ----
         // Pehle page/pageSize validate nahi hote the. page=0 / pageSize=0 aane
         // par SQL OFFSET/FETCH galat ho jata tha aur grid KHAALI dikhta tha.
-        if(pageSize!=10&&pageSize!=20&&pageSize!=50&&pageSize!=100) pageSize=10;
+        if(pageSize!=10&&pageSize!=20&&pageSize!=50&&pageSize!=100) pageSize=20;
         if(page<1) page=1;
+        // Grid refresh ke partial AJAX request me dashboard cards/dropdowns ki
+        // zarurat nahi hoti. In queries ko skip karke sirf table load karo.
+        bool isPartialRequest=IsAjaxRequest() && Request.Query.ContainsKey("partial");
         using var con=_db.GetConnection(); con.Open();
         var vm=new DailySupportDashboardViewModel(); vm.SearchTerm=search; vm.FromDate=fromDate; vm.ToDate=toDate; vm.FilterStatus=status; vm.FilterUser=user;
 
@@ -72,12 +92,16 @@ public class DailySupportController : Controller
         vm.IsMyWork=isMyWork; vm.BaseUrl="/DailySupport"; vm.MyUserId=myUid;
         vm.MyUserName=AccessControl.CurrentUserName(HttpContext); vm.CanAssign=canAssign;
 
+        if(!isPartialRequest){
         // Badge ka count - mere OPEN tickets (Closed ke alawa)
         if(myUid.HasValue){
             try{ using var pc=new SqlCommand("SELECT COUNT(*) FROM DailySupport WHERE AssignedTo=@M AND (Status IS NULL OR Status <> 'Closed')",con); pc.Parameters.AddWithValue("@M",myUid.Value); vm.MyPendingCount=Convert.ToInt32(pc.ExecuteScalar()); }catch{}
         }
-        // User filter dropdown ke liye active users
-        try{ using var ucmd=new SqlCommand("SELECT UserId, FullName FROM Users WHERE IsActive=1 ORDER BY FullName",con); using var ureader=ucmd.ExecuteReader(); while(ureader.Read()){ vm.Users.Add(new Dictionary<string,object?>{ ["UserId"]=ureader.GetInt32(0), ["FullName"]=ureader.IsDBNull(1)?ureader.GetInt32(0).ToString():ureader.GetString(1) }); } }catch{}
+        // User dropdown sirf Admin/Manager ke normal view me dikh raha hota hai;
+        // normal user aur My Work mode me is query ki zarurat nahi.
+        if(canAssign && !isMyWork){
+            try{ using var ucmd=new SqlCommand("SELECT UserId, FullName FROM Users WHERE IsActive=1 ORDER BY FullName",con); using var ureader=ucmd.ExecuteReader(); while(ureader.Read()){ vm.Users.Add(new Dictionary<string,object?>{ ["UserId"]=ureader.GetInt32(0), ["FullName"]=ureader.IsDBNull(1)?ureader.GetInt32(0).ToString():ureader.GetString(1) }); } }catch{}
+        }
         // ---- Stats cards ka date filter ----
         // Range di gayi hai  -> saare cards us RANGE par count karte hain.
         // Range nahi di      -> "Today/Closed Today" AAJ par, baaki total par.
@@ -93,20 +117,50 @@ public class DailySupportController : Controller
         // hi cards dikhenge (dusron ka data leak na ho).
         string userSql= !string.IsNullOrWhiteSpace(user) ? " AND d.AssignedTo=@U " : "";
         try{
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE 1=1 {todaySql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.TodayCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE 1=1 {dateSql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.TotalCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status IN ('Open','In Progress','On Hold','Pending') {dateSql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.OpenCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status='Closed' {todaySql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.ClosedToday=Convert.ToInt32(cmd.ExecuteScalar()); }
-            using(var cmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d WHERE Status IN ('In Progress','Pending','On Hold') {dateSql}{userSql}",con)){ AddDateParams(cmd,fromDate,toDate); AddUserParam(cmd,user); vm.PendingCalls=Convert.ToInt32(cmd.ExecuteScalar()); }
+            // 5 separate COUNT queries ko ek grouped query me combine kiya.
+            // Isse page load par database round-trips 5 se 1 ho jaate hain.
+            var statsSql=$@"SELECT
+                COALESCE(SUM(CASE WHEN 1=1 {todaySql} THEN 1 ELSE 0 END),0),
+                COALESCE(SUM(CASE WHEN 1=1 {dateSql} THEN 1 ELSE 0 END),0),
+                COALESCE(SUM(CASE WHEN d.Status IN ('Open','In Progress','On Hold','Pending') {dateSql} THEN 1 ELSE 0 END),0),
+                COALESCE(SUM(CASE WHEN d.Status='Closed' {todaySql} THEN 1 ELSE 0 END),0),
+                COALESCE(SUM(CASE WHEN d.Status IN ('In Progress','Pending','On Hold') {dateSql} THEN 1 ELSE 0 END),0)
+                FROM DailySupport d WHERE 1=1 {userSql}";
+            using var statsCmd=new SqlCommand(statsSql,con);
+            AddDateParams(statsCmd,fromDate,toDate); AddUserParam(statsCmd,user);
+            using var statsReader=statsCmd.ExecuteReader();
+            if(statsReader.Read()){
+                vm.TodayCalls=Convert.ToInt32(statsReader.GetValue(0));
+                vm.TotalCalls=Convert.ToInt32(statsReader.GetValue(1));
+                vm.OpenCalls=Convert.ToInt32(statsReader.GetValue(2));
+                vm.ClosedToday=Convert.ToInt32(statsReader.GetValue(3));
+                vm.PendingCalls=Convert.ToInt32(statsReader.GetValue(4));
+            }
         }catch{}
-        string where=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) where+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)) where+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) where+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; else where+=" AND (d.Status IS NULL OR d.Status <> 'Closed') "; /* default: Closed tickets grid me nahi - sirf Status=Closed select karne par */ if(!string.IsNullOrWhiteSpace(user)) where+=" AND d.AssignedTo = @UserId ";
-        using var countCmd=new SqlCommand($"SELECT COUNT(*) FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId {where}",con); if(!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){countCmd.Parameters.AddWithValue("@FromDate",fromDate);countCmd.Parameters["@FromDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(toDate)){countCmd.Parameters.AddWithValue("@ToDate",toDate);countCmd.Parameters["@ToDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) countCmd.Parameters.AddWithValue("@UserId",user); int total=0; try{total=(int)countCmd.ExecuteScalar();}catch{}
+        }
+        string fullTextSearch=BuildFullTextSearch(search);
+        string where=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) where+=string.IsNullOrWhiteSpace(fullTextSearch) ? " AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) " : " AND (d.TicketNo LIKE @Search OR d.Mobile LIKE @Search OR CONTAINS(d.Issue,@FullTextSearch) OR CONTAINS(c.ClientName,@FullTextSearch)) "; if(!string.IsNullOrWhiteSpace(fromDate)) where+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) where+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) where+=" AND d.Status = @Status "; else where+=" AND (d.Status IS NULL OR d.Status <> 'Closed') "; /* default: Closed tickets grid me nahi - sirf Status=Closed select karne par */ if(!string.IsNullOrWhiteSpace(user)) where+=" AND d.AssignedTo = @UserId ";
+        // Search na ho to Client join ki zarurat nahi; normal load me
+        // count query ko DailySupport table tak hi simit rakho.
+        string countFrom=string.IsNullOrWhiteSpace(search)
+            ? "FROM DailySupport d"
+            : "FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId";
+        string searchPlanHint=string.IsNullOrWhiteSpace(search)?"":" OPTION (RECOMPILE)";
+        using var countCmd=new SqlCommand($"SELECT COUNT(*) {countFrom} {where}{searchPlanHint}",con); if(!string.IsNullOrWhiteSpace(search)) countCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fullTextSearch)) countCmd.Parameters.AddWithValue("@FullTextSearch",fullTextSearch); if(!string.IsNullOrWhiteSpace(fromDate)) AddTypedDateParameter(countCmd,"@FromDate",fromDate); if(!string.IsNullOrWhiteSpace(toDate)) AddTypedDateParameter(countCmd,"@ToDate",toDate); if(!string.IsNullOrWhiteSpace(status)) countCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) AddTypedIntParameter(countCmd,"@UserId",user); int total=0; try{total=(int)countCmd.ExecuteScalar();}catch{}
         // Last page se aage ka page request aaye (ya data delete ho gaya) to
         // grid khaali na dikhe - use last valid page par le aao
         int totalPages = total>0 ? (int)Math.Ceiling(total/(double)pageSize) : 1;
         if(page>totalPages) page=totalPages;
-        string dataSql=$@"SELECT d.*, c.ClientName, c.ClientName as CompanyName, u.FullName as AssignedName FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId {where} ORDER BY d.SupportId DESC OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
-        using var dataCmd=new SqlCommand(dataSql,con); if(!string.IsNullOrWhiteSpace(search)) dataCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){dataCmd.Parameters.AddWithValue("@FromDate",fromDate);dataCmd.Parameters["@FromDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(toDate)){dataCmd.Parameters.AddWithValue("@ToDate",toDate);dataCmd.Parameters["@ToDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(status)) dataCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) dataCmd.Parameters.AddWithValue("@UserId",user); dataCmd.Parameters.AddWithValue("@Skip",(page-1)*pageSize); dataCmd.Parameters.AddWithValue("@Take",pageSize);
+        // Grid ke liye d.* ki jagah required columns hi fetch karo.
+        // Isse unused DB columns network/reader me nahi aate.
+        string dataSql=$@"SELECT d.SupportId, d.TicketNo, d.Status, d.Priority, d.SupportDate,
+            d.ClientId, d.Mobile, d.Channel, d.CallType, d.Category,
+            d.AssignedTo, d.Issue, d.CreatedOn, c.ClientName, c.ClientName as CompanyName,
+            u.FullName as AssignedName
+            FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId
+            LEFT JOIN Users u ON d.AssignedTo=u.UserId {where}
+            ORDER BY d.SupportId DESC OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY{searchPlanHint}";
+        using var dataCmd=new SqlCommand(dataSql,con); if(!string.IsNullOrWhiteSpace(search)) dataCmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fullTextSearch)) dataCmd.Parameters.AddWithValue("@FullTextSearch",fullTextSearch); if(!string.IsNullOrWhiteSpace(fromDate)) AddTypedDateParameter(dataCmd,"@FromDate",fromDate); if(!string.IsNullOrWhiteSpace(toDate)) AddTypedDateParameter(dataCmd,"@ToDate",toDate); if(!string.IsNullOrWhiteSpace(status)) dataCmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) AddTypedIntParameter(dataCmd,"@UserId",user); dataCmd.Parameters.AddWithValue("@Skip",(page-1)*pageSize); dataCmd.Parameters.AddWithValue("@Take",pageSize);
         var table=new DailySupportGridViewModel{CurrentPage=page,PageSize=pageSize,TotalRecords=total,SearchTerm=search,FilterStatus=status,FromDate=fromDate,ToDate=toDate,FilterUser=user,BaseUrl=vm.BaseUrl,IsMyWork=isMyWork,CanAssign=canAssign};
         try{ using var reader=dataCmd.ExecuteReader(); for(int i=0;i<reader.FieldCount;i++) table.Columns.Add(reader.GetName(i)); while(reader.Read()){ var row=new Dictionary<string,object?>(); for(int i=0;i<reader.FieldCount;i++) row[reader.GetName(i)]=reader.IsDBNull(i)?null:reader.GetValue(i); table.Rows.Add(row);} }catch{}
         vm.TicketTable=table;
@@ -114,9 +168,9 @@ public class DailySupportController : Controller
         // CSV/Excel export from Index (poora filtered data)
         if(!string.IsNullOrWhiteSpace(Request.Query["export"])){
             var exp = Request.Query["export"].ToString().ToLower();
-            string exWhere=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) exWhere+=" AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) "; if(!string.IsNullOrWhiteSpace(fromDate)) exWhere+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) exWhere+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) exWhere+=" AND d.Status = @Status "; else exWhere+=" AND (d.Status IS NULL OR d.Status <> 'Closed') "; /* export bhi grid jaisa */ if(!string.IsNullOrWhiteSpace(user)) exWhere+=" AND d.AssignedTo = @UserId ";
+            string exWhere=" WHERE 1=1 "; if(!string.IsNullOrWhiteSpace(search)) exWhere+=string.IsNullOrWhiteSpace(fullTextSearch) ? " AND (d.TicketNo LIKE @Search OR c.ClientName LIKE @Search OR d.Mobile LIKE @Search OR d.Issue LIKE @Search) " : " AND (d.TicketNo LIKE @Search OR d.Mobile LIKE @Search OR CONTAINS(d.Issue,@FullTextSearch) OR CONTAINS(c.ClientName,@FullTextSearch)) "; if(!string.IsNullOrWhiteSpace(fromDate)) exWhere+=" AND d.SupportDate >= @FromDate "; if(!string.IsNullOrWhiteSpace(toDate)) exWhere+=" AND d.SupportDate < DATEADD(DAY,1,@ToDate) "; if(!string.IsNullOrWhiteSpace(status)) exWhere+=" AND d.Status = @Status "; else exWhere+=" AND (d.Status IS NULL OR d.Status <> 'Closed') "; /* export bhi grid jaisa */ if(!string.IsNullOrWhiteSpace(user)) exWhere+=" AND d.AssignedTo = @UserId ";
             string exSql=$@"SELECT d.TicketNo, d.SupportDate, c.ClientName, d.Mobile, d.Channel, d.CallType, d.Category, d.Priority, d.Status, u.FullName as AssignedTo, d.Issue FROM DailySupport d LEFT JOIN Client c ON d.ClientId=c.ClientId LEFT JOIN Users u ON d.AssignedTo=u.UserId {exWhere} ORDER BY d.SupportId DESC";
-            using var excmd=new SqlCommand(exSql,con); if(!string.IsNullOrWhiteSpace(search)) excmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fromDate)){excmd.Parameters.AddWithValue("@FromDate",fromDate);excmd.Parameters["@FromDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(toDate)){excmd.Parameters.AddWithValue("@ToDate",toDate);excmd.Parameters["@ToDate"].SqlDbType=SqlDbType.DateTime;} if(!string.IsNullOrWhiteSpace(status)) excmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) excmd.Parameters.AddWithValue("@UserId",user);
+            using var excmd=new SqlCommand(exSql,con); if(!string.IsNullOrWhiteSpace(search)) excmd.Parameters.AddWithValue("@Search","%"+search+"%"); if(!string.IsNullOrWhiteSpace(fullTextSearch)) excmd.Parameters.AddWithValue("@FullTextSearch",fullTextSearch); if(!string.IsNullOrWhiteSpace(fromDate)) AddTypedDateParameter(excmd,"@FromDate",fromDate); if(!string.IsNullOrWhiteSpace(toDate)) AddTypedDateParameter(excmd,"@ToDate",toDate); if(!string.IsNullOrWhiteSpace(status)) excmd.Parameters.AddWithValue("@Status",status); if(!string.IsNullOrWhiteSpace(user)) AddTypedIntParameter(excmd,"@UserId",user);
             var dt=new DataTable(); try{ using var adapter=new SqlDataAdapter(excmd); adapter.Fill(dt);}catch{}
             if(exp=="csv"){
                 System.Text.StringBuilder sb=new System.Text.StringBuilder();
@@ -567,6 +621,29 @@ public class DailySupportController : Controller
         // History: AssignedTo old->new naam ke saath + reason
         LogTicketHistory(id,"Reassigned","AssignedTo",ResolveUserName(oldAssigned>0?oldAssigned.ToString():null),newName,reason);
         return Json(new{success=true,message=ticketNo+" ab "+newName+" ko assign ho gaya."});
+    }
+
+    // Assigned user ya Admin/Manager ticket ka status change kar sakta hai.
+    [HttpPost][ValidateAntiForgeryToken] public IActionResult UpdateStatus(int id,string? status){
+        var newStatus=(status??"").Trim();
+        var allowed=new[]{"Open","In Progress","On Hold","Pending","Closed"};
+        if(id<=0 || !allowed.Contains(newStatus,StringComparer.OrdinalIgnoreCase))
+            return Json(new{success=false,message="Valid status select karein."});
+        if(!CanAccessCommentTicket(id)) return Json(new{success=false,message="Aap is ticket ka status change nahi kar sakte."});
+        string oldStatus="", ticketNo="";
+        try{
+            using var con=_db.GetConnection(); con.Open();
+            using(var cmd=new SqlCommand("SELECT TicketNo, ISNULL(Status,'Open') FROM DailySupport WHERE SupportId=@Id",con)){
+                cmd.Parameters.AddWithValue("@Id",id); using var r=cmd.ExecuteReader();
+                if(!r.Read()) return Json(new{success=false,message="Ticket nahi mila."});
+                ticketNo=r.IsDBNull(0)?"":r.GetString(0); oldStatus=r.IsDBNull(1)?"Open":r.GetString(1);
+            }
+            if(string.Equals(oldStatus,newStatus,StringComparison.OrdinalIgnoreCase)) return Json(new{success=false,message="Ticket pehle se isi status me hai."});
+            using var update=new SqlCommand("UPDATE DailySupport SET Status=@Status WHERE SupportId=@Id",con);
+            update.Parameters.AddWithValue("@Status",newStatus); update.Parameters.AddWithValue("@Id",id); update.ExecuteNonQuery();
+        }catch(Exception ex){ return Json(new{success=false,message="Status update fail: "+ex.Message}); }
+        LogTicketHistory(id,"Status Changed","Status",oldStatus,newStatus,null);
+        return Json(new{success=true,message=ticketNo+" ka status "+newStatus+" ho gaya."});
     }
 
     // ---- Ticket COMMENTS (new) ----------------------------------------------
