@@ -61,6 +61,9 @@
   #dssTicketModal .dss-row{font-size:11.5px;margin-bottom:4px;gap:8px;}
   #dssTicketModal table th,#dssTicketModal table td{padding:3px 6px;font-size:11px;}
   #dssTicketModal table thead th{font-size:10px;text-transform:uppercase;color:#6b7280;}
+ /* Action modals backdrop ke upar visible rahen */
+ #dssStatusModal,#dssReassignModal{z-index:2000 !important;}
+ #dssStatusModal .modal-dialog,#dssReassignModal .modal-dialog{position:relative;z-index:2001;}
   @@media(max-width:700px){#dssTicketModal .modal-dialog{max-width:100%;width:calc(100vw - 12px);margin:.4rem auto;}}
 </style>
 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -301,6 +304,39 @@ function dssRefreshAfterChange(){
   if(dssMyWork){ window.location.reload(); }
   else if(typeof loadTable==='function'){ loadTable(); }
 }
+// Issue par hover karne par full text fixed box me dikhaye;
+// table ke overflow ki wajah se tooltip clip nahi hoga.
+if(!window.dssIssueTooltipBound){
+  window.dssIssueTooltipBound=true;
+  var dssIssueTip=null;
+  function dssHideIssueTip(){
+    if(dssIssueTip){ dssIssueTip.remove(); dssIssueTip=null; }
+  }
+  document.addEventListener('mouseover',function(e){
+    var el=e.target.closest('.issue-hover');
+    if(!el) return;
+    dssHideIssueTip();
+    var text=el.getAttribute('data-issue')||'';
+    if(!text.trim()) return;
+    dssIssueTip=document.createElement('div');
+    dssIssueTip.textContent=text;
+    dssIssueTip.style.cssText='position:fixed;z-index:5000;max-width:420px;min-width:180px;padding:8px 10px;background:#111827;color:#fff;border-radius:7px;box-shadow:0 5px 18px rgba(15,23,42,.25);font-size:12px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none;text-align:left;';
+    document.body.appendChild(dssIssueTip);
+    var r=el.getBoundingClientRect();
+    var w=Math.min(420,Math.max(180,window.innerWidth-20));
+    var left=Math.min(Math.max(10,r.left),window.innerWidth-w-10);
+    dssIssueTip.style.width=w+'px';
+    dssIssueTip.style.left=left+'px';
+    var top=r.bottom+6;
+    if(top+80>window.innerHeight) top=Math.max(10,r.top-dssIssueTip.offsetHeight-6);
+    dssIssueTip.style.top=top+'px';
+  });
+  document.addEventListener('mouseout',function(e){
+    var el=e.target.closest('.issue-hover');
+    if(el && (!e.relatedTarget || !el.contains(e.relatedTarget))) dssHideIssueTip();
+  });
+  window.addEventListener('scroll',dssHideIssueTip,true);
+}
 </script>
 
 <!-- ===== Ticket details popup (grid me Ticket No / Action -> View se khulta hai) ===== -->
@@ -317,27 +353,34 @@ function dssRefreshAfterChange(){
       <!-- ===== NEW: Ticket Comments (reply goes to the assigned user). This block
            is separate so openTicketDetails() replacing the body HTML cannot wipe it. ===== -->
       <div id="dssCommentsWrap" style="border-top:1px solid #e5e7eb;background:#fff;padding:7px 12px;">
-        <div class="d-flex align-items-center justify-content-between" style="margin-bottom:4px;">
-          <div style="font-size:9.5px;font-weight:800;color:#0f172a;letter-spacing:.3px;">
-            <i class="bi bi-chat-left-text me-1"></i>COMMENTS <span id="dssCommentCount" style="color:#64748b;font-weight:700;"></span>
-          </div>
-          <div id="dssCommentReplyTo" style="font-size:10px;color:#0e7490;font-weight:600;"></div>
-        </div>
-        <div id="dssCommentsList" style="display:none;max-height:132px;overflow-y:auto;border:1px solid #eef2f7;border-radius:8px;background:#f8fafc;padding:3px 6px;margin-bottom:5px;"></div>
-        <div class="d-flex gap-1 align-items-end">
-          <textarea id="dssCommentText" class="form-control form-control-sm" rows="2" maxlength="2000"
-                    placeholder="Write a comment… (sent to the assigned user)"
-                    style="font-size:11.5px;border-radius:8px;resize:vertical;min-height:38px;"></textarea>
-          <button type="button" class="btn btn-sm" id="dssCommentPost"
-                  style="background:#0f172a;color:#fff;white-space:nowrap;height:34px;font-size:11.5px;">Post</button>
-        </div>
-      </div>
-      <div class="modal-footer py-1">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <a href="#" id="dssTicketModalEdit" data-no-modal class="btn btn-sm" style="background:#0f172a;color:#fff;" onclick="event.preventDefault(); var h=this.getAttribute('href'); if(h && h!=='#') window.loadPage(h, 'Edit Call');">Open Edit Form</a>
-      </div>
+  <div class="d-flex align-items-center justify-content-between" style="margin-bottom:4px;">
+    <div style="font-size:9.5px;font-weight:800;color:#0f172a;letter-spacing:.3px;">
+      <i class="bi bi-chat-left-text me-1"></i>COMMENTS <span id="dssCommentCount" style="color:#64748b;font-weight:700;"></span>
+    </div>
+    <div id="dssCommentReplyTo" style="font-size:10px;color:#0e7490;font-weight:600;"></div>
+  </div>
+  <div id="dssCommentsList" style="display:none;max-height:132px;overflow-y:auto;border:1px solid #eef2f7;border-radius:8px;background:#f8fafc;padding:3px 6px;margin-bottom:5px;"></div>
+  
+  <div>
+    <textarea id="dssCommentText" class="form-control form-control-sm" rows="2" maxlength="2000"
+              placeholder="Write a comment… (sent to the assigned user)"
+              style="font-size:11.5px;border-radius:8px;resize:vertical;min-height:38px;width:100%;"></textarea>
+    
+    <div class="d-flex gap-1 justify-content-end" style="margin-top:5px;">
+      <button type="button" class="btn btn-sm btn-outline-primary" id="dssCommentSpeak"
+              style="white-space:nowrap;height:26px;font-size:10.5px;padding:2px 8px;line-height:1;"><i class="bi bi-mic-fill me-1"></i>Speak</button>
+      <button type="button" class="btn btn-sm btn-outline-danger" id="dssCommentClear"
+              style="white-space:nowrap;height:26px;font-size:10.5px;padding:2px 8px;line-height:1;">Clear</button>
+      <button type="button" class="btn btn-sm" id="dssCommentPost"
+              style="background:#0f172a;color:#fff;white-space:nowrap;height:26px;font-size:10.5px;padding:2px 12px;">Post</button>
     </div>
   </div>
+</div>
+
+<!-- dssTicketModal ke modal-content, dialog aur modal ko close karo.
+     In closing tags ki kami se neeche ke modals nested ho rahe the. -->
+</div>
+</div>
 </div>
 
 <!-- ===== MY WORK popup (4 cards + mere assign kiye tasks) - page ki zarurat nahi ===== -->
@@ -389,9 +432,13 @@ function openMyWork(){
         </div>
         <div class="mb-0">
           <label class="form-label" style="font-size:10px;font-weight:700;color:#64748b;">REASON (optional)</label>
-          <textarea class="form-control form-control-sm" id="dssReassignReason" name="reason" rows="2" maxlength="300" placeholder="Jaise: main busy hoon / chutti par hoon..." style="border-radius:8px;font-size:12.5px;"></textarea>
+          <textarea class="form-control form-control-sm" id="dssReassignReason" name="reason" rows="2" maxlength="300" placeholder="Like: Busy with other work / on leave..." style="border-radius:8px;font-size:12.5px;"></textarea>
+          <div class="mt-2 d-flex align-items-center gap-2">
+<button type="button" class="btn btn-outline-primary" style="font-size: 11px; padding: 2px 8px;" onclick="toggleReassignDictation()" id="dssReassignDictationBtn"><i class="bi bi-mic-fill me-1"></i>Speak</button>
+<button type="button" class="btn btn-outline-danger" style="font-size: 11px; padding: 2px 8px;" onclick="document.getElementById('dssReassignReason').value=''">Clear Text</button>
+          </div>
         </div>
-        <div class="form-text" style="font-size:10.5px;">Ticket us user ko mil jayegi. Reason history me record hoga.</div>
+        @* <div class="form-text" style="font-size:10.5px;">Ticket us user ko mil jayegi. Reason history me record hoga.</div> *@
       </div>
       <div class="modal-footer py-2 bg-white">
         <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
@@ -447,6 +494,44 @@ function openMyWork(){
 (function () {
   var usersCache = null;
 
+  var dssReassignRec = null, dssReassignListening = false;
+  function setReassignDictationButton(text) {
+    var b = document.getElementById("dssReassignDictationBtn");
+    if (b) b.innerHTML = text === "Pause" ? '<i class="bi bi-pause-fill me-1"></i>Pause' : '<i class="bi bi-mic-fill me-1"></i>Speak';
+  }
+  window.stopReassignDictation = function () {
+    if (dssReassignRec) { try { dssReassignRec.stop(); } catch (e) {} }
+    dssReassignListening = false;
+    setReassignDictationButton("Speak");
+  };
+  window.toggleReassignDictation = function () {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert("Voice not supported"); return; }
+    var reason = document.getElementById("dssReassignReason");
+    if (!reason) return;
+    if (!dssReassignListening) {
+      dssReassignRec = new SR();
+      dssReassignRec.continuous = true;
+      dssReassignRec.interimResults = true;
+      dssReassignRec.lang = "en-IN";
+      dssReassignRec.onresult = function (e) {
+        var text = "";
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) text += e.results[i][0].transcript;
+        }
+        if (text) reason.value = (reason.value ? reason.value + " " : "") + text;
+      };
+      dssReassignRec.onend = function () {
+        dssReassignListening = false;
+        setReassignDictationButton("Speak");
+      };
+      try { dssReassignRec.start(); dssReassignListening = true; setReassignDictationButton("Pause"); }
+      catch (e) { dssReassignListening = false; setReassignDictationButton("Speak"); }
+    } else {
+      window.stopReassignDictation();
+    }
+  };
+
   function fillUsers(sel) {
     var keep = sel.querySelector('option[value=""]');
     sel.innerHTML = "";
@@ -461,12 +546,12 @@ function openMyWork(){
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".ticket-reassign-btn");
     if (!btn) return;
-    e.preventDefault();
     var id = btn.getAttribute("data-id");
     var hid = document.getElementById("dssReassignId");
     if (hid) hid.value = id;
     var rea = document.getElementById("dssReassignReason");
     if (rea) rea.value = "";
+    if (window.stopReassignDictation) window.stopReassignDictation();
     var sel = document.getElementById("dssReassignUser");
     if (!sel) return;
     sel.value = "";
@@ -479,6 +564,10 @@ function openMyWork(){
     }
     var m = document.getElementById("dssReassignModal");
     if (m && window.bootstrap) bootstrap.Modal.getOrCreateInstance(m).show();
+  });
+
+  document.addEventListener("hidden.bs.modal", function (e) {
+    if (e.target && e.target.id === "dssReassignModal" && window.stopReassignDictation) window.stopReassignDictation();
   });
 
   document.addEventListener("submit", function (e) {
@@ -531,7 +620,6 @@ function openMyWork(){
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".ticket-status-btn");
     if (!btn) return;
-    e.preventDefault();
     var id = document.getElementById("dssStatusId");
     var status = document.getElementById("dssStatusValue");
     if (id) id.value = btn.getAttribute("data-id") || "";
@@ -695,9 +783,41 @@ window.openTicketDetails = function (id, focusComments) {
   var listEl  = document.getElementById("dssCommentsList");
   var inputEl = document.getElementById("dssCommentText");
   var postBtn = document.getElementById("dssCommentPost");
+  var speakBtn = document.getElementById("dssCommentSpeak");
+  var clearBtn = document.getElementById("dssCommentClear");
   var replyEl = document.getElementById("dssCommentReplyTo");
   var countEl = document.getElementById("dssCommentCount");
   var currentId = null;
+  var commentRec = null, commentListening = false;
+
+  function setSpeakButton(text) {
+    if (speakBtn) speakBtn.innerHTML = text === "Pause" ? '<i class="bi bi-pause-fill me-1"></i>Pause' : '<i class="bi bi-mic-fill me-1"></i>Speak';
+  }
+  function stopCommentDictation() {
+    if (commentRec) { try { commentRec.stop(); } catch (e) {} }
+    commentListening = false;
+    setSpeakButton("Speak");
+  }
+  function toggleCommentDictation() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { if (window.Ajax) Ajax.toast("Is browser me voice input support nahi hai. Chrome/Edge use karein.", "error"); return; }
+    if (!inputEl) return;
+    if (!commentListening) {
+      commentRec = new SR();
+      commentRec.continuous = true;
+      commentRec.interimResults = true;
+      commentRec.lang = "en-IN";
+      commentRec.onresult = function (e) {
+        var text = "";
+        for (var i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) text += e.results[i][0].transcript;
+        if (text) { inputEl.value = (inputEl.value ? inputEl.value + " " : "") + text.trim(); inputEl.focus(); }
+      };
+      commentRec.onerror = function (e) { if (window.Ajax) Ajax.toast("Voice error: " + e.error, "error"); };
+      commentRec.onend = function () { commentListening = false; setSpeakButton("Speak"); };
+      try { commentRec.start(); commentListening = true; setSpeakButton("Pause"); }
+      catch (e) { commentListening = false; setSpeakButton("Speak"); }
+    } else stopCommentDictation();
+  }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -776,12 +896,16 @@ window.openTicketDetails = function (id, focusComments) {
   if (modalEl) {
     modalEl.addEventListener("show.bs.modal", function () {
       currentId = ticketId();
+      stopCommentDictation();
       if (inputEl) inputEl.value = "";
       if (replyEl) replyEl.textContent = "";
       load(currentId);
     });
   }
   if (postBtn) postBtn.addEventListener("click", post);
+  if (speakBtn) speakBtn.addEventListener("click", toggleCommentDictation);
+  if (clearBtn) clearBtn.addEventListener("click", function () { if (inputEl) inputEl.value = ""; });
+  if (modalEl) modalEl.addEventListener("hidden.bs.modal", stopCommentDictation);
   if (inputEl) inputEl.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); post(); }
   });
