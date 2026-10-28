@@ -320,12 +320,11 @@ if(!window.dssIssueTooltipBound){
     if(!text.trim()) return;
     dssIssueTip=document.createElement('div');
     dssIssueTip.textContent=text;
-    dssIssueTip.style.cssText='position:fixed;z-index:5000;max-width:420px;min-width:180px;padding:8px 10px;background:#111827;color:#fff;border-radius:7px;box-shadow:0 5px 18px rgba(15,23,42,.25);font-size:12px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none;text-align:left;';
+    dssIssueTip.style.cssText='position:fixed;z-index:5000;width:max-content;max-width:calc(100vw - 20px);padding:8px 10px;background:#111827;color:#fff;border-radius:7px;box-shadow:0 5px 18px rgba(15,23,42,.25);font-size:12px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;pointer-events:none;text-align:left;';
     document.body.appendChild(dssIssueTip);
     var r=el.getBoundingClientRect();
-    var w=Math.min(420,Math.max(180,window.innerWidth-20));
+    var w=dssIssueTip.offsetWidth;
     var left=Math.min(Math.max(10,r.left),window.innerWidth-w-10);
-    dssIssueTip.style.width=w+'px';
     dssIssueTip.style.left=left+'px';
     var top=r.bottom+6;
     if(top+80>window.innerHeight) top=Math.max(10,r.top-dssIssueTip.offsetHeight-6);
@@ -669,6 +668,8 @@ function dssBuildRows(obj, skip) {
 window.openTicketDetails = function (id, focusComments) {
   var modalEl = document.getElementById("dssTicketModal");
   if (!modalEl || !id) return;
+  // Comment section ke liye current ticket id modal par save karo.
+  modalEl.setAttribute("data-ticket-id", String(id));
   var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   var titleEl = document.getElementById("dssTicketModalTitle");
   var bodyEl = document.getElementById("dssTicketModalBody");
@@ -828,6 +829,9 @@ window.openTicketDetails = function (id, focusComments) {
   /* Ticket id comes from the Edit link href (/DailySupport/Edit/<id>),
      which openTicketDetails sets before modal.show(). No existing function touched. */
   function ticketId() {
+    var modal = document.getElementById("dssTicketModal");
+    var savedId = modal ? (modal.getAttribute("data-ticket-id") || "") : "";
+    if (/^\d+$/.test(savedId)) return savedId;
     var a = document.getElementById("dssTicketModalEdit");
     var h = a ? (a.getAttribute("href") || "") : "";
     var m = h.match(/\/DailySupport\/Edit\/(\d+)/);
